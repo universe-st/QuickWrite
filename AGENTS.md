@@ -11,11 +11,12 @@
 - **开发语言**: Kotlin
 - **UI 框架**: Jetpack Compose + Material Design 3
 - **架构模式**: MVVM (Model-View-ViewModel)
-- **本地存储**: Room 数据库 + 文件系统
+- **本地存储**: Room 数据库 + DataStore + 文件系统
 - **网络请求**: Retrofit + OkHttp
 - **异步处理**: Kotlin 协程 + Flow
 - **依赖管理**: 手动依赖注入 (AppContainer)
-- **主题**: 深蓝色主题 (#1a237e)
+- **主题**: 深蓝色主题 (#1a237e) + 完整主题系统
+- **代码处理**: KSP (Kotlin Symbol Processing) 替代 kapt
 
 ### 项目结构
 ```
@@ -42,33 +43,43 @@ com.universe_st.quickwriter/
 
 ### 当前开发状态
 
-**完成度**: 35% | **状态**: 第一期开发中
+**完成度**: 55% | **状态**: 第二期开发中
 
 #### 已完成功能 ✅
-- 项目基础架构搭建
+- 项目基础架构搭建（AppContainer, AppDatabase）
 - MVVM 架构实现（手动依赖注入）
-- Room 数据库和表结构设计
-- 项目列表页面 UI 和功能
-- 项目创建页面 UI 和功能
+- Room 数据库和表结构设计（ProjectEntity, AiModelConfigEntity, UserSettingEntity）
+- 项目列表页面 UI 和功能（ProjectListScreen, ProjectCard）
+- 项目创建页面 UI 和功能（ProjectCreateScreen）
+- 项目编辑页面 UI 和功能（ProjectEditScreen）
 - 项目数据管理（增删改查核心逻辑）
-- 深蓝色主题系统配置
-- 文件系统管理工具
-- 底部导航和页面路由
-- Material Design 3 UI 规范
+- 完整的深蓝色主题系统配置（Theme.kt, Color.kt, Type.kt）
+- 文件系统管理工具（FileManager）
+- 底部导航和页面路由（MainScreen, Navigation）
+- Material Design 3 UI 规范完整实现
+- 系统设置界面（SettingsScreen, AppSettingsScreen）
+- AI 模型配置管理系统（AiConfigScreen, AiModelConfigRepository）
+- 用户设置数据管理（UserSettingsRepository, SettingsUseCase）
+- 写作设置界面（WritingSettingsScreen）
+- 关于界面（AboutScreen）
+- 数据验证和错误处理基本框架
+- 项目删除功能（长按交互）
 
 #### 进行中功能 🚧
-- 项目编辑功能完善
-- 项目删除功能交互优化
-- 数据验证和错误处理
+- 项目详情查看界面（待连接到导航）
+- AI 写作辅助功能集成
+- 系统设置功能的测试和优化
+- AI模型配置与网络请求集成
 
 #### 待开发功能 ⏳
-- 项目详情查看界面
-- AI 模型配置界面
-- 系统设置界面
 - 启动界面和闪屏
 - Markdown 编辑器
-- AI 写作辅助功能
-- 文档管理系统
+- 文档管理系统（文件管理界面）
+- 正文章节编辑器
+- 小说设定管理界面
+- 时间线管理功能
+- AI对话和写作助手界面
+- 导出和分享功能
 
 ## 工作规范
 
@@ -153,6 +164,12 @@ com.universe_st.quickwriter/
 - 数据库类使用 `@Database` 注解
 - 使用 Flow 返回数据变化
 
+#### DataStore
+- 用户设置使用 DataStore 存储
+- 支持键值对存储结构
+- 提供类型安全的访问
+- 使用协程进行异步操作
+
 #### 数据库迁移
 - 当前使用 `fallbackToDestructiveMigration()`（需要修复）
 - 未来应该实现正确的数据库迁移策略
@@ -226,17 +243,30 @@ com.universe_st.quickwriter/
 - `data/local/database/AppDatabase.kt`: Room 数据库配置
 - `util/FileManager.kt`: 文件系统管理工具
 - `domain/usecase/ProjectManagementUseCase.kt`: 项目管理的业务逻辑
+- `domain/usecase/SettingsUseCase.kt`: 设置管理的业务逻辑
 
 ### UI 文件
 - `presentation/MainScreen.kt`: 主界面和导航
 - `presentation/ui/screens/ProjectListScreen.kt`: 项目列表页面
 - `presentation/ui/screens/ProjectCreateScreen.kt`: 项目创建页面
+- `presentation/ui/screens/ProjectEditScreen.kt`: 项目编辑页面
+- `presentation/ui/screens/SettingsScreen.kt`: 系统设置界面
+- `presentation/ui/screens/AiConfigScreen.kt`: AI模型配置界面
+- `presentation/ui/screens/WritingSettingsScreen.kt`: 写作设置界面
+- `presentation/ui/screens/AboutScreen.kt`: 关于界面
 - `presentation/ui/components/ProjectCard.kt`: 项目卡片组件
+- `presentation/ui/components/SettingsComponents.kt`: 设置页面组件
 
 ### 数据层文件
 - `data/repository/ProjectRepository.kt`: 项目数据仓库
+- `data/repository/AiModelConfigRepository.kt`: AI模型配置仓库
+- `data/repository/UserSettingsRepository.kt`: 用户设置仓库
 - `data/local/dao/ProjectDao.kt`: 项目数据访问对象
+- `data/local/dao/AiModelConfigDao.kt`: AI模型配置数据访问对象
+- `data/local/dao/UserSettingDao.kt`: 用户设置数据访问对象
 - `data/local/entity/ProjectEntity.kt`: 项目数据库实体
+- `data/local/entity/AiModelConfigEntity.kt`: AI模型配置数据库实体
+- `data/local/entity/UserSettingEntity.kt`: 用户设置数据库实体
 
 ## 开发注意事项
 
@@ -245,6 +275,8 @@ com.universe_st.quickwriter/
 - API 密钥使用 DataStore 存储但未加密
 - 项目删除功能的 UI 交互需要优化（长按触发删除）
 - 缺少错误处理的详细反馈机制
+- 项目详情查看界面尚未连接到导航
+- AI模型配置与网络请求集成尚未完成
 
 ### 2. 技术债务
 - 需要实现正确的数据库迁移策略
@@ -294,6 +326,6 @@ com.universe_st.quickwriter/
 
 ---
 
-**文档版本**: 1.0  
+**文档版本**: 2.0  
 **最后更新**: 2026-04-22  
 **适用范围**: AI Agents 和开发团队
