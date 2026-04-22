@@ -3,10 +3,22 @@ package com.universe_st.quickwriter.data.repository
 import com.universe_st.quickwriter.data.local.dao.AiModelConfigDao
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 class AiModelConfigRepository(
     private val aiModelConfigDao: AiModelConfigDao
 ) {
+
+    companion object {
+        const val PROVIDER_OPENAI = "openai"
+        const val PROVIDER_ANTHROPIC = "anthropic"
+        const val PROVIDER_CUSTOM = "custom"
+        
+        const val MODEL_GPT_35_TURBO = "gpt-3.5-turbo"
+        const val MODEL_GPT_4 = "gpt-4"
+        const val MODEL_CLAUDE_3 = "claude-3-opus"
+    }
 
     fun getAllConfigs(): Flow<List<AiModelConfigEntity>> {
         return aiModelConfigDao.getAllConfigs()
@@ -37,11 +49,11 @@ class AiModelConfigRepository(
         frequencyPenalty: Float = 0.0f,
         presencePenalty: Float = 0.0f,
         isDefault: Boolean = false
-    ): Result<Long> {
+    ): Result<AiModelConfigEntity> {
         return try {
             val existingConfig = getConfigByName(configName)
             if (existingConfig != null) {
-                return Result.failure(IllegalArgumentException("配置名称已存在"))
+                return Result.failure(Exception("配置名称已存在"))
             }
 
             val config = AiModelConfigEntity(
@@ -59,34 +71,62 @@ class AiModelConfigRepository(
                 isDefault = isDefault
             )
 
+            val id = aiModelConfigDao.insertConfig(config).toInt()
             if (isDefault) {
                 aiModelConfigDao.clearDefaultConfig()
+                aiModelConfigDao.setDefaultConfig(id)
             }
 
-            val id = aiModelConfigDao.insertConfig(config)
-            Result.success(id)
+            Result.success(config.copy(id = id))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     suspend fun updateConfig(
-        config: AiModelConfigEntity
+        id: Int,
+        configName: String,
+        provider: String,
+        apiKey: String,
+        baseUrl: String?,
+        modelName: String,
+        temperature: Float,
+        maxTokens: Int,
+        topP: Float,
+        topK: Int,
+        frequencyPenalty: Float,
+        presencePenalty: Float,
+        isDefault: Boolean
     ): Result<Unit> {
         return try {
-            if (config.isDefault) {
-                aiModelConfigDao.clearDefaultConfig()
+            val existingConfig = getConfigByName(configName)
+            if (existingConfig != null && existingConfig.id != id) {
+                return Result.failure(Exception("配置名称已存在"))
             }
-            aiModelConfigDao.updateConfig(config)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
-    suspend fun deleteConfig(config: AiModelConfigEntity): Result<Unit> {
-        return try {
-            aiModelConfigDao.deleteConfig(config)
+            val config = AiModelConfigEntity(
+                id = id,
+                configName = configName,
+                provider = provider,
+                apiKey = apiKey,
+                baseUrl = baseUrl,
+                modelName = modelName,
+                temperature = temperature,
+                maxTokens = maxTokens,
+                topP = topP,
+                topK = topK,
+                frequencyPenalty = frequencyPenalty,
+                presencePenalty = presencePenalty,
+                isDefault = isDefault
+            )
+
+            aiModelConfigDao.updateConfig(config)
+            
+            if (isDefault) {
+                aiModelConfigDao.clearDefaultConfig()
+                aiModelConfigDao.setDefaultConfig(id)
+            }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -101,5 +141,38 @@ class AiModelConfigRepository(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun deleteConfig(config: AiModelConfigEntity): Result<Unit> {
+        return try {
+            if (config.isDefault) {
+                val configs = getAllConfigs()
+                configs.map { list ->
+                    if (list.size > 1) {
+                        val newDefault = list.firstOrNull { it.id != config.id }
+                        newDefault?.let {
+                            setDefaultConfig(it.id)
+                        }
+                    }
+                }
+            }
+            aiModelConfigDao.deleteConfig(config)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun hasAnyConfig(): Boolean {
+        return try {
+            val config = getOneConfig()
+            config != null
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private suspend fun getOneConfig(): AiModelConfigEntity? {
+        return aiModelConfigDao.getAllConfigs().first().firstOrNull()
     }
 }

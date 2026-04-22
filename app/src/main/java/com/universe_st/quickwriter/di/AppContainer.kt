@@ -9,6 +9,7 @@ import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
 import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.data.repository.UserSettingsRepository
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
 import com.universe_st.quickwriter.util.FileManager
 
 class AppContainer(private val context: Context) {
@@ -47,5 +48,9 @@ class AppContainer(private val context: Context) {
 
     val projectManagementUseCase: ProjectManagementUseCase by lazy {
         ProjectManagementUseCase(projectRepository, fileManager)
+    }
+
+    val settingsUseCase: SettingsUseCase by lazy {
+        SettingsUseCase(userSettingsRepository, aiModelConfigRepository)
     }
 }

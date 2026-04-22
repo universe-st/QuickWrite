@@ -18,9 +18,11 @@ class UserSettingsRepository(
         const val FONT_CATEGORY = "appearance"
         
         const val AUTO_SAVE_INTERVAL_KEY = "auto_save_interval"
+        const val AUTO_SAVE_IMMEDIATELY_KEY = "auto_save_immediately"
         const val DEFAULT_AUTO_SAVE_INTERVAL = "5"
         const val GENERAL_CATEGORY = "general"
         
+        const val USE_MODEL_CONFIG_KEY = "use_model_config"
         const val DEFAULT_TEMPERATURE_KEY = "default_temperature"
         const val DEFAULT_MAX_TOKENS_KEY = "default_max_tokens"
         const val DEFAULT_TOP_P_KEY = "default_top_p"
@@ -110,8 +112,24 @@ class UserSettingsRepository(
         return setSetting(AUTO_SAVE_INTERVAL_KEY, minutes.toString(), GENERAL_CATEGORY)
     }
 
+    suspend fun getAutoSaveImmediately(): Boolean {
+        return getSetting(AUTO_SAVE_IMMEDIATELY_KEY, "false").toBooleanStrictOrNull() ?: false
+    }
+
+    suspend fun setAutoSaveImmediately(enabled: Boolean): Result<Unit> {
+        return setSetting(AUTO_SAVE_IMMEDIATELY_KEY, enabled.toString(), GENERAL_CATEGORY)
+    }
+
     suspend fun getDefaultTemperature(): Float {
         return getSetting(DEFAULT_TEMPERATURE_KEY, "0.8").toFloatOrNull() ?: 0.8f
+    }
+
+    suspend fun getUseModelConfig(): Boolean {
+        return getSetting(USE_MODEL_CONFIG_KEY, "true").toBooleanStrictOrNull() ?: true
+    }
+
+    suspend fun setUseModelConfig(useModelConfig: Boolean): Result<Unit> {
+        return setSetting(USE_MODEL_CONFIG_KEY, useModelConfig.toString(), AI_WRITING_CATEGORY)
     }
 
     suspend fun setDefaultTemperature(temperature: Float): Result<Unit> {

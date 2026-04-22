@@ -113,11 +113,11 @@ class ProjectManagementUseCase(
         return projectRepository.deleteProject(project)
     }
 
-    suspend fun validateProjectTitle(title: String): Result<Unit> {
+    suspend fun validateProjectTitle(title: String, excludeId: String? = null): Result<Unit> {
         if (title.isBlank()) {
             return Result.failure(IllegalArgumentException("项目标题不能为空"))
         }
-        if (!projectRepository.isProjectTitleUnique(title)) {
+        if (!projectRepository.isProjectTitleUnique(title, excludeId)) {
             return Result.failure(IllegalArgumentException("项目标题已存在"))
         }
         return Result.success(Unit)

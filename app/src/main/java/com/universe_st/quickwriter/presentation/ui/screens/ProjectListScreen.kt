@@ -23,7 +23,6 @@ import com.universe_st.quickwriter.util.FileManager
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectListScreen(
-    onProjectClick: (String) -> Unit,
     onCreateProject: () -> Unit,
     onProjectLongClick: (String) -> Unit,
     viewModel: ProjectListViewModel
@@ -106,7 +105,6 @@ fun ProjectListScreen(
                         items(projects) { project ->
                             ProjectCard(
                                 project = project,
-                                onClick = { onProjectClick(project.id) },
                                 onLongClick = { onProjectLongClick(project.id) }
                             )
                         }
