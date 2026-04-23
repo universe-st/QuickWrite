@@ -30,6 +30,9 @@ class UserSettingsRepository(
         
         const val ENABLE_DARK_MODE_KEY = "enable_dark_mode"
         const val FOLLOW_SYSTEM_THEME_KEY = "follow_system_theme"
+        
+        const val CURRENT_PROJECT_ID_KEY = "current_project_id"
+        const val WORKSPACE_CATEGORY = "workspace"
     }
 
     fun getAllSettings(): Flow<List<UserSettingEntity>> {
@@ -150,5 +153,21 @@ class UserSettingsRepository(
 
     suspend fun setDefaultTopP(topP: Float): Result<Unit> {
         return setSetting(DEFAULT_TOP_P_KEY, topP.toString(), AI_WRITING_CATEGORY)
+    }
+
+    suspend fun getCurrentProjectId(): String? {
+        return getSetting(CURRENT_PROJECT_ID_KEY)
+    }
+
+    fun getCurrentProjectIdAsFlow(): Flow<String?> {
+        return userSettingDao.getSettingValueByKeyAsFlow(CURRENT_PROJECT_ID_KEY)
+    }
+
+    suspend fun setCurrentProjectId(projectId: String?): Result<Unit> {
+        return if (projectId == null) {
+            deleteSetting(CURRENT_PROJECT_ID_KEY)
+        } else {
+            setSetting(CURRENT_PROJECT_ID_KEY, projectId, WORKSPACE_CATEGORY)
+        }
     }
 }

@@ -148,4 +148,16 @@ class SettingsUseCase(
     suspend fun hasAnyAiConfig(): Boolean {
         return aiModelConfigRepository.hasAnyConfig()
     }
+
+    suspend fun getCurrentProjectId(): String? {
+        return userSettingsRepository.getCurrentProjectId()
+    }
+
+    fun getCurrentProjectIdAsFlow(): Flow<String?> {
+        return userSettingsRepository.getCurrentProjectIdAsFlow()
+    }
+
+    suspend fun setCurrentProjectId(projectId: String?): Result<Unit> {
+        return userSettingsRepository.setCurrentProjectId(projectId)
+    }
 }

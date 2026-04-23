@@ -30,11 +30,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.universe_st.quickwriter.QuickWriteApplication
 import com.universe_st.quickwriter.presentation.ui.screens.ProjectCreateScreen
+import com.universe_st.quickwriter.presentation.ui.screens.ProjectDetailScreen
 import com.universe_st.quickwriter.presentation.ui.screens.ProjectEditScreen
 import com.universe_st.quickwriter.presentation.ui.screens.ProjectListScreen
 import com.universe_st.quickwriter.presentation.ui.screens.SettingsScreen
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectCreateViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectCreateViewModelFactory
+import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailViewModel
+import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailViewModelFactory
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectEditViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectEditViewModelFactory
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListViewModel
@@ -45,6 +48,9 @@ import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModelFacto
 sealed class Screen(val route: String) {
     object ProjectList : Screen("project_list")
     object ProjectCreate : Screen("project_create")
+    object ProjectDetail : Screen("project_detail/{projectId}") {
+        fun createRoute(projectId: String) = "project_detail/$projectId"
+    }
     object ProjectEdit : Screen("project_edit/{projectId}") {
         fun createRoute(projectId: String) = "project_edit/$projectId"
     }
@@ -117,12 +123,15 @@ fun MainScreen() {
             composable(Screen.ProjectList.route) {
                 selectedTab = 0
                 val projectListViewModel: ProjectListViewModel = viewModel(
-                    factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase)
+                    factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
                 )
 
                 ProjectListScreen(
                     onProjectLongClick = { projectId ->
                         showActionDialog = projectId
+                    },
+                    onProjectClick = { projectId ->
+                        navController.navigate(Screen.ProjectDetail.createRoute(projectId))
                     },
                     onCreateProject = {
                         navController.navigate(Screen.ProjectCreate.route)
@@ -145,6 +154,32 @@ fun MainScreen() {
                         navController.popBackStack()
                     },
                     viewModel = projectCreateViewModel
+                )
+            }
+
+            composable(
+                route = Screen.ProjectDetail.route,
+                arguments = listOf(navArgument("projectId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val projectId = backStackEntry.arguments?.getString("projectId") ?: return@composable
+                val projectDetailViewModel: ProjectDetailViewModel = viewModel(
+                    factory = ProjectDetailViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
+                )
+
+                ProjectDetailScreen(
+                    projectId = projectId,
+                    onBackPressed = {
+                        navController.popBackStack()
+                    },
+                    onEdit = { id ->
+                        navController.navigate(Screen.ProjectEdit.createRoute(id)) {
+                            popUpTo(Screen.ProjectList.route)
+                        }
+                    },
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    viewModel = projectDetailViewModel
                 )
             }
 
@@ -192,7 +227,7 @@ fun MainScreen() {
 
     if (showActionDialog != null) {
         val projectListViewModel = viewModel<ProjectListViewModel>(
-            factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase)
+            factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
         )
         val projectId = showActionDialog!!
         val uiState = projectListViewModel.uiState.collectAsState().value
@@ -220,7 +255,7 @@ fun MainScreen() {
 
     if (showDeleteConfirmDialog != null) {
         val projectListViewModel = viewModel<ProjectListViewModel>(
-            factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase)
+            factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
         )
         val projectId = showDeleteConfirmDialog!!
         val uiState = projectListViewModel.uiState.collectAsState().value

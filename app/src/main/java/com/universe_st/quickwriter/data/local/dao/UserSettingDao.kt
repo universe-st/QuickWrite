@@ -21,6 +21,9 @@ interface UserSettingDao {
     @Query("SELECT * FROM user_settings WHERE `key` = :key LIMIT 1")
     suspend fun getSettingByKey(key: String): UserSettingEntity?
 
+    @Query("SELECT value FROM user_settings WHERE `key` = :key LIMIT 1")
+    fun getSettingValueByKeyAsFlow(key: String): Flow<String?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSetting(setting: UserSettingEntity)
 

@@ -1,9 +1,13 @@
 package com.universe_st.quickwriter.presentation.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +35,8 @@ import com.universe_st.quickwriter.util.AppUtils
 fun ProjectCard(
     project: ProjectEntity,
     onLongClick: () -> Unit = {},
+    onClick: () -> Unit = {},
+    isCurrentProject: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var isPressed by remember { mutableStateOf(false) }
@@ -40,6 +46,9 @@ fun ProjectCard(
             .fillMaxWidth()
             .pointerInput(Unit) {
                 detectTapGestures(
+                    onTap = {
+                        onClick()
+                    },
                     onPress = {
                         isPressed = true
                         tryAwaitRelease()
@@ -53,13 +62,17 @@ fun ProjectCard(
             },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isPressed) 4.dp else 2.dp
+            defaultElevation = if (isPressed) 4.dp else if (isCurrentProject) 4.dp else 2.dp
         ),
+        border = if (isCurrentProject) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else null,
         colors = CardDefaults.cardColors(
-            containerColor = if (isPressed)
-                MaterialTheme.colorScheme.surfaceVariant
-            else
-                MaterialTheme.colorScheme.surface
+            containerColor = when {
+                isPressed -> MaterialTheme.colorScheme.surfaceVariant
+                isCurrentProject -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                else -> MaterialTheme.colorScheme.surface
+            }
         )
     ) {
         Row(
@@ -68,6 +81,16 @@ fun ProjectCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isCurrentProject) {
+                Icon(
+                    imageVector = Icons.Rounded.PushPin,
+                    contentDescription = "主项目",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
             Box(
                 modifier = Modifier
                     .size(80.dp, 100.dp)

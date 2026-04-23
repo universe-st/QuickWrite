@@ -25,10 +25,12 @@ import com.universe_st.quickwriter.util.FileManager
 fun ProjectListScreen(
     onCreateProject: () -> Unit,
     onProjectLongClick: (String) -> Unit,
+    onProjectClick: (String) -> Unit,
     viewModel: ProjectListViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
+    val currentProjectId by viewModel.currentProjectId.collectAsState()
 
     var showSortDialog by remember { mutableStateOf(false) }
 
@@ -106,7 +108,9 @@ fun ProjectListScreen(
                         items(projects) { project ->
                             ProjectCard(
                                 project = project,
-                                onLongClick = { onProjectLongClick(project.id) }
+                                isCurrentProject = currentProjectId == project.id,
+                                onLongClick = { onProjectLongClick(project.id) },
+                                onClick = { onProjectClick(project.id) }
                             )
                         }
                     }

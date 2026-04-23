@@ -5,6 +5,7 @@ import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.util.FileManager
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class ProjectManagementUseCase(
     private val projectRepository: ProjectRepository,
@@ -138,7 +139,18 @@ class ProjectManagementUseCase(
         return modifiedTimeResult
     }
 
-    fun getSortedProjects(sortOption: SortOption): Flow<List<ProjectEntity>> {
-        return getAllProjects(sortOption)
+    fun getSortedProjects(sortOption: SortOption, currentProjectId: String? = null): Flow<List<ProjectEntity>> {
+        return getAllProjects(sortOption).map { projects ->
+            if (currentProjectId == null) {
+                projects
+            } else {
+                val currentProject = projects.find { it.id == currentProjectId }
+                if (currentProject != null) {
+                    listOf(currentProject) + projects.filter { it.id != currentProjectId }
+                } else {
+                    projects
+                }
+            }
+        }
     }
 }
