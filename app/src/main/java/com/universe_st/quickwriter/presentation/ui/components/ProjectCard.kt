@@ -1,7 +1,6 @@
 package com.universe_st.quickwriter.presentation.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,16 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.ui.theme.TextSecondary
 import com.universe_st.quickwriter.util.AppUtils
@@ -90,38 +83,10 @@ fun ProjectCard(
                 Spacer(modifier = Modifier.width(8.dp))
             }
 
-            Box(
-                modifier = Modifier
-                    .size(80.dp, 100.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            ) {
-                if (!project.coverImagePath.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(project.coverImagePath)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "项目封面",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = project.title.firstOrNull()?.toString() ?: "?",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+            ProjectCoverImage(
+                project = project,
+                modifier = Modifier.size(80.dp, 100.dp)
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 

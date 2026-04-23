@@ -143,16 +143,14 @@ class ProjectManagementUseCase(
     }
 
     fun getSortedProjects(sortOption: SortOption, currentProjectId: String? = null): Flow<List<ProjectEntity>> {
-        return getAllProjects(sortOption).map { projects ->
-            if (currentProjectId == null) {
-                projects
+        val baseFlow = getAllProjects(sortOption)
+        if (currentProjectId == null) return baseFlow
+        return baseFlow.map { projects ->
+            val currentProject = projects.find { it.id == currentProjectId }
+            if (currentProject != null) {
+                listOf(currentProject) + projects.filter { it.id != currentProjectId }
             } else {
-                val currentProject = projects.find { it.id == currentProjectId }
-                if (currentProject != null) {
-                    listOf(currentProject) + projects.filter { it.id != currentProjectId }
-                } else {
-                    projects
-                }
+                projects
             }
         }
     }
@@ -170,11 +168,38 @@ class ProjectManagementUseCase(
             ?: return Result.failure(IllegalArgumentException("项目不存在"))
 
         val projectDir = fileManager.getProjectDirectory(projectId).absolutePath
-        return CoverImageProcessor.saveCoverImage(context, sourceUri, projectDir)
+        val saveResult = CoverImageProcessor.saveCoverImage(context, sourceUri, projectDir)
+        if (saveResult.isSuccess) {
+            val coverPath = saveResult.getOrThrow()
+            projectRepository.updateProject(
+                id = projectId,
+                title = project.title,
+                author = project.author,
+                genre = project.genre,
+                description = project.description,
+                coverImagePath = coverPath,
+                currentProject = project
+            )
+        }
+        return saveResult
     }
 
-    fun deleteCoverImage(projectId: String): Result<Unit> {
+    suspend fun deleteCoverImage(projectId: String): Result<Unit> {
+        val project = projectRepository.getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("项目不存在"))
         val projectDir = fileManager.getProjectDirectory(projectId).absolutePath
-        return CoverImageProcessor.deleteCoverImage(projectDir)
+        val deleteResult = CoverImageProcessor.deleteCoverImage(projectDir)
+        if (deleteResult.isSuccess) {
+            projectRepository.updateProject(
+                id = projectId,
+                title = project.title,
+                author = project.author,
+                genre = project.genre,
+                description = project.description,
+                coverImagePath = null,
+                currentProject = project
+            )
+        }
+        return deleteResult
     }
 }

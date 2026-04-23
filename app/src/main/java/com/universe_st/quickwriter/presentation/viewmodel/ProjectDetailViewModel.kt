@@ -82,14 +82,20 @@ class ProjectDetailViewModel(
     }
 
     fun deleteCoverImage(projectId: String) {
-        val result = projectManagementUseCase.deleteCoverImage(projectId)
-        if (result.isSuccess) {
-            refreshCoverState(projectId)
-            reloadProject(projectId)
-        } else {
-            _uiState.value = ProjectDetailUiState.Error(
-                result.exceptionOrNull()?.message ?: "删除书封失败"
-            )
+        viewModelScope.launch {
+            try {
+                val result = projectManagementUseCase.deleteCoverImage(projectId)
+                if (result.isSuccess) {
+                    refreshCoverState(projectId)
+                    reloadProject(projectId)
+                } else {
+                    _uiState.value = ProjectDetailUiState.Error(
+                        result.exceptionOrNull()?.message ?: "删除书封失败"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = ProjectDetailUiState.Error(e.message ?: "删除书封失败")
+            }
         }
     }
 

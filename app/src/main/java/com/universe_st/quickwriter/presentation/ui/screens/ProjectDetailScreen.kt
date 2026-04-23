@@ -3,8 +3,6 @@ package com.universe_st.quickwriter.presentation.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,15 +19,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.presentation.ui.components.ProjectCoverImage
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailUiState
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailViewModel
 import com.universe_st.quickwriter.ui.theme.TextSecondary
@@ -130,19 +125,11 @@ fun ProjectDetailScreen(
                 }
                 is ProjectDetailUiState.Success -> {
                     val project = (uiState as ProjectDetailUiState.Success).project
-                    val effectiveCoverPath = coverImagePath
-                        ?: project.coverImagePath
-                        ?: if (File(project.storagePath, "cover.jpg").exists()) {
-                            File(project.storagePath, "cover.jpg").absolutePath
-                        } else null
-
-                    val effectiveHasCover = hasCoverImage || !effectiveCoverPath.isNullOrEmpty()
 
                     ProjectDetailContent(
                         project = project,
                         isCurrentProject = isCurrentProject,
-                        hasCoverImage = effectiveHasCover,
-                        coverImagePath = effectiveCoverPath,
+                        coverImagePath = coverImagePath,
                         onEdit = { onEdit(project.id) },
                         onDelete = { showDeleteDialog = true },
                         onSetCurrent = {
@@ -336,7 +323,6 @@ private fun CoverMenuDialog(
 fun ProjectDetailContent(
     project: ProjectEntity,
     isCurrentProject: Boolean,
-    hasCoverImage: Boolean,
     coverImagePath: String?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -365,44 +351,12 @@ fun ProjectDetailContent(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp, 100.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onCoverClick() }
-                ) {
-                    val effectivePath = coverImagePath
-                        ?: if (File(project.storagePath, "cover.jpg").exists()) {
-                            File(project.storagePath, "cover.jpg").absolutePath
-                        } else null
-
-                    if (!effectivePath.isNullOrEmpty()) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(File(effectivePath))
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "项目封面",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = project.title.firstOrNull()?.toString() ?: "?",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
+                ProjectCoverImage(
+                    project = project,
+                    coverImagePath = coverImagePath,
+                    modifier = Modifier.size(80.dp, 100.dp),
+                    onClick = onCoverClick
+                )
 
                 Spacer(modifier = Modifier.width(16.dp))
 
