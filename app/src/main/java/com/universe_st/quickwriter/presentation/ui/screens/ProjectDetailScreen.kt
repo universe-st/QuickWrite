@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -54,7 +55,7 @@ fun ProjectDetailScreen(
                 title = { Text("项目详情") },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
                 actions = {
@@ -109,13 +110,13 @@ fun ProjectDetailScreen(
                         isCurrentProject = isCurrentProject,
                         onEdit = { onEdit(project.id) },
                         onDelete = { showDeleteDialog = true },
-                        onSetCurrent = { 
-                            if (isCurrentProject) {
-                                viewModel.unsetCurrentProject()
-                            } else {
-                                viewModel.setCurrentProject(project.id)
-                            }
-                        },
+onSetCurrent = { 
+                        if (isCurrentProject) {
+                            viewModel.unsetCurrentProject()
+                        } else {
+                            viewModel.setCurrentProject(project.id)
+                        }
+                    },
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -158,8 +159,12 @@ fun ProjectDetailScreen(
     }
 
     LaunchedEffect(uiState) {
-        if (uiState is ProjectDetailUiState.DeleteSuccess) {
-            onNavigateBack()
+        when (uiState) {
+            is ProjectDetailUiState.DeleteSuccess,
+            ProjectDetailUiState.SetCurrentSuccess -> {
+                onNavigateBack()
+            }
+            else -> {}
         }
     }
 }

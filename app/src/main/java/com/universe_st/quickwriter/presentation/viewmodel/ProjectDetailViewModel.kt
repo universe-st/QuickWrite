@@ -49,6 +49,7 @@ class ProjectDetailViewModel(
             try {
                 settingsUseCase.setCurrentProjectId(projectId)
                 _isCurrentProject.value = true
+                _uiState.value = ProjectDetailUiState.SetCurrentSuccess
             } catch (e: Exception) {
                 _uiState.value = ProjectDetailUiState.Error("设置当前项目失败")
             }
@@ -102,4 +103,5 @@ sealed class ProjectDetailUiState {
     data class Success(val project: ProjectEntity) : ProjectDetailUiState()
     data class Error(val message: String) : ProjectDetailUiState()
     object DeleteSuccess : ProjectDetailUiState()
+    object SetCurrentSuccess : ProjectDetailUiState()
 }
