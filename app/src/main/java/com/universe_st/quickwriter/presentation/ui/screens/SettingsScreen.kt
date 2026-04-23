@@ -1,6 +1,8 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.ArrowBack
@@ -38,12 +40,14 @@ fun SettingsMainScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
-    ) { paddingValues ->
+        },
+        contentWindowInsets = WindowInsets(0.dp)
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SettingsSection(

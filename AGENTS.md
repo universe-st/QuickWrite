@@ -64,6 +64,7 @@ com.universe_st.quickwriter/
 - 关于界面（AboutScreen）
 - 数据验证和错误处理基本框架
 - 项目删除功能（长按交互）
+- 启动界面和闪屏（SplashScreen, QuickWriterApp）
 
 #### 进行中功能 🚧
 - 项目详情查看界面（待连接到导航）
@@ -72,7 +73,6 @@ com.universe_st.quickwriter/
 - AI模型配置与网络请求集成
 
 #### 待开发功能 ⏳
-- 启动界面和闪屏
 - Markdown 编辑器
 - 文档管理系统（文件管理界面）
 - 正文章节编辑器
@@ -209,6 +209,9 @@ com.universe_st.quickwriter/
 # Debug 构建运行
 ./gradlew installDebug
 
+# 检查编译是否通过（不安装到设备）
+.\gradlew :app:assembleDebug
+
 # Release 构建
 ./gradlew assembleRelease
 
@@ -307,7 +310,7 @@ com.universe_st.quickwriter/
 - 遵循项目的命名和架构规范
 
 ### 3. 代码验证
-- 在修改代码后运行构建命令确保编译通过
+- 在修改代码后运行 ` .\gradlew :app:assembleDebug ` 命令检查编译是否通过
 - 参考现有 UI 组件实现新的 UI
 - 测试新功能是否符合预期
 

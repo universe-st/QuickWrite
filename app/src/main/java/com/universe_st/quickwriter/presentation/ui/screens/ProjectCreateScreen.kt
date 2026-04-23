@@ -41,12 +41,13 @@ fun ProjectCreateScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
-    ) { paddingValues ->
+        },
+        contentWindowInsets = WindowInsets(0.dp)
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(innerPadding)
         ) {
             when (uiState) {
                 is ProjectCreateUiState.Loading -> {

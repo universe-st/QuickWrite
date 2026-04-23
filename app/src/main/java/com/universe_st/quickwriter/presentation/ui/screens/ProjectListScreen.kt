@@ -58,12 +58,13 @@ fun ProjectListScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = "创建项目")
             }
-        }
-    ) { paddingValues ->
+        },
+        contentWindowInsets = WindowInsets(0.dp)
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(innerPadding)
         ) {
             when (uiState) {
                 is ProjectListUiState.Loading -> {

@@ -39,13 +39,14 @@ fun WritingSettingsScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
-    ) { paddingValues ->
+        },
+        contentWindowInsets = WindowInsets(0.dp)
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(paddingValues)
+                .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

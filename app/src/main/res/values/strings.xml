@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">QuickWriter</string>
+    <string name="splash_initializing">正在初始化...</string>
+    <string name="splash_slogan">让创作更自由</string>
+    <string name="splash_checking_storage">正在检查存储空间...</string>
+    <string name="splash_loading_database">正在加载数据库...</string>
+    <string name="splash_ready">准备就绪</string>
 </resources>

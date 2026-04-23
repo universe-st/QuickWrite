@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -67,6 +68,7 @@ fun MainScreen() {
     var showDeleteConfirmDialog by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             if (currentRoute != Screen.ProjectCreate.route && currentRoute != Screen.ProjectEdit.route) {
                 NavigationBar {

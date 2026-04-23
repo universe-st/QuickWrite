@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.universe_st.quickwriter.presentation.MainScreen
+import com.universe_st.quickwriter.presentation.QuickWriterApp
 import com.universe_st.quickwriter.ui.theme.QuickWriterTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    QuickWriterApp()
                 }
             }
         }

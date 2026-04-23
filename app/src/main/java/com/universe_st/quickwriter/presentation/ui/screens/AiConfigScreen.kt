@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
 import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
 import com.universe_st.quickwriter.presentation.ui.components.SettingsDivider
@@ -64,7 +65,8 @@ fun AiConfigListScreen(
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
         when (uiState) {
             is com.universe_st.quickwriter.presentation.viewmodel.SettingsUiState.Loading -> {
