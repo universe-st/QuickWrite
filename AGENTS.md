@@ -24,14 +24,14 @@ com.universe_st.quickwriter/
 ├── presentation/
 │   ├── ui/
 │   │   ├── components/      # 可复用 UI 组件
-│   │   └── screens/         # 页面级 Composable
-│   └── viewmodel/           # ViewModels
+│   │   └── screens/         # 页面级 Composable (10 个页面)
+│   └── viewmodel/           # ViewModels (5 个)
 ├── domain/
 │   ├── usecase/             # 业务逻辑层
-│   └── model/               # 领域模型
+│   └── model/               # 领域模型（当前直接使用 entity）
 ├── data/
 │   ├── local/
-│   │   ├── database/        # Room 数据库
+│   │   ├── database/        # Room 数据库 + TypeConverters
 │   │   ├── dao/             # 数据访问对象
 │   │   └── entity/          # 数据库实体
 │   └── repository/          # 数据仓库
@@ -43,7 +43,7 @@ com.universe_st.quickwriter/
 
 ### 当前开发状态
 
-**完成度**: 55% | **状态**: 第二期开发中
+**完成度**: 70% | **状态**: 第二期开发中
 
 #### 已完成功能 ✅
 - 项目基础架构搭建（AppContainer, AppDatabase）
@@ -52,10 +52,12 @@ com.universe_st.quickwriter/
 - 项目列表页面 UI 和功能（ProjectListScreen, ProjectCard）
 - 项目创建页面 UI 和功能（ProjectCreateScreen）
 - 项目编辑页面 UI 和功能（ProjectEditScreen）
+- 项目详情查看页面 UI 和功能（ProjectDetailScreen, ProjectDetailViewModel）
 - 项目数据管理（增删改查核心逻辑）
 - 完整的深蓝色主题系统配置（Theme.kt, Color.kt, Type.kt）
 - 文件系统管理工具（FileManager）
-- 底部导航和页面路由（MainScreen, Navigation）
+- 封面图片处理工具（CoverImageProcessor）
+- 底部导航和页面路由（MainScreen, Navigation, 10 个路由页面）
 - Material Design 3 UI 规范完整实现
 - 系统设置界面（SettingsScreen, AppSettingsScreen）
 - AI 模型配置管理系统（AiConfigScreen, AiModelConfigRepository）
@@ -63,20 +65,22 @@ com.universe_st.quickwriter/
 - 写作设置界面（WritingSettingsScreen）
 - 关于界面（AboutScreen）
 - 数据验证和错误处理基本框架
-- 项目删除功能（长按交互）
+- 项目删除功能（长按交互 + 确认对话框）
 - 启动界面和闪屏（SplashScreen, QuickWriterApp）
+- 全部 5 个 ViewModel 实现（含工厂类）
+- Room TypeConverters 支持（List\<String\> 转换）
+- 项目排序功能（按创建时间、修改时间、名称）
 
 #### 进行中功能 🚧
-- 项目详情查看界面（待连接到导航）
 - AI 写作辅助功能集成
-- 系统设置功能的测试和优化
-- AI模型配置与网络请求集成
+- 网络请求层实现（AI模型配置与 API 集成）
+- 单元测试和集成测试编写
 
 #### 待开发功能 ⏳
 - Markdown 编辑器
 - 文档管理系统（文件管理界面）
 - 正文章节编辑器
-- 小说设定管理界面
+- 小说设定管理界面（人物/地点/组织/物品）
 - 时间线管理功能
 - AI对话和写作助手界面
 - 导出和分享功能
@@ -210,7 +214,7 @@ com.universe_st.quickwriter/
 ./gradlew installDebug
 
 # 检查编译是否通过（不安装到设备）
-.\gradlew :app:assembleDebug
+./gradlew :app:assembleDebug
 
 # Release 构建
 ./gradlew assembleRelease
@@ -250,15 +254,24 @@ com.universe_st.quickwriter/
 
 ### UI 文件
 - `presentation/MainScreen.kt`: 主界面和导航
+- `presentation/QuickWriterApp.kt`: 应用入口 Composable
+- `presentation/ui/screens/SplashScreen.kt`: 启动闪屏
 - `presentation/ui/screens/ProjectListScreen.kt`: 项目列表页面
 - `presentation/ui/screens/ProjectCreateScreen.kt`: 项目创建页面
 - `presentation/ui/screens/ProjectEditScreen.kt`: 项目编辑页面
-- `presentation/ui/screens/SettingsScreen.kt`: 系统设置界面
-- `presentation/ui/screens/AiConfigScreen.kt`: AI模型配置界面
+- `presentation/ui/screens/ProjectDetailScreen.kt`: 项目详情查看页面
+- `presentation/ui/screens/SettingsScreen.kt`: 系统设置界面（含内部导航）
+- `presentation/ui/screens/AppSettingsScreen.kt`: 外观与字体设置
 - `presentation/ui/screens/WritingSettingsScreen.kt`: 写作设置界面
+- `presentation/ui/screens/AiConfigScreen.kt`: AI模型配置界面
 - `presentation/ui/screens/AboutScreen.kt`: 关于界面
 - `presentation/ui/components/ProjectCard.kt`: 项目卡片组件
 - `presentation/ui/components/SettingsComponents.kt`: 设置页面组件
+- `presentation/viewmodel/ProjectListViewModel.kt`: 项目列表 ViewModel
+- `presentation/viewmodel/ProjectCreateViewModel.kt`: 项目创建 ViewModel
+- `presentation/viewmodel/ProjectEditViewModel.kt`: 项目编辑 ViewModel
+- `presentation/viewmodel/ProjectDetailViewModel.kt`: 项目详情 ViewModel
+- `presentation/viewmodel/SettingsViewModel.kt`: 设置页面 ViewModel
 
 ### 数据层文件
 - `data/repository/ProjectRepository.kt`: 项目数据仓库
@@ -278,7 +291,6 @@ com.universe_st.quickwriter/
 - API 密钥使用 DataStore 存储但未加密
 - 项目删除功能的 UI 交互需要优化（长按触发删除）
 - 缺少错误处理的详细反馈机制
-- 项目详情查看界面尚未连接到导航
 - AI模型配置与网络请求集成尚未完成
 
 ### 2. 技术债务
@@ -288,12 +300,13 @@ com.universe_st.quickwriter/
 - 需要实现 API 密钥的安全存储
 
 ### 3. 开发优先级
-1. 完善项目编辑功能和 UI 交互
-2. 实现项目详情查看界面
-3. 完成 AI 模型配置管理系统
-4. 构建系统设置界面
-5. 添加启动界面和闪屏
-6. 编写单元测试和集成测试
+1. AI 写作辅助功能（网络请求层、对话界面）
+2. 正文章节编辑器与 Markdown 编辑器
+3. 小说设定管理界面（人物/地点/组织/物品）
+4. 时间线管理功能
+5. 导出和分享功能
+6. 单元测试和集成测试
+7. 技术债务清理（数据库迁移策略、API 密钥加密、代码质量工具）
 
 ## 与 AI 协作的最佳实践
 
@@ -310,7 +323,7 @@ com.universe_st.quickwriter/
 - 遵循项目的命名和架构规范
 
 ### 3. 代码验证
-- 在修改代码后运行 ` .\gradlew :app:assembleDebug ` 命令检查编译是否通过
+- 在修改代码后运行 `./gradlew :app:assembleDebug` 命令检查编译是否通过
 - 参考现有 UI 组件实现新的 UI
 - 测试新功能是否符合预期
 
@@ -329,6 +342,6 @@ com.universe_st.quickwriter/
 
 ---
 
-**文档版本**: 2.0  
-**最后更新**: 2026-04-22  
+**文档版本**: 2.1  
+**最后更新**: 2026-04-23  
 **适用范围**: AI Agents 和开发团队
