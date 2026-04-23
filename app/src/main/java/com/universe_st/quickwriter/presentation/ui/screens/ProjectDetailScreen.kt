@@ -1,13 +1,17 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
@@ -30,6 +34,7 @@ import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailUiState
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailViewModel
 import com.universe_st.quickwriter.ui.theme.TextSecondary
 import com.universe_st.quickwriter.util.AppUtils
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,14 +45,34 @@ fun ProjectDetailScreen(
     onNavigateBack: () -> Unit,
     viewModel: ProjectDetailViewModel
 ) {
+    val context = LocalContext.current
+
     LaunchedEffect(projectId) {
         viewModel.loadProject(projectId)
     }
 
     val uiState by viewModel.uiState.collectAsState()
     val isCurrentProject by viewModel.isCurrentProject.collectAsState()
+    val hasCoverImage by viewModel.hasCoverImage.collectAsState()
+    val coverImagePath by viewModel.coverImagePath.collectAsState()
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showExportMenu by remember { mutableStateOf(false) }
+    var showCoverMenu by remember { mutableStateOf(false) }
+    var showDeleteCoverDialog by remember { mutableStateOf(false) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {}
+            viewModel.saveCoverImage(context, it, projectId)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -105,18 +130,35 @@ fun ProjectDetailScreen(
                 }
                 is ProjectDetailUiState.Success -> {
                     val project = (uiState as ProjectDetailUiState.Success).project
+                    val effectiveCoverPath = coverImagePath
+                        ?: project.coverImagePath
+                        ?: if (File(project.storagePath, "cover.jpg").exists()) {
+                            File(project.storagePath, "cover.jpg").absolutePath
+                        } else null
+
+                    val effectiveHasCover = hasCoverImage || !effectiveCoverPath.isNullOrEmpty()
+
                     ProjectDetailContent(
                         project = project,
                         isCurrentProject = isCurrentProject,
+                        hasCoverImage = effectiveHasCover,
+                        coverImagePath = effectiveCoverPath,
                         onEdit = { onEdit(project.id) },
                         onDelete = { showDeleteDialog = true },
-onSetCurrent = { 
-                        if (isCurrentProject) {
-                            viewModel.unsetCurrentProject()
-                        } else {
-                            viewModel.setCurrentProject(project.id)
-                        }
-                    },
+                        onSetCurrent = {
+                            if (isCurrentProject) {
+                                viewModel.unsetCurrentProject()
+                            } else {
+                                viewModel.setCurrentProject(project.id)
+                            }
+                        },
+                        onCoverClick = { showCoverMenu = true },
+                        onAddCover = {
+                            imagePickerLauncher.launch(
+                                arrayOf("image/jpeg", "image/png", "image/bmp", "image/x-bmp")
+                            )
+                        },
+                        onDeleteCover = { showDeleteCoverDialog = true },
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -143,6 +185,37 @@ onSetCurrent = {
         }
     }
 
+    if (showCoverMenu) {
+        val effectiveHasCover = when (val state = uiState) {
+            is ProjectDetailUiState.Success -> {
+                hasCoverImage || !state.project.coverImagePath.isNullOrEmpty() ||
+                    File(state.project.storagePath, "cover.jpg").exists()
+            }
+            else -> false
+        }
+
+        CoverMenuDialog(
+            hasCover = effectiveHasCover,
+            onAddCover = {
+                showCoverMenu = false
+                imagePickerLauncher.launch(
+                    arrayOf("image/jpeg", "image/png", "image/bmp", "image/x-bmp")
+                )
+            },
+            onReplaceCover = {
+                showCoverMenu = false
+                imagePickerLauncher.launch(
+                    arrayOf("image/jpeg", "image/png", "image/bmp", "image/x-bmp")
+                )
+            },
+            onDeleteCover = {
+                showCoverMenu = false
+                showDeleteCoverDialog = true
+            },
+            onDismiss = { showCoverMenu = false }
+        )
+    }
+
     if (showDeleteDialog) {
         val projectTitle = when (val state = uiState) {
             is ProjectDetailUiState.Success -> state.project.title
@@ -158,6 +231,29 @@ onSetCurrent = {
         )
     }
 
+    if (showDeleteCoverDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteCoverDialog = false },
+            title = { Text("删除书封") },
+            text = { Text("确定要删除该书封图片吗？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteCoverImage(projectId)
+                        showDeleteCoverDialog = false
+                    }
+                ) {
+                    Text("删除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteCoverDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     LaunchedEffect(uiState) {
         when (uiState) {
             is ProjectDetailUiState.DeleteSuccess,
@@ -170,16 +266,88 @@ onSetCurrent = {
 }
 
 @Composable
+private fun CoverMenuDialog(
+    hasCover: Boolean,
+    onAddCover: () -> Unit,
+    onReplaceCover: () -> Unit,
+    onDeleteCover: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("书封管理") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (hasCover) {
+                    TextButton(
+                        onClick = onReplaceCover,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.AddPhotoAlternate,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("更换书封")
+                    }
+                    TextButton(
+                        onClick = onDeleteCover,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("删除书封", color = MaterialTheme.colorScheme.error)
+                    }
+                } else {
+                    TextButton(
+                        onClick = onAddCover,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.AddPhotoAlternate,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("添加书封")
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
+@Composable
 fun ProjectDetailContent(
     project: ProjectEntity,
     isCurrentProject: Boolean,
+    hasCoverImage: Boolean,
+    coverImagePath: String?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onSetCurrent: () -> Unit,
+    onCoverClick: () -> Unit,
+    onAddCover: () -> Unit = {},
+    onDeleteCover: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -201,11 +369,17 @@ fun ProjectDetailContent(
                     modifier = Modifier
                         .size(80.dp, 100.dp)
                         .clip(RoundedCornerShape(8.dp))
+                        .clickable { onCoverClick() }
                 ) {
-                    if (!project.coverImagePath.isNullOrEmpty()) {
+                    val effectivePath = coverImagePath
+                        ?: if (File(project.storagePath, "cover.jpg").exists()) {
+                            File(project.storagePath, "cover.jpg").absolutePath
+                        } else null
+
+                    if (!effectivePath.isNullOrEmpty()) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(project.coverImagePath)
+                                .data(File(effectivePath))
                                 .crossfade(true)
                                 .build(),
                             contentDescription = "项目封面",
@@ -273,7 +447,7 @@ fun ProjectDetailContent(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 if (!project.description.isNullOrEmpty()) {
                     Text(
                         text = "描述",
@@ -285,7 +459,7 @@ fun ProjectDetailContent(
                         text = project.description,
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Divider()
+                    HorizontalDivider()
                 }
 
                 InfoRow("创建时间", AppUtils.formatTimestamp(project.createdTime))
@@ -309,7 +483,7 @@ fun ProjectDetailContent(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("编辑")
             }
-            
+
             Button(
                 onClick = onSetCurrent,
                 modifier = Modifier.weight(1f),

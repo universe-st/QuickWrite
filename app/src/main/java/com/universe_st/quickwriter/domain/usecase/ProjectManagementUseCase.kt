@@ -1,7 +1,10 @@
 package com.universe_st.quickwriter.domain.usecase
 
+import android.content.Context
+import android.net.Uri
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.data.repository.ProjectRepository
+import com.universe_st.quickwriter.util.CoverImageProcessor
 import com.universe_st.quickwriter.util.FileManager
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.Flow
@@ -152,5 +155,26 @@ class ProjectManagementUseCase(
                 }
             }
         }
+    }
+
+    fun hasCoverImage(projectId: String): Boolean {
+        return fileManager.hasCoverImage(projectId)
+    }
+
+    fun getCoverImagePath(projectId: String): String {
+        return fileManager.getCoverImagePath(projectId)
+    }
+
+    suspend fun saveCoverImage(context: Context, sourceUri: Uri, projectId: String): Result<String> {
+        val project = projectRepository.getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("项目不存在"))
+
+        val projectDir = fileManager.getProjectDirectory(projectId).absolutePath
+        return CoverImageProcessor.saveCoverImage(context, sourceUri, projectDir)
+    }
+
+    fun deleteCoverImage(projectId: String): Result<Unit> {
+        val projectDir = fileManager.getProjectDirectory(projectId).absolutePath
+        return CoverImageProcessor.deleteCoverImage(projectDir)
     }
 }

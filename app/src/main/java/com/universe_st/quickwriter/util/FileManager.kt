@@ -220,4 +220,12 @@ class FileManager(private val context: Context) {
             0L
         }
     }
+
+    fun getCoverImagePath(projectId: String): String {
+        return CoverImageProcessor.getCoverFilePath(getProjectDirectory(projectId).absolutePath)
+    }
+
+    fun hasCoverImage(projectId: String): Boolean {
+        return CoverImageProcessor.hasCoverImage(getProjectDirectory(projectId).absolutePath)
+    }
 }
