@@ -13,6 +13,8 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
 
 object CoverImageProcessor {
 
@@ -80,9 +82,9 @@ object CoverImageProcessor {
         val scaledWidth = (srcWidth * scale).toInt()
         val scaledHeight = (srcHeight * scale).toInt()
 
-        val scaledBitmap = Bitmap.createScaledBitmap(original, scaledWidth, scaledHeight, true)
+        val scaledBitmap = original.scale(scaledWidth, scaledHeight)
 
-        val result = Bitmap.createBitmap(COVER_WIDTH, COVER_HEIGHT, Bitmap.Config.ARGB_8888)
+        val result = createBitmap(COVER_WIDTH, COVER_HEIGHT)
         result.eraseColor(Color.WHITE)
 
         val canvas = Canvas(result)
