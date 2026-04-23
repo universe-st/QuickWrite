@@ -70,7 +70,6 @@ fun ProjectCard(
         colors = CardDefaults.cardColors(
             containerColor = when {
                 isPressed -> MaterialTheme.colorScheme.surfaceVariant
-                isCurrentProject -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 else -> MaterialTheme.colorScheme.surface
             }
         )
