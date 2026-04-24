@@ -9,6 +9,7 @@ import com.universe_st.quickwriter.util.FileManager
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.File
 
 class ProjectManagementUseCase(
     private val projectRepository: ProjectRepository,
@@ -157,6 +158,69 @@ class ProjectManagementUseCase(
 
     fun hasCoverImage(projectId: String): Boolean {
         return fileManager.hasCoverImage(projectId)
+    }
+
+    suspend fun getChapterFiles(projectId: String): Result<List<String>> {
+        val project = getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("项目不存在"))
+        val chapterDir = File(project.storagePath, "正文")
+        return fileManager.getDirectoryContents(chapterDir.absolutePath).map { files ->
+            files.filter { it.endsWith(".md") }.sorted()
+        }
+    }
+
+    suspend fun readFileContent(filePath: String): Result<String> {
+        return fileManager.readFileContent(filePath)
+    }
+
+    suspend fun writeFileContent(filePath: String, content: String): Result<Unit> {
+        return fileManager.writeFileContent(filePath, content)
+    }
+
+    suspend fun createChapterFile(projectId: String, fileName: String): Result<String> {
+        val project = getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("项目不存在"))
+        val filePath = File(File(project.storagePath, "正文"), fileName).absolutePath
+        return fileManager.createFile(filePath).map { filePath }
+    }
+
+    suspend fun deleteChapterFile(projectId: String, fileName: String): Result<Unit> {
+        val project = getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("项目不存在"))
+        val filePath = File(File(project.storagePath, "正文"), fileName).absolutePath
+        return fileManager.deleteFileOrDirectory(filePath)
+    }
+
+    suspend fun getDirectoryContents(path: String): Result<List<String>> {
+        return fileManager.getDirectoryContents(path)
+    }
+
+    suspend fun createDirectory(dirPath: String): Result<Unit> {
+        return fileManager.createDirectory(dirPath)
+    }
+
+    suspend fun createFile(filePath: String): Result<Unit> {
+        return fileManager.createFile(filePath)
+    }
+
+    suspend fun deleteFileOrDirectory(path: String): Result<Unit> {
+        return fileManager.deleteFileOrDirectory(path)
+    }
+
+    suspend fun renameFileOrDirectory(oldPath: String, newPath: String): Result<Unit> {
+        return fileManager.renameFileOrDirectory(oldPath, newPath)
+    }
+
+    suspend fun getFileSize(path: String): Long {
+        return fileManager.getFileSize(path)
+    }
+
+    fun isPathSafe(path: String): Boolean {
+        return fileManager.isPathSafe(path)
+    }
+
+    fun getProjectDirectory(projectId: String): String {
+        return fileManager.getProjectDirectory(projectId).absolutePath
     }
 
     fun getCoverImagePath(projectId: String): String {

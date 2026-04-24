@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.*
@@ -38,6 +39,7 @@ fun ProjectDetailScreen(
     onBackPressed: () -> Unit,
     onEdit: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onFileBrowser: (String) -> Unit,
     viewModel: ProjectDetailViewModel
 ) {
     val context = LocalContext.current
@@ -146,6 +148,7 @@ fun ProjectDetailScreen(
                             )
                         },
                         onDeleteCover = { showDeleteCoverDialog = true },
+                        onFileBrowser = { onFileBrowser(project.id) },
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -328,6 +331,8 @@ fun ProjectDetailContent(
     onDelete: () -> Unit,
     onSetCurrent: () -> Unit,
     onCoverClick: () -> Unit,
+    onStartWriting: () -> Unit = {},
+    onFileBrowser: (String) -> Unit = {},
     onAddCover: () -> Unit = {},
     onDeleteCover: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -458,6 +463,24 @@ fun ProjectDetailContent(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(if (isCurrentProject) "主项目" else "设为主项目")
             }
+        }
+
+        OutlinedButton(
+            onClick = { onStartWriting() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = null)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("开始写作")
+        }
+
+        OutlinedButton(
+            onClick = { onFileBrowser(project.id) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.FolderOpen, contentDescription = null)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("文件管理")
         }
 
         OutlinedButton(

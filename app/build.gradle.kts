@@ -74,6 +74,8 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.timber)
     
+    implementation(project(":markor-editor"))
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
