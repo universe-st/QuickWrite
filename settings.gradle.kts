@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "QuickWriter"
 include(":app")
- 
+include(":markor-editor")
