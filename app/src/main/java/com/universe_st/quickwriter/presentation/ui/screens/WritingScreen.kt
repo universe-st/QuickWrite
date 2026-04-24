@@ -24,8 +24,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -364,16 +362,13 @@ private fun EditorContent(
 
             if (state.currentChapterIndex >= 0) {
                 key(state.currentChapterIndex) {
-                    val focusRequester = remember { FocusRequester() }
                     MarkorEditor(
                         value = state.editorContent,
                         onValueChange = onContentChange,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .padding(4.dp)
-                            .focusRequester(focusRequester)
-                            .clickable { focusRequester.requestFocus() },
+                            .padding(4.dp),
                         editorConfig = editorConfig,
                         highlightingMode = HighlightingMode.MARKDOWN,
                         enabled = true

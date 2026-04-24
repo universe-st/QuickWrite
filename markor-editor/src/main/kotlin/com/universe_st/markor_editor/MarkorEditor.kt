@@ -27,6 +27,8 @@ fun MarkorEditor(
         modifier = modifier,
         factory = { context ->
             HighlightingEditor(context, null).apply {
+                isFocusable = true
+                isFocusableInTouchMode = true
                 HighlightingEditor.setDefaultConfig(editorConfig)
                 setHighlighter(createHighlighter(highlightingMode))
 
