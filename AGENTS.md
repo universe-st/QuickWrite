@@ -17,6 +17,7 @@
 - **依赖管理**: 手动依赖注入 (AppContainer)
 - **主题**: 深蓝色主题 (#1a237e) + 完整主题系统
 - **代码处理**: KSP (Kotlin Symbol Processing) 替代 kapt
+- **编辑器引擎**: markor-editor 模块 (基于 Markor HighlightingEditor 移植)
 
 ### 项目结构
 ```
@@ -36,7 +37,8 @@ com.universe_st.quickwriter/
 │   │   └── entity/          # 数据库实体
 │   └── repository/          # 数据仓库
 ├── di/                      # 依赖注入
-└── util/                    # 工具类
+├── util/                    # 工具类
+└── markor-editor/           # Markor 移植编辑器模块（独立 Android Library）
 ```
 
 ## AI Agent 协作指南
@@ -70,6 +72,7 @@ com.universe_st.quickwriter/
 - 全部 5 个 ViewModel 实现（含工厂类）
 - Room TypeConverters 支持（List\<String\> 转换）
 - 项目排序功能（按创建时间、修改时间、名称）
+- markor-editor 模块导入（基于 Markor HighlightingEditor 移植，支持语法高亮、行号、自动格式化）
 
 #### 进行中功能 🚧
 - AI 写作辅助功能集成
@@ -335,6 +338,7 @@ com.universe_st.quickwriter/
 - **需求文档**: `docs/requirement.md` - 完整的产品需求和技术规范
 - **第一期需求**: `docs/第一期需求.md` - 第一期开发计划和进度
 - **依赖清单**: `docs/依赖清单.md` - 使用的依赖库列表
+- **Markor Editor 集成说明**: `docs/markor-editor集成说明.md` - 编辑器移植详细记录
 
 ## 联系方式
 
@@ -342,6 +346,6 @@ com.universe_st.quickwriter/
 
 ---
 
-**文档版本**: 2.1  
-**最后更新**: 2026-04-23  
+**文档版本**: 2.2  
+**最后更新**: 2026-04-24  
 **适用范围**: AI Agents 和开发团队
