@@ -31,6 +31,7 @@ fun MarkorEditor(
                 isFocusableInTouchMode = true
                 HighlightingEditor.setDefaultConfig(editorConfig)
                 setHighlighter(createHighlighter(highlightingMode))
+                setHighlightingEnabled(true)
 
                 addTextChangedListener(object : TextWatcher {
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -59,6 +60,7 @@ fun MarkorEditor(
             if (currentType != targetType) {
                 view.setHighlighter(createHighlighter(highlightingMode))
                 view.initHighlighter()
+                view.setHighlightingEnabled(true)
                 view.postInvalidate()
             }
         }

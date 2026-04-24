@@ -52,7 +52,7 @@ public class MarkdownSyntaxHighlighter extends SyntaxHighlighterBase {
         _highlightCodeChangeFont = true;
         _highlightBiggerHeadings = true;
         _highlightCodeBlock = true;
-        _delay = 2400;
+        _delay = 200;
         return super.configure(paint);
     }
 
