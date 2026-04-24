@@ -1,6 +1,8 @@
 package com.universe_st.quickwriter.presentation
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -120,7 +122,11 @@ fun MainScreen() {
             startDestination = Screen.ProjectList.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.ProjectList.route) {
+            composable(
+                route = Screen.ProjectList.route,
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) }
+            ) {
                 selectedTab = 0
                 val projectListViewModel: ProjectListViewModel = viewModel(
                     factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
@@ -159,7 +165,9 @@ fun MainScreen() {
 
             composable(
                 route = Screen.ProjectDetail.route,
-                arguments = listOf(navArgument("projectId") { type = NavType.StringType })
+                arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+                enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
             ) { backStackEntry ->
                 val projectId = backStackEntry.arguments?.getString("projectId") ?: return@composable
                 val projectDetailViewModel: ProjectDetailViewModel = viewModel(
