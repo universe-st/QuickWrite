@@ -71,14 +71,14 @@ class WritingViewModel(
                     _uiState.value = WritingUiState.NoProject
                     return@launch
                 }
-                loadChapters(project)
+                loadChapters(project, useSavedTab = true)
             } catch (e: Exception) {
                 _uiState.value = WritingUiState.Error(e.message ?: "加载失败")
             }
         }
     }
 
-    private suspend fun loadChapters(project: ProjectEntity) {
+    private suspend fun loadChapters(project: ProjectEntity, useSavedTab: Boolean = false) {
         val chapterFilesResult = projectManagementUseCase.getChapterFiles(project.id)
         val filePaths = chapterFilesResult.getOrDefault(emptyList())
 
@@ -101,6 +101,9 @@ class WritingViewModel(
             )
         }.sortedBy { it.order }
 
+        val savedTab = if (useSavedTab && project.id == lastProjectId) lastSelectedTab else 0
+        lastProjectId = project.id
+
         _uiState.value = WritingUiState.Success(
             project = project,
             chapters = chapterInfoList,
@@ -108,7 +111,7 @@ class WritingViewModel(
             editorContent = "",
             currentChapterMeta = ChapterMeta(),
             wordCount = 0,
-            selectedTab = 0,
+            selectedTab = savedTab,
             isSaving = false,
             isDirty = false
         )
@@ -286,6 +289,8 @@ class WritingViewModel(
         if (state is WritingUiState.NoProject && tab == 0) return
         val success = state as? WritingUiState.Success ?: return
         _uiState.value = success.copy(selectedTab = tab)
+        lastSelectedTab = tab
+        lastProjectId = success.project.id
     }
 
     fun retry() {
@@ -293,6 +298,8 @@ class WritingViewModel(
     }
 
     companion object {
+        private var lastSelectedTab: Int = 0
+        private var lastProjectId: String? = null
         fun countWords(text: String): Int {
             if (text.isBlank()) return 0
             val chinese = text.count { c ->

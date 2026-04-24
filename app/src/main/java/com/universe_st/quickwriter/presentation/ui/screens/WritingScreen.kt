@@ -7,7 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -46,7 +49,7 @@ fun WritingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showNewChapterDialog by remember { mutableStateOf(false) }
-    var showChapterList by remember { mutableStateOf(true) }
+    var showChapterList by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -361,18 +364,31 @@ private fun EditorContent(
             }
 
             if (state.currentChapterIndex >= 0) {
-                key(state.currentChapterIndex) {
-                    MarkorEditor(
-                        value = state.editorContent,
-                        onValueChange = onContentChange,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(4.dp),
-                        editorConfig = editorConfig,
-                        highlightingMode = HighlightingMode.MARKDOWN,
-                        enabled = true
-                    )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .then(
+                            if (showChapterList) Modifier.pointerInput(showChapterList) {
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false)
+                                    onToggleChapterList()
+                                }
+                            } else Modifier
+                        )
+                ) {
+                    key(state.currentChapterIndex) {
+                        MarkorEditor(
+                            value = state.editorContent,
+                            onValueChange = onContentChange,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp),
+                            editorConfig = editorConfig,
+                            highlightingMode = HighlightingMode.MARKDOWN,
+                            enabled = true
+                        )
+                    }
                 }
             }
         }
@@ -381,20 +397,34 @@ private fun EditorContent(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .width(24.dp)
-                    .height(80.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
-                    )
-                    .clickable { onToggleChapterList() },
-                contentAlignment = Alignment.Center
+                    .width(40.dp)
+                    .fillMaxHeight()
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures { _, dragAmount ->
+                            if (dragAmount > 50f) onToggleChapterList()
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = { onToggleChapterList() })
+                    },
+                contentAlignment = Alignment.CenterStart
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "显示章节列表",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Box(
+                    modifier = Modifier
+                        .width(24.dp)
+                        .height(80.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "显示章节列表",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }
