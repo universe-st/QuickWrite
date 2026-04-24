@@ -7,13 +7,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
@@ -24,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -87,10 +91,11 @@ fun WritingScreen(
                     }
                     is WritingUiState.Success -> {
                         when (state.selectedTab) {
-                            0 -> EditorContent(
-                                state = state,
-                                showChapterList = showChapterList,
-                                onSelectChapter = { viewModel.selectChapter(it) },
+                    0 -> EditorContent(
+                        state = state,
+                        showChapterList = showChapterList,
+                        onToggleChapterList = { showChapterList = !showChapterList },
+                        onSelectChapter = { viewModel.selectChapter(it) },
                                 onMoveUp = { viewModel.moveChapter(it, it - 1) },
                                 onMoveDown = { viewModel.moveChapter(it, it + 1) },
                                 onCreateChapter = { showNewChapterDialog = true },
@@ -278,6 +283,7 @@ private fun WritingTabRow(
 private fun EditorContent(
     state: WritingUiState.Success,
     showChapterList: Boolean,
+    onToggleChapterList: () -> Unit,
     onSelectChapter: (Int) -> Unit,
     onMoveUp: (Int) -> Unit,
     onMoveDown: (Int) -> Unit,
@@ -312,45 +318,87 @@ private fun EditorContent(
         return
     }
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = showChapterList,
-            enter = slideInHorizontally { -it },
-            exit = slideOutHorizontally { -it }
-        ) {
-            ChapterListPanel(
-                chapters = state.chapters,
-                currentIndex = state.currentChapterIndex,
-                onSelectChapter = onSelectChapter,
-                onMoveUp = onMoveUp,
-                onMoveDown = onMoveDown,
-                onCreateChapter = onCreateChapter,
-                onDeleteChapter = onDeleteChapter,
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            AnimatedVisibility(
+                visible = showChapterList,
+                enter = slideInHorizontally { -it },
+                exit = slideOutHorizontally { -it }
+            ) {
+                Box(
+                    modifier = Modifier.pointerInput(showChapterList) {
+                        if (!showChapterList) return@pointerInput
+                        var totalDrag = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { totalDrag = 0f },
+                            onDragEnd = { totalDrag = 0f },
+                            onDragCancel = { totalDrag = 0f },
+                            onHorizontalDrag = { _, dragAmount ->
+                                totalDrag += dragAmount
+                                if (totalDrag < -100f) {
+                                    totalDrag = 0f
+                                    onToggleChapterList()
+                                }
+                            }
+                        )
+                    }
+                ) {
+                    ChapterListPanel(
+                        chapters = state.chapters,
+                        currentIndex = state.currentChapterIndex,
+                        onSelectChapter = onSelectChapter,
+                        onMoveUp = onMoveUp,
+                        onMoveDown = onMoveDown,
+                        onCreateChapter = onCreateChapter,
+                        onDeleteChapter = onDeleteChapter,
+                        modifier = Modifier
+                            .width(220.dp)
+                            .fillMaxHeight()
+                    )
+                }
+            }
+
+            if (showChapterList) {
+                VerticalDivider()
+            }
+
+            if (state.currentChapterIndex >= 0) {
+                key(state.currentChapterIndex) {
+                    val focusRequester = remember { FocusRequester() }
+                    MarkorEditor(
+                        value = state.editorContent,
+                        onValueChange = onContentChange,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(4.dp)
+                            .focusRequester(focusRequester)
+                            .clickable { focusRequester.requestFocus() },
+                        editorConfig = editorConfig,
+                        highlightingMode = HighlightingMode.MARKDOWN,
+                        enabled = true
+                    )
+                }
+            }
+        }
+
+        if (!showChapterList) {
+            Box(
                 modifier = Modifier
-                    .width(220.dp)
-                    .fillMaxHeight()
-            )
-        }
-
-        if (showChapterList) {
-            VerticalDivider()
-        }
-
-        if (state.currentChapterIndex >= 0) {
-            key(state.currentChapterIndex) {
-                val focusRequester = remember { FocusRequester() }
-                MarkorEditor(
-                    value = state.editorContent,
-                    onValueChange = onContentChange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .padding(4.dp)
-                        .focusRequester(focusRequester)
-                        .clickable { focusRequester.requestFocus() },
-                    editorConfig = editorConfig,
-                    highlightingMode = HighlightingMode.MARKDOWN,
-                    enabled = true
+                    .align(Alignment.CenterStart)
+                    .width(24.dp)
+                    .height(80.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
+                    )
+                    .clickable { onToggleChapterList() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "显示章节列表",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
