@@ -140,6 +140,8 @@ class WritingViewModel(
             summary = meta.summary
         )
 
+        val currentTab = (_uiState.value as? WritingUiState.Success)?.selectedTab ?: 0
+
         _uiState.value = WritingUiState.Success(
             project = project,
             chapters = updatedChapters,
@@ -147,7 +149,7 @@ class WritingViewModel(
             editorContent = body,
             currentChapterMeta = meta,
             wordCount = countWords(body),
-            selectedTab = 0,
+            selectedTab = currentTab,
             isSaving = false,
             isDirty = false
         )
