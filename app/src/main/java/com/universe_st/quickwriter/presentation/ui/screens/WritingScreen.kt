@@ -402,15 +402,7 @@ private fun EditorContent(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .width(40.dp)
-                    .fillMaxHeight()
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures { _, dragAmount ->
-                            if (dragAmount > 50f) onToggleChapterList()
-                        }
-                    }
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = { onToggleChapterList() })
-                    },
+                    .fillMaxHeight(),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Box(
@@ -418,9 +410,17 @@ private fun EditorContent(
                         .width(24.dp)
                         .height(80.dp)
                         .background(
-                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                             shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
-                        ),
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(onTap = { onToggleChapterList() })
+                        }
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures { _, dragAmount ->
+                                if (dragAmount > 50f) onToggleChapterList()
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

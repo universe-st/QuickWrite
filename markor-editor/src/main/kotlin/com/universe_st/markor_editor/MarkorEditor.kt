@@ -2,6 +2,7 @@ package com.universe_st.markor_editor
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Gravity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -27,6 +28,7 @@ fun MarkorEditor(
         modifier = modifier,
         factory = { context ->
             HighlightingEditor(context, null).apply {
+                gravity = Gravity.TOP or Gravity.START
                 isFocusable = true
                 isFocusableInTouchMode = true
                 HighlightingEditor.setDefaultConfig(editorConfig)
