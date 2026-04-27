@@ -3,6 +3,8 @@ package com.universe_st.quickwriter.presentation.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +22,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -155,7 +161,7 @@ fun ProjectDetailScreen(
                         },
                         onDeleteCover = { showDeleteCoverDialog = true },
                         onFileBrowser = { onFileBrowser(project.id) },
-                        modifier = Modifier.padding(16.dp)
+                            modifier = Modifier
                     )
                 }
                 is ProjectDetailUiState.Error -> {
@@ -352,13 +358,18 @@ fun ProjectDetailContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Box(
+        modifier = modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -511,6 +522,36 @@ fun ProjectDetailContent(
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text("删除项目")
+        }
+        }
+
+        if (scrollState.maxValue > 0) {
+            val scrollFraction by remember {
+                derivedStateOf {
+                    scrollState.value.toFloat() / scrollState.maxValue
+                }
+            }
+            Canvas(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .width(6.dp)
+                    .padding(vertical = 4.dp)
+            ) {
+                val trackColor = Color.Black.copy(alpha = 0.06f)
+                val thumbColor = Color.Black.copy(alpha = 0.18f)
+                val corner = CornerRadius(3.dp.toPx())
+                val thumbHeight = size.height * 0.3f
+                val thumbY = (size.height - thumbHeight) * scrollFraction
+
+                drawRoundRect(trackColor, cornerRadius = corner)
+                drawRoundRect(
+                    thumbColor,
+                    topLeft = Offset(0f, thumbY),
+                    size = Size(size.width, thumbHeight),
+                    cornerRadius = corner
+                )
+            }
         }
     }
 }
