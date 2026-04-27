@@ -22,7 +22,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.universe_st.quickwriter.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -89,8 +91,8 @@ fun MainScreen() {
             if (currentRoute != Screen.ProjectCreate.route && currentRoute != Screen.ProjectEdit.route) {
                 NavigationBar {
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Home, contentDescription = "项目") },
-                        label = { Text("项目") },
+                        icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.nav_projects)) },
+                        label = { Text(stringResource(R.string.nav_projects)) },
                         selected = selectedTab == 0,
                         onClick = {
                             selectedTab = 0
@@ -100,8 +102,8 @@ fun MainScreen() {
                         }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Edit, contentDescription = "写作") },
-                        label = { Text("写作") },
+                        icon = { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.nav_writing)) },
+                        label = { Text(stringResource(R.string.nav_writing)) },
                         selected = selectedTab == 1,
                         onClick = {
                             selectedTab = 1
@@ -111,8 +113,8 @@ fun MainScreen() {
                         }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "设置") },
-                        label = { Text("设置") },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.nav_settings)) },
+                        label = { Text(stringResource(R.string.nav_settings)) },
                         selected = selectedTab == 2,
                         onClick = {
                             selectedTab = 2
@@ -194,6 +196,11 @@ fun MainScreen() {
                     },
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onStartWriting = {
+                        navController.navigate(Screen.Writing.route) {
+                            popUpTo(Screen.ProjectList.route)
+                        }
                     },
                     onFileBrowser = { id ->
                         navController.navigate(Screen.FileBrowser.createRoute(id))
@@ -341,13 +348,13 @@ fun ProjectActionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("项目操作") },
+        title = { Text(stringResource(R.string.project_operations_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("对项目「${projectTitle}」进行的操作：")
+                Text(stringResource(R.string.project_operations_message, projectTitle))
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -357,7 +364,7 @@ fun ProjectActionDialog(
                         onClick = onEdit,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("编辑")
+                        Text(stringResource(R.string.common_edit))
                     }
                     Button(
                         onClick = onDelete,
@@ -366,7 +373,7 @@ fun ProjectActionDialog(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("删除")
+                        Text(stringResource(R.string.common_delete))
                     }
                 }
             }
@@ -383,21 +390,21 @@ fun DeleteConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
+        title = { Text(stringResource(R.string.project_confirm_delete_title)) },
         text = {
-            Text("确定要删除项目「${projectTitle}」吗？\n\n此操作将删除项目的所有数据，包括数据库记录、文件目录和所有相关文件。此操作不可恢复。")
+            Text(stringResource(R.string.project_confirm_delete_message, projectTitle))
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
-                    "删除",
+                    stringResource(R.string.common_delete),
                     color = MaterialTheme.colorScheme.error
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )

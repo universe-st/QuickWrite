@@ -39,6 +39,7 @@ fun ProjectDetailScreen(
     onBackPressed: () -> Unit,
     onEdit: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onStartWriting: () -> Unit = {},
     onFileBrowser: (String) -> Unit,
     viewModel: ProjectDetailViewModel
 ) {
@@ -57,6 +58,7 @@ fun ProjectDetailScreen(
     var showExportMenu by remember { mutableStateOf(false) }
     var showCoverMenu by remember { mutableStateOf(false) }
     var showDeleteCoverDialog by remember { mutableStateOf(false) }
+    var startWritingTriggered by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -141,6 +143,10 @@ fun ProjectDetailScreen(
                                 viewModel.setCurrentProject(project.id)
                             }
                         },
+                        onStartWriting = {
+                            startWritingTriggered = true
+                            viewModel.setCurrentProject(project.id)
+                        },
                         onCoverClick = { showCoverMenu = true },
                         onAddCover = {
                             imagePickerLauncher.launch(
@@ -153,6 +159,7 @@ fun ProjectDetailScreen(
                     )
                 }
                 is ProjectDetailUiState.Error -> {
+                    val context = LocalContext.current
                     val errorMessage = (uiState as ProjectDetailUiState.Error).message
                     Column(
                         modifier = Modifier
@@ -161,7 +168,7 @@ fun ProjectDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = errorMessage,
+                            text = errorMessage.asString(context),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -246,9 +253,16 @@ fun ProjectDetailScreen(
 
     LaunchedEffect(uiState) {
         when (uiState) {
-            is ProjectDetailUiState.DeleteSuccess,
-            ProjectDetailUiState.SetCurrentSuccess -> {
+            is ProjectDetailUiState.DeleteSuccess -> {
                 onNavigateBack()
+            }
+            ProjectDetailUiState.SetCurrentSuccess -> {
+                if (startWritingTriggered) {
+                    startWritingTriggered = false
+                    onStartWriting()
+                } else {
+                    onNavigateBack()
+                }
             }
             else -> {}
         }
@@ -423,7 +437,7 @@ fun ProjectDetailContent(
 
                 InfoRow("创建时间", AppUtils.formatTimestamp(project.createdTime))
                 InfoRow("修改时间", AppUtils.formatTimestamp(project.modifiedTime))
-                InfoRow("字数", AppUtils.formatWordCount(project.wordCount))
+                InfoRow("字数", AppUtils.formatWordCount(context, project.wordCount))
                 InfoRow("章节数", "${project.chapterCount} 章")
                 InfoRow("状态", project.status)
                 InfoRow("存储路径", project.storagePath, maxLines = 2)

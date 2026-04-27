@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
 import com.universe_st.quickwriter.presentation.ui.components.SettingsClickItem
+import androidx.compose.ui.res.stringResource
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
 
 sealed class SettingsSubScreen(val route: String) {
@@ -34,7 +36,7 @@ fun SettingsMainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("设置") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -51,48 +53,55 @@ fun SettingsMainScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SettingsSection(
-                title = "AI配置",
+                title = stringResource(R.string.settings_section_ai),
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 SettingsClickItem(
-                    title = "AI模型配置",
-                    subtitle = if (aiConfigList.isEmpty()) "暂无配置" else "已配置 ${aiConfigList.size} 个模型",
+                    title = stringResource(R.string.settings_ai_config),
+                    subtitle = if (aiConfigList.isEmpty()) stringResource(R.string.settings_ai_config_empty) else stringResource(R.string.settings_ai_config_count, aiConfigList.size),
                     onClick = { onNavigateToSubScreen(SettingsSubScreen.AiConfigList) }
                 )
             }
 
             SettingsSection(
-                title = "创作设置",
+                title = stringResource(R.string.settings_section_writing),
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 SettingsClickItem(
-                    title = "创作参数",
-                    subtitle = "调整AI生成参数和偏好",
-                    trailingText = "温度: ${String.format("%.1f", appSettings.defaultTemperature)}",
+                    title = stringResource(R.string.settings_writing_params),
+                    subtitle = stringResource(R.string.settings_writing_params_desc),
+                    trailingText = "${stringResource(R.string.settings_writing_temperature_label)} ${String.format("%.1f", appSettings.defaultTemperature)}",
                     onClick = { onNavigateToSubScreen(SettingsSubScreen.WritingSettings) }
                 )
             }
 
             SettingsSection(
-                title = "应用设置",
+                title = stringResource(R.string.settings_section_app),
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 SettingsClickItem(
-                    title = "外观与字体",
-                    subtitle = "主题模式、字体大小等",
-                    trailingText = getThemeModeDisplayName(appSettings.themeMode),
+                    title = stringResource(R.string.settings_appearance),
+                    subtitle = stringResource(R.string.settings_appearance_desc),
+                    trailingText = stringResource(
+                        when (appSettings.themeMode) {
+                            "system" -> R.string.theme_mode_system
+                            "light" -> R.string.theme_mode_light
+                            "dark" -> R.string.theme_mode_dark
+                            else -> R.string.theme_mode_system
+                        }
+                    ),
                     onClick = { onNavigateToSubScreen(SettingsSubScreen.AppSettings) }
                 )
             }
 
             SettingsSection(
-                title = "其他",
+                title = stringResource(R.string.settings_section_other),
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 SettingsClickItem(
-                    title = "关于",
-                    subtitle = "版本信息和开发者",
-                    trailingText = "v1.0.0",
+                    title = stringResource(R.string.settings_about),
+                    subtitle = stringResource(R.string.settings_about_desc),
+                    trailingText = stringResource(R.string.settings_version),
                     onClick = { onNavigateToSubScreen(SettingsSubScreen.About) }
                 )
             }
@@ -165,11 +174,3 @@ fun SettingsScreen(
     }
 }
 
-private fun getThemeModeDisplayName(mode: String): String {
-    return when (mode) {
-        "system" -> "跟随系统"
-        "light" -> "浅色"
-        "dark" -> "深色"
-        else -> mode
-    }
-}

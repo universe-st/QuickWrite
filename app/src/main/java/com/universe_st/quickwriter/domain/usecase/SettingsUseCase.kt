@@ -160,4 +160,12 @@ class SettingsUseCase(
     suspend fun setCurrentProjectId(projectId: String?): Result<Unit> {
         return userSettingsRepository.setCurrentProjectId(projectId)
     }
+
+    suspend fun getLanguage(): String {
+        return userSettingsRepository.getLanguage()
+    }
+
+    suspend fun setLanguage(code: String): Result<Unit> {
+        return userSettingsRepository.setLanguage(code)
+    }
 }

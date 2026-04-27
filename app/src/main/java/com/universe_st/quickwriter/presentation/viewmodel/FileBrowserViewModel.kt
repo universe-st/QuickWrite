@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +36,7 @@ sealed class FileBrowserUiState {
         val entries: List<FileEntry>,
         val selectedEntry: FileEntry?
     ) : FileBrowserUiState()
-    data class Error(val message: String) : FileBrowserUiState()
+    data class Error(val message: UiText) : FileBrowserUiState()
 }
 
 class FileBrowserViewModel(
@@ -59,13 +61,13 @@ class FileBrowserViewModel(
             try {
                 val p = projectManagementUseCase.getProjectById(projectId)
                 if (p == null) {
-                    _uiState.value = FileBrowserUiState.Error("项目不存在")
+                    _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.error_project_not_found))
                     return@launch
                 }
                 project = p
                 navigateTo(p.storagePath)
             } catch (e: Exception) {
-                _uiState.value = FileBrowserUiState.Error(e.message ?: "加载失败")
+                _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
         }
     }
@@ -76,7 +78,7 @@ class FileBrowserViewModel(
             try {
                 val entriesResult = projectManagementUseCase.getDirectoryContents(path)
                 if (entriesResult.isFailure) {
-                    _uiState.value = FileBrowserUiState.Error("目录不存在: $path")
+                    _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.file_error_dir_not_found))
                     return@launch
                 }
                 val filePaths = entriesResult.getOrDefault(emptyList())
@@ -102,7 +104,7 @@ class FileBrowserViewModel(
                     selectedEntry = _selectedEntry.value
                 )
             } catch (e: Exception) {
-                _uiState.value = FileBrowserUiState.Error(e.message ?: "加载目录失败")
+                _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.file_error_dir_not_found))
             }
         }
     }
@@ -145,7 +147,7 @@ class FileBrowserViewModel(
             val filePath = File(state.currentPath, fileName).absolutePath
             val result = projectManagementUseCase.createFile(filePath)
             if (result.isFailure) {
-                _uiState.value = FileBrowserUiState.Error(result.exceptionOrNull()?.message ?: "创建文件失败")
+                _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.file_error_create_file_failed))
             } else {
                 navigateTo(state.currentPath)
             }
@@ -158,7 +160,7 @@ class FileBrowserViewModel(
             val dirPath = File(state.currentPath, dirName).absolutePath
             val result = projectManagementUseCase.createDirectory(dirPath)
             if (result.isFailure) {
-                _uiState.value = FileBrowserUiState.Error(result.exceptionOrNull()?.message ?: "创建目录失败")
+                _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.file_error_create_dir_failed))
             } else {
                 navigateTo(state.currentPath)
             }
@@ -172,7 +174,7 @@ class FileBrowserViewModel(
             val newPath = File(oldFile.parent, newName).absolutePath
             val result = projectManagementUseCase.renameFileOrDirectory(oldPath, newPath)
             if (result.isFailure) {
-                _uiState.value = FileBrowserUiState.Error(result.exceptionOrNull()?.message ?: "重命名失败")
+                _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.file_error_rename_failed))
             } else {
                 navigateTo(state.currentPath)
             }
@@ -184,7 +186,7 @@ class FileBrowserViewModel(
         viewModelScope.launch {
             val result = projectManagementUseCase.deleteFileOrDirectory(path)
             if (result.isFailure) {
-                _uiState.value = FileBrowserUiState.Error(result.exceptionOrNull()?.message ?: "删除失败")
+                _uiState.value = FileBrowserUiState.Error(UiText.StringResource(R.string.file_error_delete_failed))
             } else {
                 navigateTo(state.currentPath)
             }

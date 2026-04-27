@@ -1,6 +1,7 @@
 package com.universe_st.quickwriter.util
 
 import android.content.Context
+import com.universe_st.quickwriter.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -94,7 +95,7 @@ class FileManager(private val context: Context) {
         try {
             val file = File(filePath)
             if (!file.exists()) {
-                Result.failure(IOException("文件不存在: $filePath"))
+                Result.failure(IOException(context.getString(R.string.file_error_not_found, filePath)))
             } else {
             val content = file.readText(Charsets.UTF_8)
             Result.success(content)
@@ -162,10 +163,10 @@ class FileManager(private val context: Context) {
                 if (oldFile.renameTo(newFile)) {
                     Result.success(Unit)
                 } else {
-                    Result.failure(IOException("重命名失败"))
+                    Result.failure(IOException(context.getString(R.string.file_error_rename_failed)))
                 }
             } else {
-                Result.failure(IOException("源文件/目录不存在"))
+                Result.failure(IOException(context.getString(R.string.file_error_source_not_found)))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -184,7 +185,7 @@ class FileManager(private val context: Context) {
         try {
             val dir = File(path)
             if (!dir.exists() || !dir.isDirectory) {
-                Result.failure(IOException("目录不存在"))
+                Result.failure(IOException(context.getString(R.string.file_error_dir_not_found)))
             } else {
                 val contents = dir.listFiles()?.map { it.absolutePath } ?: emptyList()
                 Result.success(contents)

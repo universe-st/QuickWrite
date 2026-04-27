@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.UiText
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +54,7 @@ class ProjectListViewModel(
                     }
                 }
             } catch (e: Exception) {
-                _uiState.value = ProjectListUiState.Error(e.message ?: "加载项目失败")
+                _uiState.value = ProjectListUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
         }
     }
@@ -76,7 +78,7 @@ class ProjectListViewModel(
                 projectManagementUseCase.deleteProject(projectId)
                 loadProjects()
             } catch (e: Exception) {
-                _uiState.value = ProjectListUiState.Error(e.message ?: "删除项目失败")
+                _uiState.value = ProjectListUiState.Error(UiText.StringResource(R.string.error_project_delete_failed))
             }
         }
     }
@@ -99,5 +101,5 @@ sealed class ProjectListUiState {
     object Loading : ProjectListUiState()
     object Empty : ProjectListUiState()
     data class Success(val projects: List<ProjectEntity>) : ProjectListUiState()
-    data class Error(val message: String) : ProjectListUiState()
+    data class Error(val message: UiText) : ProjectListUiState()
 }

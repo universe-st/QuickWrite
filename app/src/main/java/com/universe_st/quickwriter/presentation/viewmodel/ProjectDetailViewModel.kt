@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.UiText
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,10 +47,10 @@ class ProjectDetailViewModel(
                     val currentProjectId = settingsUseCase.getCurrentProjectId()
                     _isCurrentProject.value = currentProjectId == projectId
                 } else {
-                    _uiState.value = ProjectDetailUiState.Error("项目不存在")
+                    _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_project_not_found))
                 }
             } catch (e: Exception) {
-                _uiState.value = ProjectDetailUiState.Error(e.message ?: "加载项目失败")
+                _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
         }
     }
@@ -72,11 +74,11 @@ class ProjectDetailViewModel(
                     reloadProject(projectId)
                 } else {
                     _uiState.value = ProjectDetailUiState.Error(
-                        result.exceptionOrNull()?.message ?: "保存书封失败"
+                        UiText.StringResource(R.string.error_save_cover_failed)
                     )
                 }
             } catch (e: Exception) {
-                _uiState.value = ProjectDetailUiState.Error(e.message ?: "保存书封失败")
+                _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_save_cover_failed))
             }
         }
     }
@@ -90,11 +92,11 @@ class ProjectDetailViewModel(
                     reloadProject(projectId)
                 } else {
                     _uiState.value = ProjectDetailUiState.Error(
-                        result.exceptionOrNull()?.message ?: "删除书封失败"
+                        UiText.StringResource(R.string.error_delete_cover_failed)
                     )
                 }
             } catch (e: Exception) {
-                _uiState.value = ProjectDetailUiState.Error(e.message ?: "删除书封失败")
+                _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_delete_cover_failed))
             }
         }
     }
@@ -119,7 +121,7 @@ class ProjectDetailViewModel(
                 _isCurrentProject.value = true
                 _uiState.value = ProjectDetailUiState.SetCurrentSuccess
             } catch (e: Exception) {
-                _uiState.value = ProjectDetailUiState.Error("设置当前项目失败")
+                _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_set_current_project_failed))
             }
         }
     }
@@ -130,7 +132,7 @@ class ProjectDetailViewModel(
                 settingsUseCase.setCurrentProjectId(null)
                 _isCurrentProject.value = false
             } catch (e: Exception) {
-                _uiState.value = ProjectDetailUiState.Error("取消当前项目失败")
+                _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_cancel_current_project_failed))
             }
         }
     }
@@ -147,7 +149,7 @@ class ProjectDetailViewModel(
 
                 _uiState.value = ProjectDetailUiState.DeleteSuccess
             } catch (e: Exception) {
-                _uiState.value = ProjectDetailUiState.Error(e.message ?: "删除项目失败")
+                _uiState.value = ProjectDetailUiState.Error(UiText.StringResource(R.string.error_project_delete_failed))
             }
         }
     }
@@ -169,7 +171,7 @@ class ProjectDetailViewModelFactory(
 sealed class ProjectDetailUiState {
     object Loading : ProjectDetailUiState()
     data class Success(val project: ProjectEntity) : ProjectDetailUiState()
-    data class Error(val message: String) : ProjectDetailUiState()
+    data class Error(val message: UiText) : ProjectDetailUiState()
     object DeleteSuccess : ProjectDetailUiState()
     object SetCurrentSuccess : ProjectDetailUiState()
 }

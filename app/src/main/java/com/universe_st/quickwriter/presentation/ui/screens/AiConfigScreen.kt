@@ -21,6 +21,9 @@ import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
 import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
 import com.universe_st.quickwriter.presentation.ui.components.SettingsDivider
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSliderItem
 import com.universe_st.quickwriter.presentation.viewmodel.AiConfigFormData
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
@@ -47,15 +50,15 @@ fun AiConfigListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AI模型配置") },
+                title = { Text(stringResource(R.string.ai_config_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onAddConfig) {
-                        Icon(Icons.Default.Add, contentDescription = "添加配置")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.ai_config_add))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -92,16 +95,16 @@ fun AiConfigListScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Text(
-                                text = "暂无AI配置",
+                                text = stringResource(R.string.ai_config_empty),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "点击右上角添加按钮创建配置",
+                                text = stringResource(R.string.ai_config_empty_hint),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Button(onClick = onAddConfig) {
-                                Text("添加配置")
+                                Text(stringResource(R.string.ai_config_add))
                             }
                         }
                     }
@@ -170,7 +173,7 @@ fun AiConfigCard(
                         shape = MaterialTheme.shapes.small
                     ) {
                         Text(
-                            text = "默认",
+                            text = stringResource(R.string.ai_config_badge_default),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -179,12 +182,20 @@ fun AiConfigCard(
                 }
             }
             Text(
-                text = "模型: ${config.modelName}",
+                text = stringResource(R.string.ai_config_model_label, config.modelName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            val providerName = stringResource(
+                when (config.provider) {
+                    AiModelConfigRepository.PROVIDER_OPENAI -> R.string.ai_provider_openai
+                    AiModelConfigRepository.PROVIDER_ANTHROPIC -> R.string.ai_provider_anthropic
+                    AiModelConfigRepository.PROVIDER_CUSTOM -> R.string.ai_provider_custom
+                    else -> R.string.ai_provider_custom
+                }
+            )
             Text(
-                text = "提供商: ${getProviderDisplayName(config.provider)}",
+                text = stringResource(R.string.ai_config_provider_label, providerName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -194,7 +205,7 @@ fun AiConfigCard(
                     onClick = onSetDefault,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("设为默认配置")
+                    Text(stringResource(R.string.ai_config_set_default))
                 }
             }
         }
@@ -218,10 +229,10 @@ fun AiConfigEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isEditing) "编辑AI配置" else "添加AI配置") },
+                title = { Text(stringResource(if (isEditing) R.string.ai_config_edit_title else R.string.ai_config_add_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -243,9 +254,9 @@ fun AiConfigEditScreen(
             OutlinedTextField(
                 value = formData.configName,
                 onValueChange = { viewModel.updateAiConfigName(it) },
-                label = { Text("配置名称") },
+                label = { Text(stringResource(R.string.ai_config_field_name)) },
                 isError = formData.configNameError != null,
-                supportingText = formData.configNameError?.let { { Text(it) } },
+                supportingText = formData.configNameError?.let { error -> { Text(error.asString(LocalContext.current)) } },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
@@ -257,10 +268,17 @@ fun AiConfigEditScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = getProviderDisplayName(formData.provider),
+                    value = stringResource(
+                        when (formData.provider) {
+                            AiModelConfigRepository.PROVIDER_OPENAI -> R.string.ai_provider_openai
+                            AiModelConfigRepository.PROVIDER_ANTHROPIC -> R.string.ai_provider_anthropic
+                            AiModelConfigRepository.PROVIDER_CUSTOM -> R.string.ai_provider_custom
+                            else -> R.string.ai_provider_custom
+                        }
+                    ),
                     onValueChange = { },
                     readOnly = true,
-                    label = { Text("AI服务商") },
+                    label = { Text(stringResource(R.string.ai_config_field_provider)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerMenuExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -272,9 +290,9 @@ fun AiConfigEditScreen(
                     onDismissRequest = { providerMenuExpanded = false }
                 ) {
                     listOf(
-                        AiModelConfigRepository.PROVIDER_OPENAI to "OpenAI",
-                        AiModelConfigRepository.PROVIDER_ANTHROPIC to "Anthropic",
-                        AiModelConfigRepository.PROVIDER_CUSTOM to "自定义API"
+                        AiModelConfigRepository.PROVIDER_OPENAI to stringResource(R.string.ai_provider_openai),
+                        AiModelConfigRepository.PROVIDER_ANTHROPIC to stringResource(R.string.ai_provider_anthropic),
+                        AiModelConfigRepository.PROVIDER_CUSTOM to stringResource(R.string.ai_provider_custom)
                     ).forEach { (provider, name) ->
                         DropdownMenuItem(
                             text = { Text(name) },
@@ -290,9 +308,9 @@ fun AiConfigEditScreen(
             OutlinedTextField(
                 value = formData.apiKey,
                 onValueChange = { viewModel.updateAiApiKey(it) },
-                label = { Text("API密钥") },
+                label = { Text(stringResource(R.string.ai_config_field_api_key)) },
                 isError = formData.apiKeyError != null,
-                supportingText = formData.apiKeyError?.let { { Text(it) } },
+                supportingText = formData.apiKeyError?.let { error -> { Text(error.asString(LocalContext.current)) } },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -302,8 +320,8 @@ fun AiConfigEditScreen(
                 OutlinedTextField(
                     value = formData.baseUrl,
                     onValueChange = { viewModel.updateAiBaseUrl(it) },
-                    label = { Text("基础URL") },
-                    placeholder = { Text("https://api.example.com/v1") },
+                    label = { Text(stringResource(R.string.ai_config_field_base_url)) },
+                    placeholder = { Text(stringResource(R.string.ai_config_field_base_url_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
@@ -313,17 +331,17 @@ fun AiConfigEditScreen(
             OutlinedTextField(
                 value = formData.modelName,
                 onValueChange = { viewModel.updateAiModelName(it) },
-                label = { Text("模型名称") },
-                placeholder = { Text("gpt-3.5-turbo") },
+                label = { Text(stringResource(R.string.ai_config_field_model_name)) },
+                placeholder = { Text(stringResource(R.string.ai_config_field_model_name_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
-            SettingsSection(title = "模型参数") {
+            SettingsSection(title = stringResource(R.string.ai_config_section_params)) {
                 SettingsSliderItem(
-                    title = "温度",
-                    subtitle = "控制输出的随机性，值越高越有创意",
+                    title = stringResource(R.string.ai_config_param_temperature),
+                    subtitle = stringResource(R.string.ai_config_param_temperature_desc),
                     value = formData.temperature,
                     onValueChange = { viewModel.updateAiTemperature(it) },
                     valueRange = 0.1f..2.0f,
@@ -334,8 +352,8 @@ fun AiConfigEditScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "最大Tokens",
-                    subtitle = "控制每次生成的最大长度",
+                    title = stringResource(R.string.ai_config_param_max_tokens),
+                    subtitle = stringResource(R.string.ai_config_param_max_tokens_desc),
                     value = formData.maxTokens.toFloat(),
                     onValueChange = { viewModel.updateAiMaxTokens(it.toInt()) },
                     valueRange = 100f..8000f,
@@ -346,8 +364,8 @@ fun AiConfigEditScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "Top P",
-                    subtitle = "控制词汇采样的多样性",
+                    title = stringResource(R.string.ai_config_param_top_p),
+                    subtitle = stringResource(R.string.ai_config_param_top_p_desc),
                     value = formData.topP,
                     onValueChange = { viewModel.updateAiTopP(it) },
                     valueRange = 0f..1f,
@@ -358,8 +376,8 @@ fun AiConfigEditScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "Top K",
-                    subtitle = "限制每次采样的候选词汇数",
+                    title = stringResource(R.string.ai_config_param_top_k),
+                    subtitle = stringResource(R.string.ai_config_param_top_k_desc),
                     value = formData.topK.toFloat(),
                     onValueChange = { viewModel.updateAiTopK(it.toInt()) },
                     valueRange = 1f..100f,
@@ -370,8 +388,8 @@ fun AiConfigEditScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "频率惩罚",
-                    subtitle = "降低已出现词汇的重复概率",
+                    title = stringResource(R.string.ai_config_param_frequency_penalty),
+                    subtitle = stringResource(R.string.ai_config_param_frequency_penalty_desc),
                     value = formData.frequencyPenalty,
                     onValueChange = { viewModel.updateAiFrequencyPenalty(it) },
                     valueRange = -2f..2f,
@@ -382,8 +400,8 @@ fun AiConfigEditScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "存在惩罚",
-                    subtitle = "鼓励生成新话题和内容",
+                    title = stringResource(R.string.ai_config_param_presence_penalty),
+                    subtitle = stringResource(R.string.ai_config_param_presence_penalty_desc),
                     value = formData.presencePenalty,
                     onValueChange = { viewModel.updateAiPresencePenalty(it) },
                     valueRange = -2f..2f,
@@ -396,7 +414,7 @@ fun AiConfigEditScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
-                Text("设为默认配置", modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.ai_config_default_switch), modifier = Modifier.weight(1f))
                 Switch(
                     checked = formData.isDefault,
                     onCheckedChange = { viewModel.updateAiIsDefault(it) }
@@ -414,7 +432,7 @@ fun AiConfigEditScreen(
                     modifier = Modifier.weight(1f),
                     enabled = formData.configName.isNotBlank() && formData.apiKey.isNotBlank()
                 ) {
-                    Text(if (isEditing) "保存" else "创建")
+                    Text(stringResource(if (isEditing) R.string.common_save else R.string.common_create))
                 }
                 
                 if (isEditing) {
@@ -425,15 +443,16 @@ fun AiConfigEditScreen(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("删除")
+                        Text(stringResource(R.string.ai_config_delete))
                     }
                 }
             }
 
             if (uiState is com.universe_st.quickwriter.presentation.viewmodel.SettingsUiState.Error) {
                 val errorMessage = (uiState as com.universe_st.quickwriter.presentation.viewmodel.SettingsUiState.Error).message
+                val context = LocalContext.current
                 Text(
-                    text = errorMessage,
+                    text = errorMessage.asString(context),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -451,9 +470,9 @@ fun AiConfigEditScreen(
     if (showDeleteConfirmDialog && isEditing) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("确认删除") },
+            title = { Text(stringResource(R.string.ai_config_confirm_delete_title)) },
             text = {
-                Text("确定要删除这个AI配置吗？\n\n此操作不可恢复。")
+                Text(stringResource(R.string.ai_config_confirm_delete_message))
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -478,25 +497,17 @@ fun AiConfigEditScreen(
                     }
                 }) {
                     Text(
-                        "删除",
+                        stringResource(R.string.ai_config_delete),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
     }
 }
 
-private fun getProviderDisplayName(provider: String): String {
-    return when (provider) {
-        AiModelConfigRepository.PROVIDER_OPENAI -> "OpenAI"
-        AiModelConfigRepository.PROVIDER_ANTHROPIC -> "Anthropic"
-        AiModelConfigRepository.PROVIDER_CUSTOM -> "自定义API"
-        else -> provider
-    }
-}

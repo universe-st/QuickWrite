@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -32,6 +33,7 @@ fun ProjectCard(
     isCurrentProject: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var isPressed by remember { mutableStateOf(false) }
 
     Card(
@@ -132,13 +134,13 @@ fun ProjectCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = AppUtils.formatRelativeTime(project.modifiedTime),
+                        text = AppUtils.formatRelativeTime(context, project.modifiedTime),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
 
                     Text(
-                        text = AppUtils.formatWordCount(project.wordCount),
+                        text = AppUtils.formatWordCount(context, project.wordCount),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )

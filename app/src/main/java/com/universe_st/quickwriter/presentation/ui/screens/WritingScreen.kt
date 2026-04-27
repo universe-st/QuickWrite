@@ -31,9 +31,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universe_st.markor_editor.HighlightingMode
+import com.universe_st.quickwriter.R
 import com.universe_st.markor_editor.MarkorEditor
 import com.universe_st.quickwriter.presentation.viewmodel.ChapterFileInfo
 import com.universe_st.quickwriter.presentation.viewmodel.WritingUiState
@@ -81,7 +84,7 @@ fun WritingScreen(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                when (val state = uiState) {
+                        when (val state = uiState) {
                     is WritingUiState.NoProject -> {
                         NoProjectContent(onNavigateToProjectList)
                     }
@@ -107,19 +110,20 @@ fun WritingScreen(
                         }
                     }
                     is WritingUiState.Error -> {
+                        val context = LocalContext.current
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = state.message,
+                                    text = state.message.asString(context),
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Button(onClick = { viewModel.retry() }) {
-                                    Text("重试")
+                                    Text(stringResource(R.string.common_retry))
                                 }
                             }
                         }
@@ -133,12 +137,12 @@ fun WritingScreen(
         var title by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showNewChapterDialog = false },
-            title = { Text("新建章节") },
+            title = { Text(stringResource(R.string.chapter_new_title)) },
             text = {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("章节标题") },
+                    label = { Text(stringResource(R.string.chapter_field_title)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -151,11 +155,11 @@ fun WritingScreen(
                             showNewChapterDialog = false
                         }
                     }
-                ) { Text("创建") }
+                ) { Text(stringResource(R.string.common_create)) }
             },
             dismissButton = {
                 TextButton(onClick = { showNewChapterDialog = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -173,7 +177,7 @@ private fun WritingTopBar(
 ) {
     val title = when (uiState) {
         is WritingUiState.Success -> uiState.project.title
-        else -> "写作工作台"
+        else -> stringResource(R.string.writing_title)
     }
     val isSaving = uiState is WritingUiState.Success && uiState.isSaving
     val saveMessage = (uiState as? WritingUiState.Success)?.saveMessage
@@ -191,7 +195,7 @@ private fun WritingTopBar(
                 )
                 if (wordCount > 0) {
                     Text(
-                        text = "${wordCount}字",
+                        text = stringResource(R.string.word_count_single, wordCount),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                     )
@@ -200,7 +204,7 @@ private fun WritingTopBar(
         },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
         },
         actions = {
@@ -225,12 +229,12 @@ private fun WritingTopBar(
                 IconButton(onClick = onToggleChapterList) {
                     Icon(
                         if (showChapterList) Icons.Default.Close else Icons.Default.Menu,
-                        contentDescription = if (showChapterList) "隐藏章节列表" else "显示章节列表"
+                        contentDescription = if (showChapterList) stringResource(R.string.writing_hide_chapter_list) else stringResource(R.string.writing_show_chapter_list)
                     )
                 }
             }
             IconButton(onClick = onSave) {
-                Icon(Icons.Default.Save, contentDescription = "保存")
+                Icon(Icons.Default.Save, contentDescription = stringResource(R.string.writing_save_content_desc))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -266,7 +270,7 @@ private fun WritingTabRow(
             enabled = editorEnabled,
             text = {
                 Text(
-                    "编辑器",
+                    stringResource(R.string.writing_editor_tab),
                     color = if (editorEnabled) MaterialTheme.colorScheme.onSurface
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
@@ -275,7 +279,7 @@ private fun WritingTabRow(
         Tab(
             selected = selectedTab == 1,
             onClick = { onTabSelected(1) },
-            text = { Text("对话") }
+            text = { Text(stringResource(R.string.writing_chat_tab)) }
         )
     }
 }
@@ -304,7 +308,7 @@ private fun EditorContent(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "暂无章节",
+                    stringResource(R.string.writing_no_chapters),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextSecondary
                 )
@@ -312,7 +316,7 @@ private fun EditorContent(
                 Button(onClick = onCreateChapter) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("创建第一章")
+                    Text(stringResource(R.string.writing_create_first_chapter))
                 }
             }
         }
@@ -421,7 +425,7 @@ private fun EditorContent(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "显示章节列表",
+                        contentDescription = stringResource(R.string.writing_show_chapter_list),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
@@ -452,7 +456,7 @@ private fun ChapterListPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "章节",
+                stringResource(R.string.writing_chapters_header),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
@@ -463,7 +467,7 @@ private fun ChapterListPanel(
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "新建章节",
+                    contentDescription = stringResource(R.string.writing_new_chapter),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -492,7 +496,7 @@ private fun ChapterListPanel(
         HorizontalDivider()
 
         Text(
-            text = "${chapters.size} 章",
+            text = stringResource(R.string.writing_chapter_count, chapters.size),
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
             modifier = Modifier
@@ -538,7 +542,7 @@ private fun ChapterListItem(
             ) {
                 Icon(
                     Icons.Default.KeyboardArrowUp,
-                    contentDescription = "上移",
+                    contentDescription = stringResource(R.string.writing_move_up),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -549,7 +553,7 @@ private fun ChapterListItem(
             ) {
                 Icon(
                     Icons.Default.KeyboardArrowDown,
-                    contentDescription = "下移",
+                    contentDescription = stringResource(R.string.writing_move_down),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -595,7 +599,7 @@ private fun ChapterListItem(
         ) {
             Icon(
                 Icons.Default.Delete,
-                contentDescription = "删除",
+                contentDescription = stringResource(R.string.common_delete),
                 modifier = Modifier.size(14.dp),
                 tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
             )
@@ -610,7 +614,7 @@ private fun WritingStatusBar(uiState: WritingUiState) {
             val total = uiState.chapters.size
             val current = if (uiState.currentChapterIndex >= 0) "${uiState.currentChapterIndex + 1}/$total" else "-"
             val wordCount = uiState.wordCount
-            "第 ${current}章 · 字数 $wordCount"
+            stringResource(R.string.writing_status_bar, current, wordCount)
         }
         else -> ""
     }
@@ -639,13 +643,13 @@ private fun DialogPlaceholder() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "AI 对话",
+                text = stringResource(R.string.writing_ai_chat),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "功能开发中...",
+                text = stringResource(R.string.writing_under_development),
                 style = MaterialTheme.typography.bodyLarge,
                 color = TextSecondary
             )
@@ -661,25 +665,25 @@ private fun NoProjectContent(onNavigateToProjectList: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "AI 对话",
+                text = stringResource(R.string.writing_ai_chat),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "功能开发中...",
+                text = stringResource(R.string.writing_under_development),
                 style = MaterialTheme.typography.bodyLarge,
                 color = TextSecondary
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "请先在项目详情中设置主项目",
+                text = stringResource(R.string.writing_no_project_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(onClick = onNavigateToProjectList) {
-                Text("前往项目列表")
+                Text(stringResource(R.string.writing_go_to_projects))
             }
         }
     }

@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,10 +40,10 @@ class ProjectEditViewModel(
                     )
                     _uiState.value = ProjectEditUiState.Success(project)
                 } else {
-                    _uiState.value = ProjectEditUiState.Error("项目不存在")
+                    _uiState.value = ProjectEditUiState.Error(UiText.StringResource(R.string.error_project_not_found))
                 }
             } catch (e: Exception) {
-                _uiState.value = ProjectEditUiState.Error(e.message ?: "加载项目失败")
+                _uiState.value = ProjectEditUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
         }
     }
@@ -102,7 +104,7 @@ class ProjectEditViewModel(
     fun updateProject() {
         val projectId = currentProjectId
         if (projectId == null) {
-            _uiState.value = ProjectEditUiState.Error("项目未加载")
+            _uiState.value = ProjectEditUiState.Error(UiText.StringResource(R.string.error_project_not_loaded))
             return
         }
 
@@ -126,12 +128,12 @@ class ProjectEditViewModel(
                     _uiState.value = ProjectEditUiState.UpdateSuccess(result.getOrNull()!!)
                 } else {
                     _uiState.value = ProjectEditUiState.Error(
-                        result.exceptionOrNull()?.message ?: "更新项目失败"
+                        UiText.StringResource(R.string.error_project_update_failed)
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = ProjectEditUiState.Error(
-                    e.message ?: "更新项目失败"
+                    UiText.StringResource(R.string.error_project_update_failed)
                 )
             }
         }
@@ -162,5 +164,5 @@ sealed class ProjectEditUiState {
     object Loading : ProjectEditUiState()
     data class Success(val project: ProjectEntity) : ProjectEditUiState()
     data class UpdateSuccess(val project: ProjectEntity) : ProjectEditUiState()
-    data class Error(val message: String) : ProjectEditUiState()
+    data class Error(val message: UiText) : ProjectEditUiState()
 }

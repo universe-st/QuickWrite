@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.viewmodel.FileBrowserUiState
 import com.universe_st.quickwriter.presentation.viewmodel.FileBrowserViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.FileEntry
@@ -48,25 +51,25 @@ fun FileBrowserScreen(
         topBar = {
             val title = when (val s = uiState) {
                 is FileBrowserUiState.Success -> s.project.title
-                else -> "文件管理"
+                else -> stringResource(R.string.file_browser_title)
             }
             TopAppBar(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { showNewMenu = true }) {
-                        Icon(Icons.Default.CreateNewFolder, contentDescription = "新建")
+                        Icon(Icons.Default.CreateNewFolder, contentDescription = stringResource(R.string.file_browser_new))
                     }
                     DropdownMenu(
                         expanded = showNewMenu,
                         onDismissRequest = { showNewMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("新建文件") },
+                            text = { Text(stringResource(R.string.file_browser_new_file)) },
                             onClick = {
                                 showNewMenu = false
                                 createIsDir = false
@@ -77,7 +80,7 @@ fun FileBrowserScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("新建文件夹") },
+                            text = { Text(stringResource(R.string.file_browser_new_folder)) },
                             onClick = {
                                 showNewMenu = false
                                 createIsDir = true
@@ -114,19 +117,20 @@ fun FileBrowserScreen(
                     }
                 }
                 is FileBrowserUiState.Error -> {
+                    val context = LocalContext.current
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = state.message,
+                                text = state.message.asString(context),
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.loadProject() }) {
-                                Text("重试")
+                                Text(stringResource(R.string.common_retry))
                             }
                         }
                     }
@@ -147,13 +151,13 @@ fun FileBrowserScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    "此目录为空",
+                                    stringResource(R.string.file_browser_empty),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = TextSecondary
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
-                                    "点击右上角新建文件或文件夹",
+                                    stringResource(R.string.file_browser_empty_hint),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary.copy(alpha = 0.7f)
                                 )
@@ -253,7 +257,7 @@ private fun BreadcrumbBar(
                     onClick = onNavigateUp,
                     modifier = Modifier.size(28.dp)
                 ) {
-                    Icon(Icons.Default.ArrowUpward, contentDescription = "上级目录", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.ArrowUpward, contentDescription = stringResource(R.string.file_browser_parent_dir), modifier = Modifier.size(18.dp))
                 }
             }
             Row(
@@ -382,12 +386,12 @@ private fun FileEntryItem(
                     onClick = onDelete,
                     modifier = Modifier.size(24.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "删除",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
-                    )
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.common_delete),
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                        )
                 }
             }
         }
@@ -414,13 +418,13 @@ private fun FilePreviewPanel(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "预览",
+                    stringResource(R.string.common_preview),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "关闭预览", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.file_browser_close_preview), modifier = Modifier.size(16.dp))
                 }
             }
             HorizontalDivider()
@@ -448,7 +452,7 @@ private fun CreateEntryDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    val title = if (isDirectory) "新建文件夹" else "新建文件"
+    val title = if (isDirectory) stringResource(R.string.file_dialog_new_folder_title) else stringResource(R.string.file_dialog_new_file_title)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -457,8 +461,8 @@ private fun CreateEntryDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(if (isDirectory) "文件夹名称" else "文件名（含扩展名）") },
-                placeholder = { Text(if (isDirectory) "新文件夹" else "新文件.md") },
+                label = { Text(if (isDirectory) stringResource(R.string.file_dialog_folder_name_label) else stringResource(R.string.file_dialog_file_name_label)) },
+                placeholder = { Text(if (isDirectory) stringResource(R.string.file_dialog_folder_placeholder) else stringResource(R.string.file_dialog_file_placeholder)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -468,10 +472,10 @@ private fun CreateEntryDialog(
                 onClick = {
                     if (name.isNotBlank()) onConfirm(name.trim())
                 }
-            ) { Text("创建") }
+            ) { Text(stringResource(R.string.common_create)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         }
     )
 }
@@ -486,12 +490,12 @@ private fun RenameEntryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("重命名") },
+        title = { Text(stringResource(R.string.file_dialog_rename_title)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("新名称") },
+                label = { Text(stringResource(R.string.file_dialog_rename_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -501,10 +505,10 @@ private fun RenameEntryDialog(
                 onClick = {
                     if (name.isNotBlank()) onConfirm(name.trim())
                 }
-            ) { Text("确定") }
+            ) { Text(stringResource(R.string.common_ok)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         }
     )
 }
@@ -515,20 +519,20 @@ private fun DeleteFileConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val type = if (entry.isDirectory) "文件夹" else "文件"
+    val type = if (entry.isDirectory) stringResource(R.string.file_dialog_type_folder) else stringResource(R.string.file_dialog_type_file)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
+        title = { Text(stringResource(R.string.file_dialog_confirm_delete_title)) },
         text = {
-            Text("确定要删除${type}「${entry.name}」吗？\n\n此操作不可恢复。")
+            Text(stringResource(R.string.file_dialog_confirm_delete_message, type, entry.name))
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("删除", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         }
     )
 }

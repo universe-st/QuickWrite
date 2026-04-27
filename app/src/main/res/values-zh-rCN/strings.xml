@@ -1,0 +1,394 @@
+<resources>
+    <!-- ===== 应用名称 ===== -->
+    <string name="app_name">快写</string>
+
+    <!-- ===== 启动闪屏 ===== -->
+    <string name="splash_initializing">正在初始化…</string>
+    <string name="splash_slogan">为创意加上翅膀</string>
+    <string name="splash_checking_storage">正在检查存储空间…</string>
+    <string name="splash_loading_database">正在加载数据库…</string>
+    <string name="splash_ready">准备就绪</string>
+
+    <!-- ===== 底部导航 ===== -->
+    <string name="nav_projects">项目</string>
+    <string name="nav_writing">写作</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- ===== 通用 ===== -->
+    <string name="common_cancel">取消</string>
+    <string name="common_confirm">确认</string>
+    <string name="common_delete">删除</string>
+    <string name="common_edit">编辑</string>
+    <string name="common_save">保存</string>
+    <string name="common_create">创建</string>
+    <string name="common_close">关闭</string>
+    <string name="common_ok">确定</string>
+    <string name="common_back">返回</string>
+    <string name="common_retry">重试</string>
+    <string name="common_preview">预览</string>
+    <string name="common_rename">重命名</string>
+    <string name="common_default">默认</string>
+    <string name="common_no_data">暂无数据</string>
+
+    <!-- ===== 项目列表页面 ===== -->
+    <string name="project_list_title">我的项目</string>
+    <string name="project_list_sort">排序</string>
+    <string name="project_list_create">创建项目</string>
+    <string name="project_list_empty_title">还没有项目</string>
+    <string name="project_list_empty_hint">点击右下角按钮创建您的第一个小说项目</string>
+    <string name="project_list_loading_error">加载出错</string>
+    <string name="project_list_current_project">主项目</string>
+
+    <!-- ===== 排序对话框 ===== -->
+    <string name="project_sort_title">排序方式</string>
+    <string name="project_sort_by_modified">按修改时间</string>
+    <string name="project_sort_by_created">按创建时间</string>
+    <string name="project_sort_by_name">按名称</string>
+
+    <!-- ===== 创建项目页面 ===== -->
+    <string name="project_create_title">创建项目</string>
+    <string name="project_create_button">创建项目</string>
+
+    <!-- ===== 编辑项目页面 ===== -->
+    <string name="project_edit_title">编辑项目</string>
+    <string name="project_edit_button">保存修改</string>
+
+    <!-- ===== 项目详情页面 ===== -->
+    <string name="project_detail_title">项目详情</string>
+    <string name="project_detail_export">导出</string>
+    <string name="project_detail_export_txt">TXT 格式</string>
+    <string name="project_detail_export_epub">EPUB 格式</string>
+    <string name="project_detail_section_info">项目信息</string>
+    <string name="project_detail_label_description">描述</string>
+    <string name="project_detail_label_created">创建时间</string>
+    <string name="project_detail_label_modified">修改时间</string>
+    <string name="project_detail_label_word_count">字数</string>
+    <string name="project_detail_label_chapter_count">章节数</string>
+    <string name="project_detail_label_status">状态</string>
+    <string name="project_detail_label_path">存储路径</string>
+    <string name="project_detail_edit">编辑</string>
+    <string name="project_detail_set_current">设为主项目</string>
+    <string name="project_detail_is_current">主项目</string>
+    <string name="project_detail_start_writing">开始写作</string>
+    <string name="project_detail_file_management">文件管理</string>
+    <string name="project_detail_delete_project">删除项目</string>
+
+    <!-- ===== 书封管理 ===== -->
+    <string name="project_cover_management">书封管理</string>
+    <string name="project_cover_change">更换书封</string>
+    <string name="project_cover_delete">删除书封</string>
+    <string name="project_cover_add">添加书封</string>
+    <string name="project_cover_content_desc">项目封面</string>
+    <string name="project_cover_delete_title">删除书封</string>
+    <string name="project_cover_delete_message">确定要删除该书封图片吗？</string>
+
+    <!-- ===== 项目操作对话框 ===== -->
+    <string name="project_operations_title">项目操作</string>
+    <string name="project_operations_message">对项目「%1$s」进行的操作：</string>
+    <string name="project_confirm_delete_title">确认删除</string>
+    <string name="project_confirm_delete_message">确定要删除项目「%1$s」吗？\n\n此操作将删除项目的所有数据，包括数据库记录、文件目录和所有相关文件。此操作不可恢复。</string>
+
+    <!-- ===== 项目表单字段 ===== -->
+    <string name="project_field_title">项目标题 *</string>
+    <string name="project_field_author">作者名称 *</string>
+    <string name="project_field_genre">小说类型</string>
+    <string name="project_field_description">项目描述</string>
+
+    <!-- ===== 写作页面 ===== -->
+    <string name="writing_title">写作工作台</string>
+    <string name="writing_editor_tab">编辑器</string>
+    <string name="writing_chat_tab">对话</string>
+    <string name="writing_ai_chat">AI 对话</string>
+    <string name="writing_under_development">功能开发中…</string>
+    <string name="writing_no_project_hint">请先在项目详情中设置主项目</string>
+    <string name="writing_go_to_projects">前往项目列表</string>
+    <string name="writing_no_chapters">暂无章节</string>
+    <string name="writing_create_first_chapter">创建第一章</string>
+    <string name="writing_chapters_header">章节</string>
+    <string name="writing_new_chapter">新建章节</string>
+    <string name="writing_hide_chapter_list">隐藏章节列表</string>
+    <string name="writing_show_chapter_list">显示章节列表</string>
+    <string name="writing_move_up">上移</string>
+    <string name="writing_move_down">下移</string>
+    <string name="writing_unsaved_chapter">未命名章节</string>
+    <string name="writing_saved">已保存</string>
+    <string name="writing_save_failed">保存失败</string>
+    <string name="writing_chapter_count">%1$d 章</string>
+    <string name="writing_status_bar">第 %1$s章 · 字数 %2$s</string>
+    <string name="writing_save_content_desc">保存</string>
+
+    <!-- ===== 新建章节对话框 ===== -->
+    <string name="chapter_new_title">新建章节</string>
+    <string name="chapter_field_title">章节标题</string>
+
+    <!-- ===== 文件管理页面 ===== -->
+    <string name="file_browser_title">文件管理</string>
+    <string name="file_browser_new">新建</string>
+    <string name="file_browser_new_file">新建文件</string>
+    <string name="file_browser_new_folder">新建文件夹</string>
+    <string name="file_browser_empty">此目录为空</string>
+    <string name="file_browser_empty_hint">点击右上角新建文件或文件夹</string>
+    <string name="file_browser_parent_dir">上级目录</string>
+    <string name="file_browser_close_preview">关闭预览</string>
+    <string name="file_browser_root">项目根目录</string>
+
+    <!-- ===== 文件对话框 ===== -->
+    <string name="file_dialog_new_folder_title">新建文件夹</string>
+    <string name="file_dialog_new_file_title">新建文件</string>
+    <string name="file_dialog_folder_name_label">文件夹名称</string>
+    <string name="file_dialog_file_name_label">文件名（含扩展名）</string>
+    <string name="file_dialog_folder_placeholder">新文件夹</string>
+    <string name="file_dialog_file_placeholder">新文件.md</string>
+    <string name="file_dialog_rename_title">重命名</string>
+    <string name="file_dialog_rename_label">新名称</string>
+    <string name="file_dialog_confirm_delete_title">确认删除</string>
+    <string name="file_dialog_confirm_delete_message">确定要删除%1$s「%2$s」吗？\n\n此操作不可恢复。</string>
+    <string name="file_dialog_type_folder">文件夹</string>
+    <string name="file_dialog_type_file">文件</string>
+
+    <!-- ===== 文件错误 ===== -->
+    <string name="file_error_not_found">文件不存在: %1$s</string>
+    <string name="file_error_rename_failed">重命名失败</string>
+    <string name="file_error_source_not_found">源文件/目录不存在</string>
+    <string name="file_error_dir_not_found">目录不存在</string>
+    <string name="file_error_load_dir_failed">目录不存在: %1$s</string>
+    <string name="file_error_empty_file">(空文件)</string>
+    <string name="file_error_read_failed">无法读取文件: %1$s</string>
+    <string name="file_error_create_file_failed">创建文件失败</string>
+    <string name="file_error_create_dir_failed">创建目录失败</string>
+    <string name="file_error_delete_failed">删除失败</string>
+
+    <!-- ===== 设置页面 ===== -->
+    <string name="settings_title">设置</string>
+    <string name="settings_section_ai">AI配置</string>
+    <string name="settings_ai_config">AI模型配置</string>
+    <string name="settings_ai_config_empty">暂无配置</string>
+    <string name="settings_ai_config_count">已配置 %1$d 个模型</string>
+    <string name="settings_section_writing">创作设置</string>
+    <string name="settings_writing_params">创作参数</string>
+    <string name="settings_writing_params_desc">调整AI生成参数和偏好</string>
+    <string name="settings_writing_temperature_label">温度:</string>
+    <string name="settings_section_app">应用设置</string>
+    <string name="settings_appearance">外观与字体</string>
+    <string name="settings_appearance_desc">主题模式、字体大小等</string>
+    <string name="settings_section_other">其他</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_desc">版本信息和开发者</string>
+    <string name="settings_version">v1.0.0</string>
+
+    <!-- ===== 应用设置页面 ===== -->
+    <string name="app_settings_title">应用设置</string>
+    <string name="app_settings_section_appearance">外观设置</string>
+    <string name="app_settings_theme_mode">主题模式</string>
+    <string name="app_settings_theme_mode_desc">选择应用的主题风格</string>
+    <string name="app_settings_font_size">字体大小</string>
+    <string name="app_settings_font_size_desc">调整编辑器字体大小</string>
+    <string name="app_settings_section_editor">编辑器设置</string>
+    <string name="app_settings_font_size_editor">字体大小</string>
+    <string name="app_settings_font_size_editor_desc">调整编辑器字体大小</string>
+    <string name="app_settings_font_size_unit">%1$dsp</string>
+    <string name="app_settings_section_auto_save">自动保存</string>
+    <string name="app_settings_instant_save">即时自动保存</string>
+    <string name="app_settings_instant_save_desc">有修改时立即自动保存，无需等待固定间隔</string>
+    <string name="app_settings_auto_save_interval">自动保存间隔</string>
+    <string name="app_settings_auto_save_interval_desc">设置定时自动保存的时间间隔（即时保存启用时不可用）</string>
+    <string name="app_settings_save_realtime">实时保存</string>
+    <string name="app_settings_save_interval_minutes">%1$d分钟</string>
+
+    <!-- ===== 主题模式选项 ===== -->
+    <string name="theme_mode_system">跟随系统</string>
+    <string name="theme_mode_light">浅色模式</string>
+    <string name="theme_mode_dark">深色模式</string>
+    <string name="theme_mode_dialog_title">主题模式</string>
+
+    <!-- ===== 语言设置 ===== -->
+    <string name="app_settings_language">语言</string>
+    <string name="app_settings_language_desc">选择应用显示语言</string>
+    <string name="language_dialog_title">语言</string>
+    <string name="language_system">跟随系统</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_zh_tw">繁體中文</string>
+    <string name="language_en">English</string>
+
+    <!-- ===== 字体大小对话框 ===== -->
+    <string name="font_size_dialog_title">字体大小</string>
+
+    <!-- ===== 自动保存间隔对话框 ===== -->
+    <string name="auto_save_interval_dialog_title">自动保存间隔</string>
+    <string name="auto_save_realtime">实时保存</string>
+
+    <!-- ===== 写作设置页面 ===== -->
+    <string name="writing_settings_title">创作参数</string>
+    <string name="writing_settings_section_source">参数来源</string>
+    <string name="writing_settings_use_model_config">使用模型配置</string>
+    <string name="writing_settings_use_model_config_subtitle">当前: %1$s</string>
+    <string name="writing_settings_no_default_model">未设置默认模型</string>
+    <string name="writing_settings_use_custom">使用下方自定义参数</string>
+    <string name="writing_settings_section_params">AI生成参数</string>
+    <string name="writing_settings_temperature">温度</string>
+    <string name="writing_settings_temperature_desc">控制输出的随机性和创意性，值越高越有创意</string>
+    <string name="writing_settings_max_tokens">最大生成长度</string>
+    <string name="writing_settings_max_tokens_desc">控制每次生成回复的最大字符数</string>
+    <string name="writing_settings_top_p">Top P</string>
+    <string name="writing_settings_top_p_desc">控制词汇采样的多样性和质量</string>
+    <string name="writing_settings_section_info">参数说明</string>
+    <string name="writing_settings_temp_info_title">温度</string>
+    <string name="writing_settings_temp_info_desc">低值（0.1-0.3）：输出更确定、更保守\n中值（0.4-0.7）：平衡多样性和准确性\n高值（0.8-2.0）：更有创意和多样性</string>
+    <string name="writing_settings_max_tokens_info_title">最大生成长度</string>
+    <string name="writing_settings_max_tokens_info_desc">控制AI每次回复的字符数限制，值越大回复越长但消耗更多令牌</string>
+    <string name="writing_settings_top_p_info_title">Top P</string>
+    <string name="writing_settings_top_p_info_desc">控制从概率最高的累积概率P中采样，较低值会使输出更集中</string>
+
+    <!-- ===== AI配置页面 ===== -->
+    <string name="ai_config_title">AI模型配置</string>
+    <string name="ai_config_add">添加配置</string>
+    <string name="ai_config_empty">暂无AI配置</string>
+    <string name="ai_config_empty_hint">点击右上角添加按钮创建配置</string>
+    <string name="ai_config_badge_default">默认</string>
+    <string name="ai_config_model_label">模型: %1$s</string>
+    <string name="ai_config_provider_label">提供商: %1$s</string>
+    <string name="ai_config_set_default">设为默认配置</string>
+    <string name="ai_config_edit_title">编辑AI配置</string>
+    <string name="ai_config_add_title">添加AI配置</string>
+    <string name="ai_config_field_name">配置名称</string>
+    <string name="ai_config_field_provider">AI服务商</string>
+    <string name="ai_config_field_api_key">API密钥</string>
+    <string name="ai_config_field_base_url">基础URL</string>
+    <string name="ai_config_field_base_url_placeholder">https://api.example.com/v1</string>
+    <string name="ai_config_field_model_name">模型名称</string>
+    <string name="ai_config_field_model_name_placeholder">gpt-3.5-turbo</string>
+    <string name="ai_config_section_params">模型参数</string>
+    <string name="ai_config_param_temperature">温度</string>
+    <string name="ai_config_param_temperature_desc">控制输出的随机性，值越高越有创意</string>
+    <string name="ai_config_param_max_tokens">最大Tokens</string>
+    <string name="ai_config_param_max_tokens_desc">控制每次生成的最大长度</string>
+    <string name="ai_config_param_top_p">Top P</string>
+    <string name="ai_config_param_top_p_desc">控制词汇采样的多样性</string>
+    <string name="ai_config_param_top_k">Top K</string>
+    <string name="ai_config_param_top_k_desc">限制每次采样的候选词汇数</string>
+    <string name="ai_config_param_frequency_penalty">频率惩罚</string>
+    <string name="ai_config_param_frequency_penalty_desc">降低已出现词汇的重复概率</string>
+    <string name="ai_config_param_presence_penalty">存在惩罚</string>
+    <string name="ai_config_param_presence_penalty_desc">鼓励生成新话题和内容</string>
+    <string name="ai_config_default_switch">设为默认配置</string>
+    <string name="ai_config_delete">删除</string>
+    <string name="ai_config_confirm_delete_title">确认删除</string>
+    <string name="ai_config_confirm_delete_message">确定要删除这个AI配置吗？\n\n此操作不可恢复。</string>
+
+    <!-- ===== AI提供商名称 ===== -->
+    <string name="ai_provider_openai">OpenAI</string>
+    <string name="ai_provider_anthropic">Anthropic</string>
+    <string name="ai_provider_custom">自定义API</string>
+
+    <!-- ===== 关于页面 ===== -->
+    <string name="about_title">关于</string>
+    <string name="about_app_tagline">智能小说创作助手</string>
+    <string name="about_label_version">版本号</string>
+    <string name="about_value_version">1.0.0-alpha</string>
+    <string name="about_label_build">构建版本</string>
+    <string name="about_value_build">100</string>
+    <string name="about_label_build_date">构建日期</string>
+    <string name="about_value_build_date">2026-04</string>
+    <string name="about_label_developer">开发者</string>
+    <string name="about_value_developer">Universe Software</string>
+    <string name="about_label_min_sdk">最低要求</string>
+    <string name="about_value_min_sdk">Android 7.0 (API 24)</string>
+    <string name="about_label_target_sdk">目标平台</string>
+    <string name="about_value_target_sdk">Android 14 (API 34)</string>
+    <string name="about_description">QuickWrite是一款专为小说创作者设计的AI写作助手，旨在帮助作家系统化管理创作过程，提升写作效率和质量。</string>
+    <string name="about_copyright">© 2026 Universe Software. 保留所有权利。</string>
+
+    <!-- ===== 小说类型 ===== -->
+    <string name="genre_fantasy_xuanhuan">玄幻</string>
+    <string name="genre_fantasy_qihuan">奇幻</string>
+    <string name="genre_history">历史</string>
+    <string name="genre_urban">都市</string>
+    <string name="genre_scifi">科幻</string>
+    <string name="genre_wuxia">武侠</string>
+    <string name="genre_xianxia">仙侠</string>
+    <string name="genre_military">军事</string>
+    <string name="genre_mystery">悬疑</string>
+    <string name="genre_horror">恐怖</string>
+    <string name="genre_game">游戏</string>
+    <string name="genre_sports">竞技</string>
+    <string name="genre_fanfic">同人</string>
+    <string name="genre_light_novel">轻小说</string>
+    <string name="genre_other">其他</string>
+
+    <!-- ===== 验证消息 ===== -->
+    <string name="validation_project_title_empty">项目标题不能为空</string>
+    <string name="validation_project_title_duplicate">项目标题已存在</string>
+    <string name="validation_author_name_empty">作者名称不能为空</string>
+    <string name="validation_genre_invalid">无效的小说类型</string>
+    <string name="validation_config_name_empty">配置名称不能为空</string>
+    <string name="validation_api_key_empty">API密钥不能为空</string>
+    <string name="validation_config_name_duplicate">配置名称已存在</string>
+
+    <!-- ===== 错误消息 ===== -->
+    <string name="error_project_not_found">项目不存在</string>
+    <string name="error_project_load_failed">加载项目失败</string>
+    <string name="error_project_create_failed">创建项目失败</string>
+    <string name="error_project_update_failed">更新项目失败</string>
+    <string name="error_project_delete_failed">删除项目失败</string>
+    <string name="error_project_not_loaded">项目未加载</string>
+    <string name="error_create_project_dir_failed">创建项目目录失败</string>
+    <string name="error_delete_project_files_failed">删除项目文件失败</string>
+    <string name="error_save_cover_failed">保存书封失败</string>
+    <string name="error_delete_cover_failed">删除书封失败</string>
+    <string name="error_set_current_project_failed">设置当前项目失败</string>
+    <string name="error_cancel_current_project_failed">取消当前项目失败</string>
+    <string name="error_load_settings_failed">加载设置失败</string>
+    <string name="error_update_theme_failed">更新主题失败</string>
+    <string name="error_update_font_size_failed">更新字体大小失败</string>
+    <string name="error_update_font_failed">更新字体失败</string>
+    <string name="error_update_auto_save_interval_failed">更新自动保存间隔失败</string>
+    <string name="error_update_auto_save_failed">更新自动保存设置失败</string>
+    <string name="error_update_temperature_failed">更新默认温度失败</string>
+    <string name="error_update_max_tokens_failed">更新默认最大Token数失败</string>
+    <string name="error_update_top_p_failed">更新默认Top P失败</string>
+    <string name="error_update_param_source_failed">更新参数来源失败</string>
+    <string name="error_save_ai_config_failed">保存AI配置失败</string>
+    <string name="error_set_default_config_failed">设置默认配置失败</string>
+    <string name="error_delete_ai_config_failed">删除AI配置失败</string>
+    <string name="error_update_language_failed">更新语言失败</string>
+
+    <!-- ===== 成功消息 ===== -->
+    <string name="success_theme_updated">主题已更新</string>
+    <string name="success_font_size_updated">字体大小已更新</string>
+    <string name="success_font_updated">字体已更新</string>
+    <string name="success_instant_save_enabled">即时自动保存已启用</string>
+    <string name="success_instant_save_disabled">即时自动保存已禁用</string>
+    <string name="success_auto_save_interval_updated">自动保存间隔已更新</string>
+    <string name="success_temperature_updated">默认温度已更新</string>
+    <string name="success_max_tokens_updated">默认最大Token数已更新</string>
+    <string name="success_top_p_updated">默认Top P已更新</string>
+    <string name="success_param_source_updated">参数来源已更新</string>
+    <string name="success_ai_config_updated">AI配置已更新</string>
+    <string name="success_ai_config_created">AI配置已创建</string>
+    <string name="success_ai_config_set_default">已设置为默认配置</string>
+    <string name="success_ai_config_deleted">AI配置已删除</string>
+    <string name="success_language_updated">语言已更新</string>
+
+    <!-- ===== 时间格式 ===== -->
+    <string name="time_just_now">刚刚</string>
+    <string name="time_minutes_ago">%1$d分钟前</string>
+    <string name="time_hours_ago">%1$d小时前</string>
+    <string name="time_days_ago">%1$d天前</string>
+    <string name="time_weeks_ago">%1$d周前</string>
+    <string name="time_months_ago">%1$d个月前</string>
+    <string name="time_years_ago">%1$d年前</string>
+
+    <!-- ===== 字数格式 ===== -->
+    <string name="word_count_ten_k">%.1f万字</string>
+    <string name="word_count_k">%.1f千字</string>
+    <string name="word_count_single">%d字</string>
+
+    <!-- ===== 文件大小格式 ===== -->
+    <string name="file_size_bytes">%1$d B</string>
+    <string name="file_size_kb">%1$d KB</string>
+    <string name="file_size_mb">%.1f MB</string>
+
+    <!-- ===== 封面图片 ===== -->
+    <string name="cover_cannot_open">无法打开图片文件</string>
+    <string name="cover_cannot_decode">无法解码图片</string>
+</resources>

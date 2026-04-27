@@ -13,10 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import java.io.File
 
@@ -50,7 +52,7 @@ fun ProjectCoverImage(
                     .memoryCacheKey(cacheKey)
                     .crossfade(true)
                     .build(),
-                contentDescription = "项目封面",
+                contentDescription = stringResource(R.string.project_cover_content_desc),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )

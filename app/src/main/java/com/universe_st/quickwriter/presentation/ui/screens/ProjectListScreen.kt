@@ -12,7 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
 import com.universe_st.quickwriter.presentation.ui.components.ProjectCard
@@ -37,12 +39,12 @@ fun ProjectListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("我的项目") },
+                title = { Text(stringResource(R.string.project_list_title)) },
                 actions = {
                     IconButton(
                         onClick = { showSortDialog = true }
                     ) {
-                        Icon(Icons.Default.Sort, contentDescription = "排序")
+                        Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.project_list_sort))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -58,7 +60,7 @@ fun ProjectListScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "创建项目")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.project_list_create))
             }
         },
         contentWindowInsets = WindowInsets(0.dp)
@@ -87,12 +89,12 @@ fun ProjectListScreen(
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                         )
                         Text(
-                            text = "还没有项目",
+                            text = stringResource(R.string.project_list_empty_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                         Text(
-                            text = "点击右下角按钮创建您的第一个小说项目",
+                            text = stringResource(R.string.project_list_empty_hint),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
@@ -122,7 +124,7 @@ fun ProjectListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = "加载出错",
+                            text = stringResource(R.string.project_list_loading_error),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -152,7 +154,7 @@ fun SortDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("排序方式") },
+        title = { Text(stringResource(R.string.project_sort_title)) },
         text = {
             Column {
                 ProjectManagementUseCase.SortOption.values().forEach { option ->
@@ -172,9 +174,9 @@ fun SortDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = when (option) {
-                                ProjectManagementUseCase.SortOption.MODIFIED_TIME -> "按修改时间"
-                                ProjectManagementUseCase.SortOption.CREATED_TIME -> "按创建时间"
-                                ProjectManagementUseCase.SortOption.TITLE -> "按名称"
+                                ProjectManagementUseCase.SortOption.MODIFIED_TIME -> stringResource(R.string.project_sort_by_modified)
+                                ProjectManagementUseCase.SortOption.CREATED_TIME -> stringResource(R.string.project_sort_by_created)
+                                ProjectManagementUseCase.SortOption.TITLE -> stringResource(R.string.project_sort_by_name)
                             }
                         )
                     }
@@ -183,7 +185,7 @@ fun SortDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )

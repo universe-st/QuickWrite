@@ -33,6 +33,9 @@ class UserSettingsRepository(
         
         const val CURRENT_PROJECT_ID_KEY = "current_project_id"
         const val WORKSPACE_CATEGORY = "workspace"
+
+        const val LANGUAGE_KEY = "language"
+        const val LANGUAGE_CATEGORY = "appearance"
     }
 
     fun getAllSettings(): Flow<List<UserSettingEntity>> {
@@ -169,5 +172,13 @@ class UserSettingsRepository(
         } else {
             setSetting(CURRENT_PROJECT_ID_KEY, projectId, WORKSPACE_CATEGORY)
         }
+    }
+
+    suspend fun getLanguage(): String {
+        return getSetting(LANGUAGE_KEY, "system")
+    }
+
+    suspend fun setLanguage(code: String): Result<Unit> {
+        return setSetting(LANGUAGE_KEY, code, LANGUAGE_CATEGORY)
     }
 }

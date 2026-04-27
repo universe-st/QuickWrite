@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.UiText
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
 import com.universe_st.quickwriter.util.AppUtils
 import com.universe_st.quickwriter.util.ChapterFileHelper
@@ -40,7 +42,7 @@ sealed class WritingUiState {
         val isDirty: Boolean,
         val saveMessage: String? = null
     ) : WritingUiState()
-    data class Error(val message: String) : WritingUiState()
+    data class Error(val message: UiText) : WritingUiState()
 }
 
 class WritingViewModel(
@@ -73,7 +75,7 @@ class WritingViewModel(
                 }
                 loadChapters(project, useSavedTab = true)
             } catch (e: Exception) {
-                _uiState.value = WritingUiState.Error(e.message ?: "加载失败")
+                _uiState.value = WritingUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
         }
     }

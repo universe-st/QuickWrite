@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.UiText
 import com.universe_st.quickwriter.util.FileManager
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,12 +81,12 @@ class ProjectCreateViewModel(
                     _uiState.value = ProjectCreateUiState.Success(result.getOrNull()!!)
                 } else {
                     _uiState.value = ProjectCreateUiState.Error(
-                        result.exceptionOrNull()?.message ?: "创建项目失败"
+                        UiText.StringResource(R.string.error_project_create_failed)
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = ProjectCreateUiState.Error(
-                    e.message ?: "创建项目失败"
+                    UiText.StringResource(R.string.error_project_create_failed)
                 )
             }
         }
@@ -122,5 +124,5 @@ sealed class ProjectCreateUiState {
     object Idle : ProjectCreateUiState()
     object Loading : ProjectCreateUiState()
     data class Success(val project: ProjectEntity) : ProjectCreateUiState()
-    data class Error(val message: String) : ProjectCreateUiState()
+    data class Error(val message: UiText) : ProjectCreateUiState()
 }

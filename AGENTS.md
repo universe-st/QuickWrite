@@ -230,6 +230,74 @@ summary: "主角醒来发现自己穿越到了异世界"  # 内容摘要（可�
 - 使用对话框显示重要错误
 - 使用状态字段处理加载、成功、错误状态
 
+### 7. 国际化 (i18n) 与字符串规范
+
+本项目支持三种语言：**简体中文 (zh-rCN)**、**繁体中文 (zh-rTW)** 和 **英文 (en)**。
+
+#### 字符串资源文件
+- `res/values/strings.xml` — 默认语言（英文）
+- `res/values-zh-rCN/strings.xml` — 简体中文
+- `res/values-zh-rTW/strings.xml` — 繁体中文
+
+#### 硬编码字符串禁令
+**绝对禁止**在任何 `.kt` 文件中硬编码用户可见的字符串。所有用户界面文本必须通过 `stringResource()` 从资源文件获取。
+
+#### UiText 类
+ViewModel 中的错误消息和成功消息必须使用 `UiText`（位于 `util/UiText.kt`），而非直接使用 `String`。`UiText` 支持两种类型：
+- `UiText.DynamicString(value)` — 动态字符串（如异常消息）
+- `UiText.StringResource(resId, args...)` — 字符串资源引用
+
+```kotlin
+// ✅ 正确 — 使用 UiText.StringResource
+_uiState.value = SettingsUiState.Error(
+    UiText.StringResource(R.string.error_load_settings_failed)
+)
+
+// ✅ 正确 — 使用 UiText.DynamicString 处理异常消息
+_uiState.value = ProjectDetailUiState.Error(
+    UiText.DynamicString(e.message ?: "Unknown error")
+)
+
+// ❌ 错误 — 硬编码字符串
+_uiState.value = SettingsUiState.Error(UiText.DynamicString("加载失败"))
+```
+
+在 Compose UI 中显示 UiText：
+```kotlin
+val context = LocalContext.current
+Text(text = errorMessage.asString(context))
+```
+
+#### UiState 规范
+所有 `UiState` 密封类中的 `Error` 和 `Success` 状态必须使用 `UiText` 类型作为消息字段：
+```kotlin
+sealed class SomeUiState {
+    data class Success(val message: UiText) : SomeUiState()
+    data class Error(val message: UiText) : SomeUiState()
+}
+```
+
+#### 新增字符串流程
+1. 在 `res/values/strings.xml` 中添加英文字符串
+2. 在 `res/values-zh-rCN/strings.xml` 中添加对应简体中文翻译
+3. 在 `res/values-zh-rTW/strings.xml` 中添加对应繁体中文翻译
+4. 在代码中使用 `stringResource(R.string.xxx)` 或 `UiText.StringResource(R.string.xxx)`
+
+#### 字符串命名规范
+- 使用 `snake_case` 命名
+- 按功能分组使用前缀：`common_`、`nav_`、`project_`、`writing_`、`file_`、`settings_`、`ai_config_`、`about_`、`error_`、`success_`、`validation_`、`genre_`、`format_`、`splash_`、`time_` 等
+- 参数化字符串使用 `%1$s`（字符串）、`%1$d`（整数）、`%.1f`（浮点）等占位符
+
+#### 不可翻译的内容
+以下内容**不需要**翻译（保留原始值）：
+- 文件系统目录名（如 `正文/`、`设定/`）— 这些是实际文件路径
+- 技术符号（如 `?`、`/`、` · `）
+- 代码中用作键值的字符串（如 genre 内部存储值、provider 标识符）
+- 文件模板内容（如 AI 指令模板）
+
+#### 工具类 Context 依赖
+若工具类（如 `AppUtils`、`FileManager`、`CoverImageProcessor`）需要使用字符串资源，须通过参数接收 `Context` 对象，并添加 `import com.universe_st.quickwriter.R`。
+
 ## 常用命令
 
 ### 构建
@@ -273,6 +341,7 @@ summary: "主角醒来发现自己穿越到了异世界"  # 内容摘要（可�
 - `di/AppContainer.kt`: 依赖注入容器
 - `data/local/database/AppDatabase.kt`: Room 数据库配置
 - `util/FileManager.kt`: 文件系统管理工具
+- `util/UiText.kt`: 国际化文本包装类（支持字符串资源与动态字符串）
 - `domain/usecase/ProjectManagementUseCase.kt`: 项目管理的业务逻辑
 - `domain/usecase/SettingsUseCase.kt`: 设置管理的业务逻辑
 
@@ -367,6 +436,6 @@ summary: "主角醒来发现自己穿越到了异世界"  # 内容摘要（可�
 
 ---
 
-**文档版本**: 2.2  
-**最后更新**: 2026-04-24  
+**文档版本**: 2.3  
+**最后更新**: 2026-04-27  
 **适用范围**: AI Agents 和开发团队

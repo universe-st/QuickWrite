@@ -1,0 +1,394 @@
+<resources>
+    <!-- ===== 應用名稱 ===== -->
+    <string name="app_name">快寫</string>
+
+    <!-- ===== 啟動閃屏 ===== -->
+    <string name="splash_initializing">正在初始化…</string>
+    <string name="splash_slogan">為創意加上翅膀</string>
+    <string name="splash_checking_storage">正在檢查儲存空間…</string>
+    <string name="splash_loading_database">正在載入資料庫…</string>
+    <string name="splash_ready">準備就緒</string>
+
+    <!-- ===== 底部導航 ===== -->
+    <string name="nav_projects">專案</string>
+    <string name="nav_writing">寫作</string>
+    <string name="nav_settings">設定</string>
+
+    <!-- ===== 通用 ===== -->
+    <string name="common_cancel">取消</string>
+    <string name="common_confirm">確認</string>
+    <string name="common_delete">刪除</string>
+    <string name="common_edit">編輯</string>
+    <string name="common_save">儲存</string>
+    <string name="common_create">建立</string>
+    <string name="common_close">關閉</string>
+    <string name="common_ok">確定</string>
+    <string name="common_back">返回</string>
+    <string name="common_retry">重試</string>
+    <string name="common_preview">預覽</string>
+    <string name="common_rename">重新命名</string>
+    <string name="common_default">預設</string>
+    <string name="common_no_data">暫無資料</string>
+
+    <!-- ===== 專案列表頁面 ===== -->
+    <string name="project_list_title">我的專案</string>
+    <string name="project_list_sort">排序</string>
+    <string name="project_list_create">建立專案</string>
+    <string name="project_list_empty_title">還沒有專案</string>
+    <string name="project_list_empty_hint">點擊右下角按鈕建立您的第一個小說專案</string>
+    <string name="project_list_loading_error">載入出錯</string>
+    <string name="project_list_current_project">主專案</string>
+
+    <!-- ===== 排序對話框 ===== -->
+    <string name="project_sort_title">排序方式</string>
+    <string name="project_sort_by_modified">按修改時間</string>
+    <string name="project_sort_by_created">按建立時間</string>
+    <string name="project_sort_by_name">按名稱</string>
+
+    <!-- ===== 建立專案頁面 ===== -->
+    <string name="project_create_title">建立專案</string>
+    <string name="project_create_button">建立專案</string>
+
+    <!-- ===== 編輯專案頁面 ===== -->
+    <string name="project_edit_title">編輯專案</string>
+    <string name="project_edit_button">儲存修改</string>
+
+    <!-- ===== 專案詳情頁面 ===== -->
+    <string name="project_detail_title">專案詳情</string>
+    <string name="project_detail_export">匯出</string>
+    <string name="project_detail_export_txt">TXT 格式</string>
+    <string name="project_detail_export_epub">EPUB 格式</string>
+    <string name="project_detail_section_info">專案資訊</string>
+    <string name="project_detail_label_description">描述</string>
+    <string name="project_detail_label_created">建立時間</string>
+    <string name="project_detail_label_modified">修改時間</string>
+    <string name="project_detail_label_word_count">字數</string>
+    <string name="project_detail_label_chapter_count">章節數</string>
+    <string name="project_detail_label_status">狀態</string>
+    <string name="project_detail_label_path">儲存路徑</string>
+    <string name="project_detail_edit">編輯</string>
+    <string name="project_detail_set_current">設為主專案</string>
+    <string name="project_detail_is_current">主專案</string>
+    <string name="project_detail_start_writing">開始寫作</string>
+    <string name="project_detail_file_management">檔案管理</string>
+    <string name="project_detail_delete_project">刪除專案</string>
+
+    <!-- ===== 書封管理 ===== -->
+    <string name="project_cover_management">書封管理</string>
+    <string name="project_cover_change">更換書封</string>
+    <string name="project_cover_delete">刪除書封</string>
+    <string name="project_cover_add">新增書封</string>
+    <string name="project_cover_content_desc">專案封面</string>
+    <string name="project_cover_delete_title">刪除書封</string>
+    <string name="project_cover_delete_message">確定要刪除該書封圖片嗎？</string>
+
+    <!-- ===== 專案操作對話框 ===== -->
+    <string name="project_operations_title">專案操作</string>
+    <string name="project_operations_message">對專案「%1$s」進行的操作：</string>
+    <string name="project_confirm_delete_title">確認刪除</string>
+    <string name="project_confirm_delete_message">確定要刪除專案「%1$s」嗎？\n\n此操作將刪除專案的所有資料，包括資料庫記錄、檔案目錄和所有相關檔案。此操作不可恢復。</string>
+
+    <!-- ===== 專案表單欄位 ===== -->
+    <string name="project_field_title">專案標題 *</string>
+    <string name="project_field_author">作者名稱 *</string>
+    <string name="project_field_genre">小說類型</string>
+    <string name="project_field_description">專案描述</string>
+
+    <!-- ===== 寫作頁面 ===== -->
+    <string name="writing_title">寫作工作臺</string>
+    <string name="writing_editor_tab">編輯器</string>
+    <string name="writing_chat_tab">對話</string>
+    <string name="writing_ai_chat">AI 對話</string>
+    <string name="writing_under_development">功能開發中…</string>
+    <string name="writing_no_project_hint">請先在專案詳情中設定主專案</string>
+    <string name="writing_go_to_projects">前往專案列表</string>
+    <string name="writing_no_chapters">暫無章節</string>
+    <string name="writing_create_first_chapter">建立第一章</string>
+    <string name="writing_chapters_header">章節</string>
+    <string name="writing_new_chapter">新增章節</string>
+    <string name="writing_hide_chapter_list">隱藏章節列表</string>
+    <string name="writing_show_chapter_list">顯示章節列表</string>
+    <string name="writing_move_up">上移</string>
+    <string name="writing_move_down">下移</string>
+    <string name="writing_unsaved_chapter">未命名章節</string>
+    <string name="writing_saved">已儲存</string>
+    <string name="writing_save_failed">儲存失敗</string>
+    <string name="writing_chapter_count">%1$d 章</string>
+    <string name="writing_status_bar">第 %1$s章 · 字數 %2$s</string>
+    <string name="writing_save_content_desc">儲存</string>
+
+    <!-- ===== 新增章節對話框 ===== -->
+    <string name="chapter_new_title">新增章節</string>
+    <string name="chapter_field_title">章節標題</string>
+
+    <!-- ===== 檔案管理頁面 ===== -->
+    <string name="file_browser_title">檔案管理</string>
+    <string name="file_browser_new">新增</string>
+    <string name="file_browser_new_file">新增檔案</string>
+    <string name="file_browser_new_folder">新增資料夾</string>
+    <string name="file_browser_empty">此目錄為空</string>
+    <string name="file_browser_empty_hint">點擊右上角新增檔案或資料夾</string>
+    <string name="file_browser_parent_dir">上級目錄</string>
+    <string name="file_browser_close_preview">關閉預覽</string>
+    <string name="file_browser_root">專案根目錄</string>
+
+    <!-- ===== 檔案對話框 ===== -->
+    <string name="file_dialog_new_folder_title">新增資料夾</string>
+    <string name="file_dialog_new_file_title">新增檔案</string>
+    <string name="file_dialog_folder_name_label">資料夾名稱</string>
+    <string name="file_dialog_file_name_label">檔案名稱（含副檔名）</string>
+    <string name="file_dialog_folder_placeholder">新資料夾</string>
+    <string name="file_dialog_file_placeholder">新檔案.md</string>
+    <string name="file_dialog_rename_title">重新命名</string>
+    <string name="file_dialog_rename_label">新名稱</string>
+    <string name="file_dialog_confirm_delete_title">確認刪除</string>
+    <string name="file_dialog_confirm_delete_message">確定要刪除%1$s「%2$s」嗎？\n\n此操作不可恢復。</string>
+    <string name="file_dialog_type_folder">資料夾</string>
+    <string name="file_dialog_type_file">檔案</string>
+
+    <!-- ===== 檔案錯誤 ===== -->
+    <string name="file_error_not_found">檔案不存在: %1$s</string>
+    <string name="file_error_rename_failed">重新命名失敗</string>
+    <string name="file_error_source_not_found">來源檔案/目錄不存在</string>
+    <string name="file_error_dir_not_found">目錄不存在</string>
+    <string name="file_error_load_dir_failed">目錄不存在: %1$s</string>
+    <string name="file_error_empty_file">(空檔案)</string>
+    <string name="file_error_read_failed">無法讀取檔案: %1$s</string>
+    <string name="file_error_create_file_failed">建立檔案失敗</string>
+    <string name="file_error_create_dir_failed">建立目錄失敗</string>
+    <string name="file_error_delete_failed">刪除失敗</string>
+
+    <!-- ===== 設定頁面 ===== -->
+    <string name="settings_title">設定</string>
+    <string name="settings_section_ai">AI設定</string>
+    <string name="settings_ai_config">AI模型設定</string>
+    <string name="settings_ai_config_empty">暫無設定</string>
+    <string name="settings_ai_config_count">已設定 %1$d 個模型</string>
+    <string name="settings_section_writing">創作設定</string>
+    <string name="settings_writing_params">創作參數</string>
+    <string name="settings_writing_params_desc">調整AI生成參數和偏好</string>
+    <string name="settings_writing_temperature_label">溫度:</string>
+    <string name="settings_section_app">應用設定</string>
+    <string name="settings_appearance">外觀與字型</string>
+    <string name="settings_appearance_desc">主題模式、字型大小等</string>
+    <string name="settings_section_other">其他</string>
+    <string name="settings_about">關於</string>
+    <string name="settings_about_desc">版本資訊和開發者</string>
+    <string name="settings_version">v1.0.0</string>
+
+    <!-- ===== 應用設定頁面 ===== -->
+    <string name="app_settings_title">應用設定</string>
+    <string name="app_settings_section_appearance">外觀設定</string>
+    <string name="app_settings_theme_mode">主題模式</string>
+    <string name="app_settings_theme_mode_desc">選擇應用的主題風格</string>
+    <string name="app_settings_font_size">字型大小</string>
+    <string name="app_settings_font_size_desc">調整編輯器字型大小</string>
+    <string name="app_settings_section_editor">編輯器設定</string>
+    <string name="app_settings_font_size_editor">字型大小</string>
+    <string name="app_settings_font_size_editor_desc">調整編輯器字型大小</string>
+    <string name="app_settings_font_size_unit">%1$dsp</string>
+    <string name="app_settings_section_auto_save">自動儲存</string>
+    <string name="app_settings_instant_save">即時自動儲存</string>
+    <string name="app_settings_instant_save_desc">有修改時立即自動儲存，無需等待固定間隔</string>
+    <string name="app_settings_auto_save_interval">自動儲存間隔</string>
+    <string name="app_settings_auto_save_interval_desc">設定定時自動儲存的時間間隔（即時儲存啟用時不可用）</string>
+    <string name="app_settings_save_realtime">即時儲存</string>
+    <string name="app_settings_save_interval_minutes">%1$d分鐘</string>
+
+    <!-- ===== 主題模式選項 ===== -->
+    <string name="theme_mode_system">跟隨系統</string>
+    <string name="theme_mode_light">淺色模式</string>
+    <string name="theme_mode_dark">深色模式</string>
+    <string name="theme_mode_dialog_title">主題模式</string>
+
+    <!-- ===== 語言設定 ===== -->
+    <string name="app_settings_language">語言</string>
+    <string name="app_settings_language_desc">選擇應用顯示語言</string>
+    <string name="language_dialog_title">語言</string>
+    <string name="language_system">跟隨系統</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_zh_tw">繁體中文</string>
+    <string name="language_en">English</string>
+
+    <!-- ===== 字型大小對話框 ===== -->
+    <string name="font_size_dialog_title">字型大小</string>
+
+    <!-- ===== 自動儲存間隔對話框 ===== -->
+    <string name="auto_save_interval_dialog_title">自動儲存間隔</string>
+    <string name="auto_save_realtime">即時儲存</string>
+
+    <!-- ===== 寫作設定頁面 ===== -->
+    <string name="writing_settings_title">創作參數</string>
+    <string name="writing_settings_section_source">參數來源</string>
+    <string name="writing_settings_use_model_config">使用模型設定</string>
+    <string name="writing_settings_use_model_config_subtitle">目前: %1$s</string>
+    <string name="writing_settings_no_default_model">未設定預設模型</string>
+    <string name="writing_settings_use_custom">使用下方自訂參數</string>
+    <string name="writing_settings_section_params">AI生成參數</string>
+    <string name="writing_settings_temperature">溫度</string>
+    <string name="writing_settings_temperature_desc">控制輸出的隨機性和創意性，值越高越有創意</string>
+    <string name="writing_settings_max_tokens">最大生成長度</string>
+    <string name="writing_settings_max_tokens_desc">控制每次生成回覆的最大字元數</string>
+    <string name="writing_settings_top_p">Top P</string>
+    <string name="writing_settings_top_p_desc">控制詞彙取樣的多樣性和品質</string>
+    <string name="writing_settings_section_info">參數說明</string>
+    <string name="writing_settings_temp_info_title">溫度</string>
+    <string name="writing_settings_temp_info_desc">低值（0.1-0.3）：輸出更確定、更保守\n中值（0.4-0.7）：平衡多樣性和準確性\n高值（0.8-2.0）：更有創意和多樣性</string>
+    <string name="writing_settings_max_tokens_info_title">最大生成長度</string>
+    <string name="writing_settings_max_tokens_info_desc">控制AI每次回覆的字元數限制，值越大回覆越長但消耗更多權杖</string>
+    <string name="writing_settings_top_p_info_title">Top P</string>
+    <string name="writing_settings_top_p_info_desc">控制從機率最高的累積機率P中取樣，較低值會使輸出更集中</string>
+
+    <!-- ===== AI設定頁面 ===== -->
+    <string name="ai_config_title">AI模型設定</string>
+    <string name="ai_config_add">新增設定</string>
+    <string name="ai_config_empty">暫無AI設定</string>
+    <string name="ai_config_empty_hint">點擊右上角新增按鈕建立設定</string>
+    <string name="ai_config_badge_default">預設</string>
+    <string name="ai_config_model_label">模型: %1$s</string>
+    <string name="ai_config_provider_label">提供者: %1$s</string>
+    <string name="ai_config_set_default">設為預設設定</string>
+    <string name="ai_config_edit_title">編輯AI設定</string>
+    <string name="ai_config_add_title">新增AI設定</string>
+    <string name="ai_config_field_name">設定名稱</string>
+    <string name="ai_config_field_provider">AI服務商</string>
+    <string name="ai_config_field_api_key">API金鑰</string>
+    <string name="ai_config_field_base_url">基礎URL</string>
+    <string name="ai_config_field_base_url_placeholder">https://api.example.com/v1</string>
+    <string name="ai_config_field_model_name">模型名稱</string>
+    <string name="ai_config_field_model_name_placeholder">gpt-3.5-turbo</string>
+    <string name="ai_config_section_params">模型參數</string>
+    <string name="ai_config_param_temperature">溫度</string>
+    <string name="ai_config_param_temperature_desc">控制輸出的隨機性，值越高越有創意</string>
+    <string name="ai_config_param_max_tokens">最大Tokens</string>
+    <string name="ai_config_param_max_tokens_desc">控制每次生成的最大長度</string>
+    <string name="ai_config_param_top_p">Top P</string>
+    <string name="ai_config_param_top_p_desc">控制詞彙取樣的多樣性</string>
+    <string name="ai_config_param_top_k">Top K</string>
+    <string name="ai_config_param_top_k_desc">限制每次取樣的候選詞彙數</string>
+    <string name="ai_config_param_frequency_penalty">頻率懲罰</string>
+    <string name="ai_config_param_frequency_penalty_desc">降低已出現詞彙的重複機率</string>
+    <string name="ai_config_param_presence_penalty">存在懲罰</string>
+    <string name="ai_config_param_presence_penalty_desc">鼓勵生成新話題和內容</string>
+    <string name="ai_config_default_switch">設為預設設定</string>
+    <string name="ai_config_delete">刪除</string>
+    <string name="ai_config_confirm_delete_title">確認刪除</string>
+    <string name="ai_config_confirm_delete_message">確定要刪除這個AI設定嗎？\n\n此操作不可恢復。</string>
+
+    <!-- ===== AI提供者名稱 ===== -->
+    <string name="ai_provider_openai">OpenAI</string>
+    <string name="ai_provider_anthropic">Anthropic</string>
+    <string name="ai_provider_custom">自訂API</string>
+
+    <!-- ===== 關於頁面 ===== -->
+    <string name="about_title">關於</string>
+    <string name="about_app_tagline">智慧小說創作助手</string>
+    <string name="about_label_version">版本號</string>
+    <string name="about_value_version">1.0.0-alpha</string>
+    <string name="about_label_build">建置版本</string>
+    <string name="about_value_build">100</string>
+    <string name="about_label_build_date">建置日期</string>
+    <string name="about_value_build_date">2026-04</string>
+    <string name="about_label_developer">開發者</string>
+    <string name="about_value_developer">Universe Software</string>
+    <string name="about_label_min_sdk">最低要求</string>
+    <string name="about_value_min_sdk">Android 7.0 (API 24)</string>
+    <string name="about_label_target_sdk">目標平台</string>
+    <string name="about_value_target_sdk">Android 14 (API 34)</string>
+    <string name="about_description">QuickWrite是一款專為小說創作者設計的AI寫作助手，旨在幫助作家系統化管理創作過程，提升寫作效率和品質。</string>
+    <string name="about_copyright">© 2026 Universe Software. 保留所有權利。</string>
+
+    <!-- ===== 小說類型 ===== -->
+    <string name="genre_fantasy_xuanhuan">玄幻</string>
+    <string name="genre_fantasy_qihuan">奇幻</string>
+    <string name="genre_history">歷史</string>
+    <string name="genre_urban">都市</string>
+    <string name="genre_scifi">科幻</string>
+    <string name="genre_wuxia">武俠</string>
+    <string name="genre_xianxia">仙俠</string>
+    <string name="genre_military">軍事</string>
+    <string name="genre_mystery">懸疑</string>
+    <string name="genre_horror">恐怖</string>
+    <string name="genre_game">遊戲</string>
+    <string name="genre_sports">競技</string>
+    <string name="genre_fanfic">同人</string>
+    <string name="genre_light_novel">輕小說</string>
+    <string name="genre_other">其他</string>
+
+    <!-- ===== 驗證訊息 ===== -->
+    <string name="validation_project_title_empty">專案標題不能為空</string>
+    <string name="validation_project_title_duplicate">專案標題已存在</string>
+    <string name="validation_author_name_empty">作者名稱不能為空</string>
+    <string name="validation_genre_invalid">無效的小說類型</string>
+    <string name="validation_config_name_empty">設定名稱不能為空</string>
+    <string name="validation_api_key_empty">API金鑰不能為空</string>
+    <string name="validation_config_name_duplicate">設定名稱已存在</string>
+
+    <!-- ===== 錯誤訊息 ===== -->
+    <string name="error_project_not_found">專案不存在</string>
+    <string name="error_project_load_failed">載入專案失敗</string>
+    <string name="error_project_create_failed">建立專案失敗</string>
+    <string name="error_project_update_failed">更新專案失敗</string>
+    <string name="error_project_delete_failed">刪除專案失敗</string>
+    <string name="error_project_not_loaded">專案未載入</string>
+    <string name="error_create_project_dir_failed">建立專案目錄失敗</string>
+    <string name="error_delete_project_files_failed">刪除專案檔案失敗</string>
+    <string name="error_save_cover_failed">儲存書封失敗</string>
+    <string name="error_delete_cover_failed">刪除書封失敗</string>
+    <string name="error_set_current_project_failed">設定目前專案失敗</string>
+    <string name="error_cancel_current_project_failed">取消目前專案失敗</string>
+    <string name="error_load_settings_failed">載入設定失敗</string>
+    <string name="error_update_theme_failed">更新主題失敗</string>
+    <string name="error_update_font_size_failed">更新字型大小失敗</string>
+    <string name="error_update_font_failed">更新字型失敗</string>
+    <string name="error_update_auto_save_interval_failed">更新自動儲存間隔失敗</string>
+    <string name="error_update_auto_save_failed">更新自動儲存設定失敗</string>
+    <string name="error_update_temperature_failed">更新預設溫度失敗</string>
+    <string name="error_update_max_tokens_failed">更新預設最大Token數失敗</string>
+    <string name="error_update_top_p_failed">更新預設Top P失敗</string>
+    <string name="error_update_param_source_failed">更新參數來源失敗</string>
+    <string name="error_save_ai_config_failed">儲存AI設定失敗</string>
+    <string name="error_set_default_config_failed">設定預設設定失敗</string>
+    <string name="error_delete_ai_config_failed">刪除AI設定失敗</string>
+    <string name="error_update_language_failed">更新語言失敗</string>
+
+    <!-- ===== 成功訊息 ===== -->
+    <string name="success_theme_updated">主題已更新</string>
+    <string name="success_font_size_updated">字型大小已更新</string>
+    <string name="success_font_updated">字型已更新</string>
+    <string name="success_instant_save_enabled">即時自動儲存已啟用</string>
+    <string name="success_instant_save_disabled">即時自動儲存已停用</string>
+    <string name="success_auto_save_interval_updated">自動儲存間隔已更新</string>
+    <string name="success_temperature_updated">預設溫度已更新</string>
+    <string name="success_max_tokens_updated">預設最大Token數已更新</string>
+    <string name="success_top_p_updated">預設Top P已更新</string>
+    <string name="success_param_source_updated">參數來源已更新</string>
+    <string name="success_ai_config_updated">AI設定已更新</string>
+    <string name="success_ai_config_created">AI設定已建立</string>
+    <string name="success_ai_config_set_default">已設為預設設定</string>
+    <string name="success_ai_config_deleted">AI設定已刪除</string>
+    <string name="success_language_updated">語言已更新</string>
+
+    <!-- ===== 時間格式 ===== -->
+    <string name="time_just_now">剛剛</string>
+    <string name="time_minutes_ago">%1$d分鐘前</string>
+    <string name="time_hours_ago">%1$d小時前</string>
+    <string name="time_days_ago">%1$d天前</string>
+    <string name="time_weeks_ago">%1$d週前</string>
+    <string name="time_months_ago">%1$d個月前</string>
+    <string name="time_years_ago">%1$d年前</string>
+
+    <!-- ===== 字數格式 ===== -->
+    <string name="word_count_ten_k">%.1f萬字</string>
+    <string name="word_count_k">%.1f千字</string>
+    <string name="word_count_single">%d字</string>
+
+    <!-- ===== 檔案大小格式 ===== -->
+    <string name="file_size_bytes">%1$d B</string>
+    <string name="file_size_kb">%1$d KB</string>
+    <string name="file_size_mb">%.1f MB</string>
+
+    <!-- ===== 封面圖片 ===== -->
+    <string name="cover_cannot_open">無法開啟圖片檔案</string>
+    <string name="cover_cannot_decode">無法解碼圖片</string>
+</resources>

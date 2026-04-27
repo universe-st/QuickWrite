@@ -1,6 +1,7 @@
 package com.universe_st.quickwriter.util
 
 import android.content.Context
+import com.universe_st.quickwriter.R
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -42,13 +43,13 @@ object CoverImageProcessor {
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             val inputStream = context.contentResolver.openInputStream(sourceUri)
-                ?: return@withContext Result.failure(IOException("无法打开图片文件"))
+                ?: return@withContext Result.failure(IOException(context.getString(R.string.cover_cannot_open)))
 
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
 
             if (originalBitmap == null) {
-                return@withContext Result.failure(IOException("无法解码图片"))
+                return@withContext Result.failure(IOException(context.getString(R.string.cover_cannot_decode)))
             }
 
             val processedBitmap = processBitmap(originalBitmap)

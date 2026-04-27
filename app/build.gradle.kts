@@ -69,6 +69,7 @@ dependencies {
     
     implementation(libs.gson)
     implementation(libs.timber)
+    implementation(libs.androidx.appcompat)
     
     implementation(project(":markor-editor"))
     

@@ -185,6 +185,7 @@ public class GsTextUtils {
         }
     }
 
+    @SafeVarargs
     public static <T> ArrayList<T> toArrayList(T... array) {
         ArrayList<T> list = new ArrayList<>();
         Collections.addAll(list, array);

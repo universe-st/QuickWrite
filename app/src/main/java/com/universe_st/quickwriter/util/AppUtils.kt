@@ -1,5 +1,7 @@
 package com.universe_st.quickwriter.util
 
+import android.content.Context
+import com.universe_st.quickwriter.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -20,18 +22,18 @@ object AppUtils {
         return sdf.format(Date(timestamp))
     }
 
-    fun formatRelativeTime(timestamp: Long): String {
+    fun formatRelativeTime(context: Context, timestamp: Long): String {
         val currentTime = System.currentTimeMillis()
         val diff = currentTime - timestamp
 
         return when {
-            diff < 60_000L -> "刚刚"
-            diff < 3600_000L -> "${diff / 60_000L}分钟前"
-            diff < 86400_000L -> "${diff / 3600_000L}小时前"
-            diff < 604800_000L -> "${diff / 86400_000L}天前"
-            diff < 2592000_000L -> "${diff / 604800_000L}周前"
-            diff < 31536000_000L -> "${diff / 2592000_000L}个月前"
-            else -> "${diff / 31536000_000L}年前"
+            diff < 60_000L -> context.getString(R.string.time_just_now)
+            diff < 3600_000L -> context.getString(R.string.time_minutes_ago, diff / 60_000L)
+            diff < 86400_000L -> context.getString(R.string.time_hours_ago, diff / 3600_000L)
+            diff < 604800_000L -> context.getString(R.string.time_days_ago, diff / 86400_000L)
+            diff < 2592000_000L -> context.getString(R.string.time_weeks_ago, diff / 604800_000L)
+            diff < 31536000_000L -> context.getString(R.string.time_months_ago, diff / 2592000_000L)
+            else -> context.getString(R.string.time_years_ago, diff / 31536000_000L)
         }
     }
 
@@ -44,11 +46,11 @@ object AppUtils {
         }
     }
 
-    fun formatWordCount(wordCount: Int): String {
+    fun formatWordCount(context: Context, wordCount: Int): String {
         return when {
-            wordCount > 10000 -> String.format("%.1f万字", wordCount / 10000.0)
-            wordCount > 1000 -> String.format("%.1f千字", wordCount / 1000.0)
-            else -> "${wordCount}字"
+            wordCount > 10000 -> context.getString(R.string.word_count_ten_k, wordCount / 10000.0)
+            wordCount > 1000 -> context.getString(R.string.word_count_k, wordCount / 1000.0)
+            else -> context.getString(R.string.word_count_single, wordCount)
         }
     }
 

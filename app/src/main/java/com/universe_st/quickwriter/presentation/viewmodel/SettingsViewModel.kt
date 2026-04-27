@@ -3,15 +3,17 @@ package com.universe_st.quickwriter.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
+import com.universe_st.quickwriter.util.UiText
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 sealed class SettingsUiState {
     object Loading : SettingsUiState()
     object Idle : SettingsUiState()
-    data class Success(val message: String = "") : SettingsUiState()
-    data class Error(val message: String) : SettingsUiState()
+    data class Success(val message: UiText) : SettingsUiState()
+    data class Error(val message: UiText) : SettingsUiState()
 }
 
 data class AppSettingsData(
@@ -27,7 +29,8 @@ data class AppSettingsData(
     val modelConfigTemperature: Float = 0.7f,
     val modelConfigMaxTokens: Int = 2000,
     val modelConfigTopP: Float = 1.0f,
-    val modelConfigName: String = ""
+    val modelConfigName: String = "",
+    val languageCode: String = "system"
 )
 
 data class AiConfigFormData(
@@ -44,8 +47,8 @@ data class AiConfigFormData(
     val frequencyPenalty: Float = 0.0f,
     val presencePenalty: Float = 0.0f,
     val isDefault: Boolean = false,
-    val configNameError: String? = null,
-    val apiKeyError: String? = null
+    val configNameError: UiText? = null,
+    val apiKeyError: UiText? = null
 )
 
 class SettingsViewModel(
@@ -90,11 +93,12 @@ class SettingsViewModel(
                     modelConfigTemperature = defaultConfig?.temperature ?: 0.7f,
                     modelConfigMaxTokens = defaultConfig?.maxTokens ?: 2000,
                     modelConfigTopP = defaultConfig?.topP ?: 1.0f,
-                    modelConfigName = defaultConfig?.configName ?: ""
+                    modelConfigName = defaultConfig?.configName ?: "",
+                    languageCode = settingsUseCase.getLanguage()
                 )
                 _uiState.value = SettingsUiState.Idle
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "加载设置失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_load_settings_failed))
             }
         }
     }
@@ -121,9 +125,9 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setThemeMode(mode)
                 _appSettingsData.value = _appSettingsData.value.copy(themeMode = mode)
-                _uiState.value = SettingsUiState.Success("主题已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_theme_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新主题失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_theme_failed))
             }
         }
     }
@@ -133,9 +137,9 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setFontSize(size)
                 _appSettingsData.value = _appSettingsData.value.copy(fontSize = size)
-                _uiState.value = SettingsUiState.Success("字体大小已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_font_size_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新字体大小失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_font_size_failed))
             }
         }
     }
@@ -145,9 +149,21 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setFontFamily(family)
                 _appSettingsData.value = _appSettingsData.value.copy(fontFamily = family)
-                _uiState.value = SettingsUiState.Success("字体已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_font_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新字体失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_font_failed))
+            }
+        }
+    }
+
+    fun updateLanguage(code: String) {
+        viewModelScope.launch {
+            try {
+                settingsUseCase.setLanguage(code)
+                _appSettingsData.value = _appSettingsData.value.copy(languageCode = code)
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_language_updated))
+            } catch (e: Exception) {
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_language_failed))
             }
         }
     }
@@ -163,17 +179,17 @@ class SettingsViewModel(
                         autoSaveInterval = 0,
                         autoSaveImmediately = true
                     )
-                    _uiState.value = SettingsUiState.Success("已启用实时自动保存")
+                    _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_instant_save_enabled))
                 } else {
                     // 如果设置了非0的时间间隔，关闭即时保存
                     if (_appSettingsData.value.autoSaveImmediately) {
                         settingsUseCase.setAutoSaveImmediately(false)
                     }
                     _appSettingsData.value = _appSettingsData.value.copy(autoSaveInterval = minutes)
-                    _uiState.value = SettingsUiState.Success("自动保存间隔已更新")
+                    _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_auto_save_interval_updated))
                 }
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新自动保存间隔失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_auto_save_interval_failed))
             }
         }
     }
@@ -197,9 +213,11 @@ class SettingsViewModel(
                         autoSaveInterval = 5
                     )
                 }
-                _uiState.value = SettingsUiState.Success("即时自动保存${if (enabled) "已启用" else "已禁用"}")
+                _uiState.value = SettingsUiState.Success(
+                    UiText.StringResource(if (enabled) R.string.success_instant_save_enabled else R.string.success_instant_save_disabled)
+                )
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新自动保存设置失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_auto_save_failed))
             }
         }
     }
@@ -209,9 +227,9 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setDefaultTemperature(temperature)
                 _appSettingsData.value = _appSettingsData.value.copy(defaultTemperature = temperature)
-                _uiState.value = SettingsUiState.Success("默认温度已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_temperature_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新默认温度失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_temperature_failed))
             }
         }
     }
@@ -221,9 +239,9 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setDefaultMaxTokens(tokens)
                 _appSettingsData.value = _appSettingsData.value.copy(defaultMaxTokens = tokens)
-                _uiState.value = SettingsUiState.Success("默认最大Token数已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_max_tokens_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新默认最大Token数失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_max_tokens_failed))
             }
         }
     }
@@ -233,9 +251,9 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setDefaultTopP(topP)
                 _appSettingsData.value = _appSettingsData.value.copy(defaultTopP = topP)
-                _uiState.value = SettingsUiState.Success("默认Top P已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_top_p_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新默认Top P失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_top_p_failed))
             }
         }
     }
@@ -245,9 +263,9 @@ class SettingsViewModel(
             try {
                 settingsUseCase.setUseModelConfig(useModelConfig)
                 _appSettingsData.value = _appSettingsData.value.copy(useModelConfig = useModelConfig)
-                _uiState.value = SettingsUiState.Success("参数来源已更新")
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_param_source_updated))
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "更新参数来源失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_param_source_failed))
             }
         }
     }
@@ -279,7 +297,7 @@ class SettingsViewModel(
     fun updateAiConfigName(name: String) {
         _currentAiConfig.value = _currentAiConfig.value.copy(
             configName = name,
-            configNameError = if (name.isBlank()) "配置名称不能为空" else null
+            configNameError = if (name.isBlank()) UiText.StringResource(R.string.validation_config_name_empty) else null
         )
     }
 
@@ -290,7 +308,7 @@ class SettingsViewModel(
     fun updateAiApiKey(apiKey: String) {
         _currentAiConfig.value = _currentAiConfig.value.copy(
             apiKey = apiKey,
-            apiKeyError = if (apiKey.isBlank()) "API密钥不能为空" else null
+            apiKeyError = if (apiKey.isBlank()) UiText.StringResource(R.string.validation_api_key_empty) else null
         )
     }
 
@@ -334,12 +352,12 @@ class SettingsViewModel(
         val formData = _currentAiConfig.value
         
         if (formData.configName.isBlank()) {
-            _currentAiConfig.value = formData.copy(configNameError = "配置名称不能为空")
+            _currentAiConfig.value = formData.copy(configNameError = UiText.StringResource(R.string.validation_config_name_empty))
             return
         }
         
         if (formData.apiKey.isBlank()) {
-            _currentAiConfig.value = formData.copy(apiKeyError = "API密钥不能为空")
+            _currentAiConfig.value = formData.copy(apiKeyError = UiText.StringResource(R.string.validation_api_key_empty))
             return
         }
 
@@ -361,7 +379,7 @@ class SettingsViewModel(
                         presencePenalty = formData.presencePenalty,
                         isDefault = formData.isDefault
                     )
-                    _uiState.value = SettingsUiState.Success("AI配置已更新")
+                    _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_ai_config_updated))
                 } else {
                     settingsUseCase.createAiConfig(
                         configName = formData.configName,
@@ -377,10 +395,10 @@ class SettingsViewModel(
                         presencePenalty = formData.presencePenalty,
                         isDefault = formData.isDefault
                     )
-                    _uiState.value = SettingsUiState.Success("AI配置已创建")
+                    _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_ai_config_created))
                 }
             } catch (e: Exception) {
-                _uiState.value = SettingsUiState.Error(e.message ?: "保存AI配置失败")
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_save_ai_config_failed))
             }
         }
     }
@@ -388,18 +406,18 @@ class SettingsViewModel(
     suspend fun setDefaultAiConfig(id: Int) {
         try {
             settingsUseCase.setDefaultAiConfig(id)
-            _uiState.value = SettingsUiState.Success("已设置为默认配置")
+            _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_ai_config_set_default))
         } catch (e: Exception) {
-            _uiState.value = SettingsUiState.Error(e.message ?: "设置默认配置失败")
+            _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_set_default_config_failed))
         }
     }
 
     suspend fun deleteAiConfig(config: AiModelConfigEntity) {
         try {
             settingsUseCase.deleteAiConfig(config)
-            _uiState.value = SettingsUiState.Success("AI配置已删除")
+            _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_ai_config_deleted))
         } catch (e: Exception) {
-            _uiState.value = SettingsUiState.Error(e.message ?: "删除AI配置失败")
+            _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_delete_ai_config_failed))
         }
     }
 

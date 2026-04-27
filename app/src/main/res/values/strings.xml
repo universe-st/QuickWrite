@@ -1,8 +1,394 @@
 <resources>
-    <string name="app_name">快写</string>
-    <string name="splash_initializing">正在初始化…</string>
-    <string name="splash_slogan">为创意加上翅膀</string>
-    <string name="splash_checking_storage">正在检查存储空间…</string>
-    <string name="splash_loading_database">正在加载数据库…</string>
-    <string name="splash_ready">准备就绪</string>
+    <!-- ===== App Name ===== -->
+    <string name="app_name">QuickWrite</string>
+
+    <!-- ===== Splash Screen ===== -->
+    <string name="splash_initializing">Initializing…</string>
+    <string name="splash_slogan">Wings for Your Creativity</string>
+    <string name="splash_checking_storage">Checking storage…</string>
+    <string name="splash_loading_database">Loading database…</string>
+    <string name="splash_ready">Ready</string>
+
+    <!-- ===== Navigation ===== -->
+    <string name="nav_projects">Projects</string>
+    <string name="nav_writing">Writing</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- ===== Common ===== -->
+    <string name="common_cancel">Cancel</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_save">Save</string>
+    <string name="common_create">Create</string>
+    <string name="common_close">Close</string>
+    <string name="common_ok">OK</string>
+    <string name="common_back">Back</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_preview">Preview</string>
+    <string name="common_rename">Rename</string>
+    <string name="common_default">Default</string>
+    <string name="common_no_data">No Data</string>
+
+    <!-- ===== Project List Screen ===== -->
+    <string name="project_list_title">My Projects</string>
+    <string name="project_list_sort">Sort</string>
+    <string name="project_list_create">Create Project</string>
+    <string name="project_list_empty_title">No Projects Yet</string>
+    <string name="project_list_empty_hint">Tap the button at bottom right to create your first novel project</string>
+    <string name="project_list_loading_error">Loading Failed</string>
+    <string name="project_list_current_project">Main Project</string>
+
+    <!-- ===== Project Sort Dialog ===== -->
+    <string name="project_sort_title">Sort By</string>
+    <string name="project_sort_by_modified">Last Modified</string>
+    <string name="project_sort_by_created">Created Date</string>
+    <string name="project_sort_by_name">Name</string>
+
+    <!-- ===== Project Create Screen ===== -->
+    <string name="project_create_title">Create Project</string>
+    <string name="project_create_button">Create Project</string>
+
+    <!-- ===== Project Edit Screen ===== -->
+    <string name="project_edit_title">Edit Project</string>
+    <string name="project_edit_button">Save Changes</string>
+
+    <!-- ===== Project Detail Screen ===== -->
+    <string name="project_detail_title">Project Details</string>
+    <string name="project_detail_export">Export</string>
+    <string name="project_detail_export_txt">TXT Format</string>
+    <string name="project_detail_export_epub">EPUB Format</string>
+    <string name="project_detail_section_info">Project Info</string>
+    <string name="project_detail_label_description">Description</string>
+    <string name="project_detail_label_created">Created</string>
+    <string name="project_detail_label_modified">Modified</string>
+    <string name="project_detail_label_word_count">Word Count</string>
+    <string name="project_detail_label_chapter_count">Chapters</string>
+    <string name="project_detail_label_status">Status</string>
+    <string name="project_detail_label_path">Storage Path</string>
+    <string name="project_detail_edit">Edit</string>
+    <string name="project_detail_set_current">Set as Main</string>
+    <string name="project_detail_is_current">Main Project</string>
+    <string name="project_detail_start_writing">Start Writing</string>
+    <string name="project_detail_file_management">File Manager</string>
+    <string name="project_detail_delete_project">Delete Project</string>
+
+    <!-- ===== Project Cover Management ===== -->
+    <string name="project_cover_management">Cover Management</string>
+    <string name="project_cover_change">Change Cover</string>
+    <string name="project_cover_delete">Delete Cover</string>
+    <string name="project_cover_add">Add Cover</string>
+    <string name="project_cover_content_desc">Project Cover</string>
+    <string name="project_cover_delete_title">Delete Cover</string>
+    <string name="project_cover_delete_message">Are you sure you want to delete this cover image?</string>
+
+    <!-- ===== Project Operations Dialog ===== -->
+    <string name="project_operations_title">Project Operations</string>
+    <string name="project_operations_message">Operations for project "%1$s":</string>
+    <string name="project_confirm_delete_title">Confirm Deletion</string>
+    <string name="project_confirm_delete_message">Are you sure you want to delete project "%1$s"?\n\nThis will delete all project data, including database records, file directories and all related files. This operation cannot be undone.</string>
+
+    <!-- ===== Project Form Fields ===== -->
+    <string name="project_field_title">Project Title *</string>
+    <string name="project_field_author">Author Name *</string>
+    <string name="project_field_genre">Genre</string>
+    <string name="project_field_description">Description</string>
+
+    <!-- ===== Writing Screen ===== -->
+    <string name="writing_title">Writing Workspace</string>
+    <string name="writing_editor_tab">Editor</string>
+    <string name="writing_chat_tab">Chat</string>
+    <string name="writing_ai_chat">AI Chat</string>
+    <string name="writing_under_development">Under Development…</string>
+    <string name="writing_no_project_hint">Please set a main project in project details first</string>
+    <string name="writing_go_to_projects">Go to Projects</string>
+    <string name="writing_no_chapters">No Chapters</string>
+    <string name="writing_create_first_chapter">Create First Chapter</string>
+    <string name="writing_chapters_header">Chapters</string>
+    <string name="writing_new_chapter">New Chapter</string>
+    <string name="writing_hide_chapter_list">Hide Chapter List</string>
+    <string name="writing_show_chapter_list">Show Chapter List</string>
+    <string name="writing_move_up">Move Up</string>
+    <string name="writing_move_down">Move Down</string>
+    <string name="writing_unsaved_chapter">Untitled Chapter</string>
+    <string name="writing_saved">Saved</string>
+    <string name="writing_save_failed">Save Failed</string>
+    <string name="writing_chapter_count">%1$d Chapters</string>
+    <string name="writing_status_bar">Ch. %1$s · %2$s</string>
+    <string name="writing_save_content_desc">Save</string>
+
+    <!-- ===== New Chapter Dialog ===== -->
+    <string name="chapter_new_title">New Chapter</string>
+    <string name="chapter_field_title">Chapter Title</string>
+
+    <!-- ===== File Browser Screen ===== -->
+    <string name="file_browser_title">File Manager</string>
+    <string name="file_browser_new">New</string>
+    <string name="file_browser_new_file">New File</string>
+    <string name="file_browser_new_folder">New Folder</string>
+    <string name="file_browser_empty">This directory is empty</string>
+    <string name="file_browser_empty_hint">Tap the button at top right to create files or folders</string>
+    <string name="file_browser_parent_dir">Parent Directory</string>
+    <string name="file_browser_close_preview">Close Preview</string>
+    <string name="file_browser_root">Project Root</string>
+
+    <!-- ===== File Dialog Strings ===== -->
+    <string name="file_dialog_new_folder_title">New Folder</string>
+    <string name="file_dialog_new_file_title">New File</string>
+    <string name="file_dialog_folder_name_label">Folder Name</string>
+    <string name="file_dialog_file_name_label">File Name (with extension)</string>
+    <string name="file_dialog_folder_placeholder">New Folder</string>
+    <string name="file_dialog_file_placeholder">New File.md</string>
+    <string name="file_dialog_rename_title">Rename</string>
+    <string name="file_dialog_rename_label">New Name</string>
+    <string name="file_dialog_confirm_delete_title">Confirm Deletion</string>
+    <string name="file_dialog_confirm_delete_message">Are you sure you want to delete %1$s "%2$s"?\n\nThis operation cannot be undone.</string>
+    <string name="file_dialog_type_folder">folder</string>
+    <string name="file_dialog_type_file">file</string>
+
+    <!-- ===== File Errors ===== -->
+    <string name="file_error_not_found">File not found: %1$s</string>
+    <string name="file_error_rename_failed">Rename failed</string>
+    <string name="file_error_source_not_found">Source file/directory not found</string>
+    <string name="file_error_dir_not_found">Directory not found</string>
+    <string name="file_error_load_dir_failed">Failed to load directory: %1$s</string>
+    <string name="file_error_empty_file">(Empty File)</string>
+    <string name="file_error_read_failed">Failed to read file: %1$s</string>
+    <string name="file_error_create_file_failed">Failed to create file</string>
+    <string name="file_error_create_dir_failed">Failed to create directory</string>
+    <string name="file_error_delete_failed">Failed to delete</string>
+
+    <!-- ===== Settings Screen ===== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_ai">AI Configuration</string>
+    <string name="settings_ai_config">AI Model Configuration</string>
+    <string name="settings_ai_config_empty">No Configuration</string>
+    <string name="settings_ai_config_count">%1$d Model(s) Configured</string>
+    <string name="settings_section_writing">Writing Settings</string>
+    <string name="settings_writing_params">Writing Parameters</string>
+    <string name="settings_writing_params_desc">Adjust AI generation parameters and preferences</string>
+    <string name="settings_writing_temperature_label">Temperature:</string>
+    <string name="settings_section_app">App Settings</string>
+    <string name="settings_appearance">Appearance &amp; Font</string>
+    <string name="settings_appearance_desc">Theme mode, font size, etc.</string>
+    <string name="settings_section_other">Other</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_desc">Version info and developer</string>
+    <string name="settings_version">v1.0.0</string>
+
+    <!-- ===== App Settings Screen ===== -->
+    <string name="app_settings_title">App Settings</string>
+    <string name="app_settings_section_appearance">Appearance</string>
+    <string name="app_settings_theme_mode">Theme Mode</string>
+    <string name="app_settings_theme_mode_desc">Choose app theme style</string>
+    <string name="app_settings_font_size">Font Size</string>
+    <string name="app_settings_font_size_desc">Adjust editor font size</string>
+    <string name="app_settings_section_editor">Editor Settings</string>
+    <string name="app_settings_font_size_editor">Font Size</string>
+    <string name="app_settings_font_size_editor_desc">Adjust editor font size</string>
+    <string name="app_settings_font_size_unit">%1$dsp</string>
+    <string name="app_settings_section_auto_save">Auto Save</string>
+    <string name="app_settings_instant_save">Instant Auto Save</string>
+    <string name="app_settings_instant_save_desc">Save immediately when changes are made, without waiting for fixed intervals</string>
+    <string name="app_settings_auto_save_interval">Auto Save Interval</string>
+    <string name="app_settings_auto_save_interval_desc">Set the interval for scheduled auto-save (disabled when instant save is on)</string>
+    <string name="app_settings_save_realtime">Realtime Save</string>
+    <string name="app_settings_save_interval_minutes">%1$d Minutes</string>
+
+    <!-- ===== Theme Mode Options ===== -->
+    <string name="theme_mode_system">Follow System</string>
+    <string name="theme_mode_light">Light Mode</string>
+    <string name="theme_mode_dark">Dark Mode</string>
+    <string name="theme_mode_dialog_title">Theme Mode</string>
+
+    <!-- ===== Language Settings ===== -->
+    <string name="app_settings_language">Language</string>
+    <string name="app_settings_language_desc">Choose app display language</string>
+    <string name="language_dialog_title">Language</string>
+    <string name="language_system">Follow System</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_zh_tw">繁體中文</string>
+    <string name="language_en">English</string>
+
+    <!-- ===== Font Size Dialog ===== -->
+    <string name="font_size_dialog_title">Font Size</string>
+
+    <!-- ===== Auto Save Interval Dialog ===== -->
+    <string name="auto_save_interval_dialog_title">Auto Save Interval</string>
+    <string name="auto_save_realtime">Realtime</string>
+
+    <!-- ===== Writing Settings Screen ===== -->
+    <string name="writing_settings_title">Writing Parameters</string>
+    <string name="writing_settings_section_source">Parameter Source</string>
+    <string name="writing_settings_use_model_config">Use Model Configuration</string>
+    <string name="writing_settings_use_model_config_subtitle">Current: %1$s</string>
+    <string name="writing_settings_no_default_model">No default model set</string>
+    <string name="writing_settings_use_custom">Use custom parameters below</string>
+    <string name="writing_settings_section_params">AI Generation Parameters</string>
+    <string name="writing_settings_temperature">Temperature</string>
+    <string name="writing_settings_temperature_desc">Controls output randomness and creativity. Higher values are more creative.</string>
+    <string name="writing_settings_max_tokens">Max Output Length</string>
+    <string name="writing_settings_max_tokens_desc">Maximum character count per generation reply.</string>
+    <string name="writing_settings_top_p">Top P</string>
+    <string name="writing_settings_top_p_desc">Controls vocabulary sampling diversity and quality.</string>
+    <string name="writing_settings_section_info">Parameter Reference</string>
+    <string name="writing_settings_temp_info_title">Temperature</string>
+    <string name="writing_settings_temp_info_desc">Low (0.1-0.3): More deterministic, conservative\nMedium (0.4-0.7): Balance diversity and accuracy\nHigh (0.8-2.0): More creative and diverse</string>
+    <string name="writing_settings_max_tokens_info_title">Max Output Length</string>
+    <string name="writing_settings_max_tokens_info_desc">Controls the character limit per AI reply. Larger values produce longer replies but consume more tokens.</string>
+    <string name="writing_settings_top_p_info_title">Top P</string>
+    <string name="writing_settings_top_p_info_desc">Samples from tokens with cumulative probability P. Lower values make output more focused.</string>
+
+    <!-- ===== AI Config Screen ===== -->
+    <string name="ai_config_title">AI Model Configuration</string>
+    <string name="ai_config_add">Add Configuration</string>
+    <string name="ai_config_empty">No AI Configuration</string>
+    <string name="ai_config_empty_hint">Tap the add button at top right to create a configuration</string>
+    <string name="ai_config_badge_default">Default</string>
+    <string name="ai_config_model_label">Model: %1$s</string>
+    <string name="ai_config_provider_label">Provider: %1$s</string>
+    <string name="ai_config_set_default">Set as Default</string>
+    <string name="ai_config_edit_title">Edit AI Configuration</string>
+    <string name="ai_config_add_title">Add AI Configuration</string>
+    <string name="ai_config_field_name">Configuration Name</string>
+    <string name="ai_config_field_provider">AI Provider</string>
+    <string name="ai_config_field_api_key">API Key</string>
+    <string name="ai_config_field_base_url">Base URL</string>
+    <string name="ai_config_field_base_url_placeholder">https://api.example.com/v1</string>
+    <string name="ai_config_field_model_name">Model Name</string>
+    <string name="ai_config_field_model_name_placeholder">gpt-3.5-turbo</string>
+    <string name="ai_config_section_params">Model Parameters</string>
+    <string name="ai_config_param_temperature">Temperature</string>
+    <string name="ai_config_param_temperature_desc">Controls output randomness. Higher values are more creative.</string>
+    <string name="ai_config_param_max_tokens">Max Tokens</string>
+    <string name="ai_config_param_max_tokens_desc">Maximum output length per generation.</string>
+    <string name="ai_config_param_top_p">Top P</string>
+    <string name="ai_config_param_top_p_desc">Controls vocabulary sampling diversity.</string>
+    <string name="ai_config_param_top_k">Top K</string>
+    <string name="ai_config_param_top_k_desc">Limits candidate vocabulary count per sampling step.</string>
+    <string name="ai_config_param_frequency_penalty">Frequency Penalty</string>
+    <string name="ai_config_param_frequency_penalty_desc">Reduces repetition of already appeared words.</string>
+    <string name="ai_config_param_presence_penalty">Presence Penalty</string>
+    <string name="ai_config_param_presence_penalty_desc">Encourages generating new topics and content.</string>
+    <string name="ai_config_default_switch">Set as Default Configuration</string>
+    <string name="ai_config_delete">Delete</string>
+    <string name="ai_config_confirm_delete_title">Confirm Deletion</string>
+    <string name="ai_config_confirm_delete_message">Are you sure you want to delete this AI configuration?\n\nThis operation cannot be undone.</string>
+
+    <!-- ===== AI Provider Names ===== -->
+    <string name="ai_provider_openai">OpenAI</string>
+    <string name="ai_provider_anthropic">Anthropic</string>
+    <string name="ai_provider_custom">Custom API</string>
+
+    <!-- ===== About Screen ===== -->
+    <string name="about_title">About</string>
+    <string name="about_app_tagline">Intelligent Novel Writing Assistant</string>
+    <string name="about_label_version">Version</string>
+    <string name="about_value_version">1.0.0-alpha</string>
+    <string name="about_label_build">Build Number</string>
+    <string name="about_value_build">100</string>
+    <string name="about_label_build_date">Build Date</string>
+    <string name="about_value_build_date">2026-04</string>
+    <string name="about_label_developer">Developer</string>
+    <string name="about_value_developer">Universe Software</string>
+    <string name="about_label_min_sdk">Minimum Requirement</string>
+    <string name="about_value_min_sdk">Android 7.0 (API 24)</string>
+    <string name="about_label_target_sdk">Target Platform</string>
+    <string name="about_value_target_sdk">Android 14 (API 34)</string>
+    <string name="about_description">QuickWrite is an AI writing assistant designed specifically for novelists, helping writers systematically manage the creative process and improve writing efficiency and quality.</string>
+    <string name="about_copyright">© 2026 Universe Software. All rights reserved.</string>
+
+    <!-- ===== Genre Names ===== -->
+    <string name="genre_fantasy_xuanhuan">Xuanhuan (Eastern Fantasy)</string>
+    <string name="genre_fantasy_qihuan">Qihuan (Western Fantasy)</string>
+    <string name="genre_history">Historical</string>
+    <string name="genre_urban">Urban</string>
+    <string name="genre_scifi">Sci-Fi</string>
+    <string name="genre_wuxia">Wuxia (Martial Arts)</string>
+    <string name="genre_xianxia">Xianxia (Immortal Cultivation)</string>
+    <string name="genre_military">Military</string>
+    <string name="genre_mystery">Mystery</string>
+    <string name="genre_horror">Horror</string>
+    <string name="genre_game">Game</string>
+    <string name="genre_sports">Sports</string>
+    <string name="genre_fanfic">Fan Fiction</string>
+    <string name="genre_light_novel">Light Novel</string>
+    <string name="genre_other">Other</string>
+
+    <!-- ===== Validation Messages ===== -->
+    <string name="validation_project_title_empty">Project title cannot be empty</string>
+    <string name="validation_project_title_duplicate">Project title already exists</string>
+    <string name="validation_author_name_empty">Author name cannot be empty</string>
+    <string name="validation_genre_invalid">Invalid genre</string>
+    <string name="validation_config_name_empty">Configuration name cannot be empty</string>
+    <string name="validation_api_key_empty">API key cannot be empty</string>
+    <string name="validation_config_name_duplicate">Configuration name already exists</string>
+
+    <!-- ===== Error Messages ===== -->
+    <string name="error_project_not_found">Project not found</string>
+    <string name="error_project_load_failed">Failed to load project</string>
+    <string name="error_project_create_failed">Failed to create project</string>
+    <string name="error_project_update_failed">Failed to update project</string>
+    <string name="error_project_delete_failed">Failed to delete project</string>
+    <string name="error_project_not_loaded">Project not loaded</string>
+    <string name="error_create_project_dir_failed">Failed to create project directory</string>
+    <string name="error_delete_project_files_failed">Failed to delete project files</string>
+    <string name="error_save_cover_failed">Failed to save cover</string>
+    <string name="error_delete_cover_failed">Failed to delete cover</string>
+    <string name="error_set_current_project_failed">Failed to set current project</string>
+    <string name="error_cancel_current_project_failed">Failed to cancel current project</string>
+    <string name="error_load_settings_failed">Failed to load settings</string>
+    <string name="error_update_theme_failed">Failed to update theme</string>
+    <string name="error_update_font_size_failed">Failed to update font size</string>
+    <string name="error_update_font_failed">Failed to update font</string>
+    <string name="error_update_auto_save_interval_failed">Failed to update auto-save interval</string>
+    <string name="error_update_auto_save_failed">Failed to update auto-save settings</string>
+    <string name="error_update_temperature_failed">Failed to update default temperature</string>
+    <string name="error_update_max_tokens_failed">Failed to update default max tokens</string>
+    <string name="error_update_top_p_failed">Failed to update default Top P</string>
+    <string name="error_update_param_source_failed">Failed to update parameter source</string>
+    <string name="error_save_ai_config_failed">Failed to save AI configuration</string>
+    <string name="error_set_default_config_failed">Failed to set default configuration</string>
+    <string name="error_delete_ai_config_failed">Failed to delete AI configuration</string>
+    <string name="error_update_language_failed">Failed to update language</string>
+
+    <!-- ===== Success Messages ===== -->
+    <string name="success_theme_updated">Theme updated</string>
+    <string name="success_font_size_updated">Font size updated</string>
+    <string name="success_font_updated">Font updated</string>
+    <string name="success_instant_save_enabled">Instant auto-save enabled</string>
+    <string name="success_instant_save_disabled">Instant auto-save disabled</string>
+    <string name="success_auto_save_interval_updated">Auto-save interval updated</string>
+    <string name="success_temperature_updated">Default temperature updated</string>
+    <string name="success_max_tokens_updated">Default max tokens updated</string>
+    <string name="success_top_p_updated">Default Top P updated</string>
+    <string name="success_param_source_updated">Parameter source updated</string>
+    <string name="success_ai_config_updated">AI configuration updated</string>
+    <string name="success_ai_config_created">AI configuration created</string>
+    <string name="success_ai_config_set_default">Set as default configuration</string>
+    <string name="success_ai_config_deleted">AI configuration deleted</string>
+    <string name="success_language_updated">Language updated</string>
+
+    <!-- ===== Time Format ===== -->
+    <string name="time_just_now">Just now</string>
+    <string name="time_minutes_ago">%1$d minutes ago</string>
+    <string name="time_hours_ago">%1$d hours ago</string>
+    <string name="time_days_ago">%1$d days ago</string>
+    <string name="time_weeks_ago">%1$d weeks ago</string>
+    <string name="time_months_ago">%1$d months ago</string>
+    <string name="time_years_ago">%1$d years ago</string>
+
+    <!-- ===== Word Count Format ===== -->
+    <string name="word_count_ten_k">%.1f ten-thousand words</string>
+    <string name="word_count_k">%.1f thousand words</string>
+    <string name="word_count_single">%d words</string>
+
+    <!-- ===== File Size Format ===== -->
+    <string name="file_size_bytes">%1$d B</string>
+    <string name="file_size_kb">%1$d KB</string>
+    <string name="file_size_mb">%.1f MB</string>
+
+    <!-- ===== Cover Image ===== -->
+    <string name="cover_cannot_open">Cannot open image file</string>
+    <string name="cover_cannot_decode">Cannot decode image</string>
 </resources>

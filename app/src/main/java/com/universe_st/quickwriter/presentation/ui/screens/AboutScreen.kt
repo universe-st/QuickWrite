@@ -10,7 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.universe_st.quickwriter.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,10 +22,10 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("关于") },
+                title = { Text(stringResource(R.string.about_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -67,13 +69,13 @@ fun AboutScreen(
             }
 
             Text(
-                text = "QuickWrite",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "智能小说创作助手",
+                text = stringResource(R.string.about_app_tagline),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -91,39 +93,39 @@ fun AboutScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     AppInfoItem(
-                        label = "版本号",
-                        value = "1.0.0-alpha"
+                        label = stringResource(R.string.about_label_version),
+                        value = stringResource(R.string.about_value_version)
                     )
                     
                     AppInfoItem(
-                        label = "构建版本",
-                        value = "100"
+                        label = stringResource(R.string.about_label_build),
+                        value = stringResource(R.string.about_value_build)
                     )
                     
                     AppInfoItem(
-                        label = "构建日期",
-                        value = "2026-04"
+                        label = stringResource(R.string.about_label_build_date),
+                        value = stringResource(R.string.about_value_build_date)
                     )
                     
                     AppInfoItem(
-                        label = "开发者",
-                        value = "Universe Software"
+                        label = stringResource(R.string.about_label_developer),
+                        value = stringResource(R.string.about_value_developer)
                     )
                     
                     AppInfoItem(
-                        label = "最低要求",
-                        value = "Android 7.0 (API 24)"
+                        label = stringResource(R.string.about_label_min_sdk),
+                        value = stringResource(R.string.about_value_min_sdk)
                     )
                     
                     AppInfoItem(
-                        label = "目标平台",
-                        value = "Android 14 (API 34)"
+                        label = stringResource(R.string.about_label_target_sdk),
+                        value = stringResource(R.string.about_value_target_sdk)
                     )
                 }
             }
 
             Text(
-                text = "QuickWrite是一款专小说创作者设计的AI写作助手，旨在帮助作家系统化管理创作过程，提升写作效率和质量。",
+                text = stringResource(R.string.about_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -131,7 +133,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "© 2026 Universe Software. 保留所有权利。",
+                text = stringResource(R.string.about_copyright),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

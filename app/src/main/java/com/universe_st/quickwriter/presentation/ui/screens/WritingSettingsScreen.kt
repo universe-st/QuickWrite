@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.universe_st.quickwriter.presentation.ui.components.SettingsDivider
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSliderItem
+import androidx.compose.ui.res.stringResource
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSwitchItem
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
 
@@ -27,10 +29,10 @@ fun WritingSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("创作参数") },
+                title = { Text(stringResource(R.string.writing_settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -50,29 +52,29 @@ fun WritingSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SettingsSection(title = "参数来源") {
+            SettingsSection(title = stringResource(R.string.writing_settings_section_source)) {
                 SettingsSwitchItem(
-                    title = "使用模型配置",
+                    title = stringResource(R.string.writing_settings_use_model_config),
                     subtitle = if (appSettings.useModelConfig && appSettings.modelConfigName.isNotBlank())
-                        "当前: ${appSettings.modelConfigName}"
+                        stringResource(R.string.writing_settings_use_model_config_subtitle, appSettings.modelConfigName)
                     else if (appSettings.useModelConfig)
-                        "未设置默认模型"
+                        stringResource(R.string.writing_settings_no_default_model)
                     else
-                        "使用下方自定义参数",
+                        stringResource(R.string.writing_settings_use_custom),
                     checked = appSettings.useModelConfig,
                     onCheckedChange = { viewModel.updateUseModelConfig(it) }
                 )
             }
 
-            SettingsSection(title = "AI生成参数") {
+            SettingsSection(title = stringResource(R.string.writing_settings_section_params)) {
                 val sliderEnabled = !appSettings.useModelConfig
                 val displayTemperature = if (appSettings.useModelConfig) appSettings.modelConfigTemperature else appSettings.defaultTemperature
                 val displayMaxTokens = if (appSettings.useModelConfig) appSettings.modelConfigMaxTokens else appSettings.defaultMaxTokens
                 val displayTopP = if (appSettings.useModelConfig) appSettings.modelConfigTopP else appSettings.defaultTopP
 
                 SettingsSliderItem(
-                    title = "温度",
-                    subtitle = "控制输出的随机性和创意性，值越高越有创意",
+                    title = stringResource(R.string.writing_settings_temperature),
+                    subtitle = stringResource(R.string.writing_settings_temperature_desc),
                     value = displayTemperature,
                     onValueChange = { viewModel.updateDefaultTemperature(it) },
                     valueRange = 0.1f..2.0f,
@@ -84,8 +86,8 @@ fun WritingSettingsScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "最大生成长度",
-                    subtitle = "控制每次生成回复的最大字符数",
+                    title = stringResource(R.string.writing_settings_max_tokens),
+                    subtitle = stringResource(R.string.writing_settings_max_tokens_desc),
                     value = displayMaxTokens.toFloat(),
                     onValueChange = { viewModel.updateDefaultMaxTokens(it.toInt()) },
                     valueRange = 100f..8000f,
@@ -97,8 +99,8 @@ fun WritingSettingsScreen(
                 SettingsDivider()
 
                 SettingsSliderItem(
-                    title = "Top P",
-                    subtitle = "控制词汇采样的多样性和质量",
+                    title = stringResource(R.string.writing_settings_top_p),
+                    subtitle = stringResource(R.string.writing_settings_top_p_desc),
                     value = displayTopP,
                     onValueChange = { viewModel.updateDefaultTopP(it) },
                     valueRange = 0f..1f,
@@ -108,7 +110,7 @@ fun WritingSettingsScreen(
                 )
             }
 
-            SettingsSection(title = "参数说明") {
+            SettingsSection(title = stringResource(R.string.writing_settings_section_info)) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -116,18 +118,18 @@ fun WritingSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ParameterInfoCard(
-                        title = "温度",
-                        description = "低值（0.1-0.3）：输出更确定、更保守\n中值（0.4-0.7）：平衡多样性和准确性\n高值（0.8-2.0）：更有创意和多样性"
+                        title = stringResource(R.string.writing_settings_temp_info_title),
+                        description = stringResource(R.string.writing_settings_temp_info_desc)
                     )
                     
                     ParameterInfoCard(
-                        title = "最大生成长度",
-                        description = "控制AI每次回复的字符数限制，值越大回复越长但消耗更多令牌"
+                        title = stringResource(R.string.writing_settings_max_tokens_info_title),
+                        description = stringResource(R.string.writing_settings_max_tokens_info_desc)
                     )
                     
                     ParameterInfoCard(
-                        title = "Top P",
-                        description = "控制从概率最高的累积概率P中采样，较低值会使输出更集中"
+                        title = stringResource(R.string.writing_settings_top_p_info_title),
+                        description = stringResource(R.string.writing_settings_top_p_info_desc)
                     )
                 }
             }

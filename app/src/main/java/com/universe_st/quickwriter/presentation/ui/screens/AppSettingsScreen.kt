@@ -9,12 +9,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.SettingsClickItem
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSliderItem
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSwitchItem
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
+import com.universe_st.quickwriter.util.LocaleHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,14 +30,15 @@ fun AppSettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     var showFontDialog by remember { mutableStateOf(false) }
     var showAutoSaveDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("应用设置") },
+                title = { Text(stringResource(R.string.app_settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -53,46 +58,60 @@ fun AppSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SettingsSection(title = "外观设置") {
+            SettingsSection(title = stringResource(R.string.app_settings_section_appearance)) {
                 SettingsClickItem(
-                    title = "主题模式",
-                    subtitle = "选择应用的主题风格",
-                    trailingText = getThemeModeDisplayName(appSettings.themeMode),
+                    title = stringResource(R.string.app_settings_theme_mode),
+                    subtitle = stringResource(R.string.app_settings_theme_mode_desc),
+                    trailingText = stringResource(
+                        when (appSettings.themeMode) {
+                            "system" -> R.string.theme_mode_system
+                            "light" -> R.string.theme_mode_light
+                            "dark" -> R.string.theme_mode_dark
+                            else -> R.string.theme_mode_system
+                        }
+                    ),
                     onClick = { showThemeDialog = true }
                 )
 
                 SettingsClickItem(
-                    title = "字体大小",
-                    subtitle = "调整编辑器字体大小",
-                    trailingText = "${appSettings.fontSize}sp",
+                    title = stringResource(R.string.app_settings_font_size),
+                    subtitle = stringResource(R.string.app_settings_font_size_desc),
+                    trailingText = stringResource(R.string.app_settings_font_size_unit, appSettings.fontSize),
                     onClick = { showFontDialog = true }
+                )
+
+                SettingsClickItem(
+                    title = stringResource(R.string.app_settings_language),
+                    subtitle = stringResource(R.string.app_settings_language_desc),
+                    trailingText = stringResource(LocaleHelper.languageCodeToResourceId(appSettings.languageCode)),
+                    onClick = { showLanguageDialog = true }
                 )
             }
 
-            SettingsSection(title = "编辑器设置") {
+            SettingsSection(title = stringResource(R.string.app_settings_section_editor)) {
                 SettingsSliderItem(
-                    title = "字体大小",
-                    subtitle = "调整编辑器字体大小",
+                    title = stringResource(R.string.app_settings_font_size_editor),
+                    subtitle = stringResource(R.string.app_settings_font_size_editor_desc),
                     value = appSettings.fontSize.toFloat(),
                     onValueChange = { viewModel.updateFontSize(it.toInt()) },
                     valueRange = 10f..24f,
                     steps = 13,
-                    valueText = "${appSettings.fontSize}sp"
+                    valueText = stringResource(R.string.app_settings_font_size_unit, appSettings.fontSize)
                 )
             }
 
-            SettingsSection(title = "自动保存") {
+            SettingsSection(title = stringResource(R.string.app_settings_section_auto_save)) {
                 SettingsSwitchItem(
-                    title = "即时自动保存",
-                    subtitle = "有修改时立即自动保存，无需等待固定间隔",
+                    title = stringResource(R.string.app_settings_instant_save),
+                    subtitle = stringResource(R.string.app_settings_instant_save_desc),
                     checked = appSettings.autoSaveImmediately,
                     onCheckedChange = { viewModel.updateAutoSaveImmediately(it) }
                 )
                 
                 SettingsClickItem(
-                    title = "自动保存间隔",
-                    subtitle = "设置定时自动保存的时间间隔（即时保存启用时不可用）",
-                    trailingText = if (appSettings.autoSaveImmediately) "实时保存" else "${appSettings.autoSaveInterval}分钟",
+                    title = stringResource(R.string.app_settings_auto_save_interval),
+                    subtitle = stringResource(R.string.app_settings_auto_save_interval_desc),
+                    trailingText = if (appSettings.autoSaveImmediately) stringResource(R.string.app_settings_save_realtime) else stringResource(R.string.app_settings_save_interval_minutes, appSettings.autoSaveInterval),
                     onClick = { 
                         if (!appSettings.autoSaveImmediately) {
                             showAutoSaveDialog = true 
@@ -136,6 +155,21 @@ fun AppSettingsScreen(
             onDismiss = { showAutoSaveDialog = false }
         )
     }
+
+    if (showLanguageDialog) {
+        val context = LocalContext.current
+        LanguageDialog(
+            currentLanguage = appSettings.languageCode,
+            onLanguageSelected = { code ->
+                viewModel.updateLanguage(code)
+                showLanguageDialog = false
+                val activity = context as android.app.Activity
+                LocaleHelper.applyLocale(activity, code)
+                activity.recreate()
+            },
+            onDismiss = { showLanguageDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -145,14 +179,14 @@ fun ThemeModeDialog(
     onDismiss: () -> Unit
 ) {
     val themeOptions = listOf(
-        "system" to "跟随系统",
-        "light" to "浅色模式",
-        "dark" to "深色模式"
+        "system" to stringResource(R.string.theme_mode_system),
+        "light" to stringResource(R.string.theme_mode_light),
+        "dark" to stringResource(R.string.theme_mode_dark)
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("主题模式") },
+        title = { Text(stringResource(R.string.theme_mode_dialog_title)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -179,7 +213,7 @@ fun ThemeModeDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )
@@ -195,7 +229,7 @@ fun FontSizeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("字体大小") },
+        title = { Text(stringResource(R.string.font_size_dialog_title)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -212,7 +246,7 @@ fun FontSizeDialog(
                             onClick = { onSizeSelected(size) }
                         )
                         Text(
-                            text = "${size}sp",
+                            text = stringResource(R.string.app_settings_font_size_unit, size),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )
@@ -222,7 +256,7 @@ fun FontSizeDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )
@@ -236,7 +270,7 @@ fun AutoSaveIntervalDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("自动保存间隔") },
+        title = { Text(stringResource(R.string.auto_save_interval_dialog_title)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -252,7 +286,7 @@ fun AutoSaveIntervalDialog(
                         onClick = { onIntervalSelected(0) }
                     )
                     Text(
-                        text = "实时保存",
+                        text = stringResource(R.string.auto_save_realtime),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f)
                     )
@@ -270,7 +304,7 @@ fun AutoSaveIntervalDialog(
                             onClick = { onIntervalSelected(interval) }
                         )
                         Text(
-                            text = "${interval}分钟",
+                            text = stringResource(R.string.app_settings_save_interval_minutes, interval),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )
@@ -280,17 +314,56 @@ fun AutoSaveIntervalDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.common_close))
             }
         }
     )
 }
 
-private fun getThemeModeDisplayName(mode: String): String {
-    return when (mode) {
-        "system" -> "跟随系统"
-        "light" -> "浅色模式"
-        "dark" -> "深色模式"
-        else -> mode
-    }
+@Composable
+fun LanguageDialog(
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val languageOptions = listOf(
+        LocaleHelper.CODE_SYSTEM to stringResource(R.string.language_system),
+        LocaleHelper.CODE_EN to stringResource(R.string.language_en),
+        LocaleHelper.CODE_ZH_CN to stringResource(R.string.language_zh_cn),
+        LocaleHelper.CODE_ZH_TW to stringResource(R.string.language_zh_tw)
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.language_dialog_title)) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                languageOptions.forEach { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        RadioButton(
+                            selected = currentLanguage == code,
+                            onClick = { onLanguageSelected(code) }
+                        )
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_close))
+            }
+        }
+    )
 }
