@@ -40,6 +40,7 @@ sealed class WritingUiState {
         val selectedTab: Int,
         val isSaving: Boolean,
         val isDirty: Boolean,
+        val autoSaveImmediately: Boolean = false,
         val saveMessage: String? = null
     ) : WritingUiState()
     data class Error(val message: UiText) : WritingUiState()
@@ -54,6 +55,11 @@ class WritingViewModel(
     val uiState: StateFlow<WritingUiState> = _uiState.asStateFlow()
 
     private var saveMessageJob: Job? = null
+    private var autoSaveTimerJob: Job? = null
+    private var instantSaveJob: Job? = null
+
+    private var autoSaveImmediately: Boolean = false
+    private var autoSaveInterval: Int = 5
 
     init {
         loadCurrentProject()
@@ -73,11 +79,68 @@ class WritingViewModel(
                     _uiState.value = WritingUiState.NoProject
                     return@launch
                 }
+                loadAutoSaveSettings()
                 loadChapters(project, useSavedTab = true)
             } catch (e: Exception) {
                 _uiState.value = WritingUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
         }
+    }
+
+    private suspend fun loadAutoSaveSettings() {
+        autoSaveImmediately = settingsUseCase.getAutoSaveImmediately()
+        autoSaveInterval = settingsUseCase.getAutoSaveInterval()
+    }
+
+    private fun startAutoSaveIfNeeded() {
+        stopAutoSaveTimer()
+        if (autoSaveImmediately) {
+            startInstantAutoSave()
+        } else if (autoSaveInterval > 0) {
+            startIntervalAutoSave()
+        }
+    }
+
+    private fun startIntervalAutoSave() {
+        stopAutoSaveTimer()
+        autoSaveTimerJob = viewModelScope.launch {
+            while (true) {
+                delay(autoSaveInterval * 60 * 1000L)
+                val state = _uiState.value as? WritingUiState.Success ?: continue
+                if (state.isDirty) {
+                    saveCurrentChapterInternal(state)
+                }
+            }
+        }
+    }
+
+    private fun startInstantAutoSave() {
+        stopAutoSaveTimer()
+    }
+
+    private fun scheduleInstantSave() {
+        if (!autoSaveImmediately) return
+        instantSaveJob?.cancel()
+        instantSaveJob = viewModelScope.launch {
+            delay(1500)
+            val state = _uiState.value as? WritingUiState.Success ?: return@launch
+            if (state.isDirty) {
+                saveCurrentChapterInternal(state)
+            }
+        }
+    }
+
+    private fun stopAutoSaveTimer() {
+        autoSaveTimerJob?.cancel()
+        autoSaveTimerJob = null
+        instantSaveJob?.cancel()
+        instantSaveJob = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopAutoSaveTimer()
+        saveMessageJob?.cancel()
     }
 
     private suspend fun loadChapters(project: ProjectEntity, useSavedTab: Boolean = false) {
@@ -115,12 +178,15 @@ class WritingViewModel(
             wordCount = 0,
             selectedTab = savedTab,
             isSaving = false,
-            isDirty = false
+            isDirty = false,
+            autoSaveImmediately = autoSaveImmediately
         )
 
         if (chapterInfoList.isNotEmpty()) {
             selectChapterInternal(project, chapterInfoList, 0)
         }
+
+        startAutoSaveIfNeeded()
     }
 
     private suspend fun selectChapterInternal(
@@ -153,7 +219,8 @@ class WritingViewModel(
             wordCount = countWords(body),
             selectedTab = currentTab,
             isSaving = false,
-            isDirty = false
+            isDirty = false,
+            autoSaveImmediately = autoSaveImmediately
         )
     }
 
@@ -175,10 +242,15 @@ class WritingViewModel(
             isDirty = true,
             saveMessage = null
         )
+        scheduleInstantSave()
     }
 
     fun saveCurrentChapter() {
         val state = _uiState.value as? WritingUiState.Success ?: return
+        saveCurrentChapterInternal(state)
+    }
+
+    private fun saveCurrentChapterInternal(state: WritingUiState.Success) {
         val index = state.currentChapterIndex
         if (index < 0) return
 
@@ -186,20 +258,20 @@ class WritingViewModel(
         val fullContent = ChapterFileHelper.buildChapterContent(
             state.currentChapterMeta, state.editorContent
         )
+        val savedEditorContent = state.editorContent
         if (!state.isDirty) return
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isSaving = true)
+            _uiState.value = (_uiState.value as? WritingUiState.Success)?.copy(isSaving = true) ?: return@launch
             val result = projectManagementUseCase.writeFileContent(chapter.filePath, fullContent)
+            val current = _uiState.value as? WritingUiState.Success ?: return@launch
             if (result.isSuccess) {
                 projectManagementUseCase.updateProjectStatistics(state.project.id)
-                _uiState.value = state.copy(isSaving = false, isDirty = false, saveMessage = "已保存")
+                val stillDirty = current.editorContent != savedEditorContent
+                _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
                 clearSaveMessageAfterDelay()
             } else {
-                _uiState.value = state.copy(
-                    isSaving = false,
-                    saveMessage = "保存失败"
-                )
+                _uiState.value = current.copy(isSaving = false, saveMessage = "保存失败")
                 clearSaveMessageAfterDelay()
             }
         }

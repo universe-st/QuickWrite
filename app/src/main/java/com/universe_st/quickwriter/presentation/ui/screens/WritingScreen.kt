@@ -10,16 +10,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
@@ -183,6 +180,7 @@ private fun WritingTopBar(
     val saveMessage = (uiState as? WritingUiState.Success)?.saveMessage
     val wordCount = (uiState as? WritingUiState.Success)?.wordCount ?: 0
     val hasChapters = (uiState as? WritingUiState.Success)?.chapters?.isNotEmpty() == true
+    val showSaveButton = (uiState as? WritingUiState.Success)?.autoSaveImmediately != true
 
     TopAppBar(
         title = {
@@ -233,8 +231,10 @@ private fun WritingTopBar(
                     )
                 }
             }
-            IconButton(onClick = onSave) {
-                Icon(Icons.Default.Save, contentDescription = stringResource(R.string.writing_save_content_desc))
+            if (showSaveButton) {
+                IconButton(onClick = onSave) {
+                    Icon(Icons.Default.Save, contentDescription = stringResource(R.string.writing_save_content_desc))
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -397,40 +397,7 @@ private fun EditorContent(
             }
         }
 
-        if (!showChapterList) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(40.dp)
-                    .fillMaxHeight(),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(24.dp)
-                        .height(80.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
-                        )
-                        .pointerInput(Unit) {
-                            detectTapGestures(onTap = { onToggleChapterList() })
-                        }
-                        .pointerInput(Unit) {
-                            detectHorizontalDragGestures { _, dragAmount ->
-                                if (dragAmount > 50f) onToggleChapterList()
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = stringResource(R.string.writing_show_chapter_list),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
+
     }
 }
 
