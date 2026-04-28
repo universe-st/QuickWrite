@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.*
@@ -48,7 +47,6 @@ fun ProjectDetailScreen(
     onEdit: (String) -> Unit,
     onNavigateBack: () -> Unit,
     onStartWriting: () -> Unit = {},
-    onFileBrowser: (String) -> Unit,
     viewModel: ProjectDetailViewModel
 ) {
     val context = LocalContext.current
@@ -181,7 +179,6 @@ fun ProjectDetailScreen(
                             )
                         },
                         onDeleteCover = { showDeleteCoverDialog = true },
-                        onFileBrowser = { onFileBrowser(project.id) },
                             modifier = Modifier
                     )
                 }
@@ -211,7 +208,6 @@ fun ProjectDetailScreen(
                                 )
                             },
                             onDeleteCover = { showDeleteCoverDialog = true },
-                            onFileBrowser = { onFileBrowser(project.id) },
                             modifier = Modifier
                         )
                     }
@@ -444,7 +440,6 @@ fun ProjectDetailContent(
     onSetCurrent: () -> Unit,
     onCoverClick: () -> Unit,
     onStartWriting: () -> Unit = {},
-    onFileBrowser: (String) -> Unit = {},
     onAddCover: () -> Unit = {},
     onDeleteCover: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -589,15 +584,6 @@ fun ProjectDetailContent(
             Icon(Icons.Default.Edit, contentDescription = null)
             Spacer(modifier = Modifier.width(4.dp))
             Text("开始写作")
-        }
-
-        OutlinedButton(
-            onClick = { onFileBrowser(project.id) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.FolderOpen, contentDescription = null)
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("文件管理")
         }
 
         OutlinedButton(

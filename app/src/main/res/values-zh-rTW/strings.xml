@@ -122,31 +122,6 @@
     <string name="chapter_new_title">新增章節</string>
     <string name="chapter_field_title">章節標題</string>
 
-    <!-- ===== 檔案管理頁面 ===== -->
-    <string name="file_browser_title">檔案管理</string>
-    <string name="file_browser_new">新增</string>
-    <string name="file_browser_new_file">新增檔案</string>
-    <string name="file_browser_new_folder">新增資料夾</string>
-    <string name="file_browser_empty">此目錄為空</string>
-    <string name="file_browser_empty_hint">點擊右上角新增檔案或資料夾</string>
-    <string name="file_browser_parent_dir">上級目錄</string>
-    <string name="file_browser_close_preview">關閉預覽</string>
-    <string name="file_browser_root">專案根目錄</string>
-
-    <!-- ===== 檔案對話框 ===== -->
-    <string name="file_dialog_new_folder_title">新增資料夾</string>
-    <string name="file_dialog_new_file_title">新增檔案</string>
-    <string name="file_dialog_folder_name_label">資料夾名稱</string>
-    <string name="file_dialog_file_name_label">檔案名稱（含副檔名）</string>
-    <string name="file_dialog_folder_placeholder">新資料夾</string>
-    <string name="file_dialog_file_placeholder">新檔案.md</string>
-    <string name="file_dialog_rename_title">重新命名</string>
-    <string name="file_dialog_rename_label">新名稱</string>
-    <string name="file_dialog_confirm_delete_title">確認刪除</string>
-    <string name="file_dialog_confirm_delete_message">確定要刪除%1$s「%2$s」嗎？\n\n此操作不可恢復。</string>
-    <string name="file_dialog_type_folder">資料夾</string>
-    <string name="file_dialog_type_file">檔案</string>
-
     <!-- ===== 檔案錯誤 ===== -->
     <string name="file_error_not_found">檔案不存在: %1$s</string>
     <string name="file_error_rename_failed">重新命名失敗</string>

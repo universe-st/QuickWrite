@@ -195,34 +195,6 @@ class ProjectManagementUseCase(
         return fileManager.deleteFileOrDirectory(filePath)
     }
 
-    suspend fun getDirectoryContents(path: String): Result<List<String>> {
-        return fileManager.getDirectoryContents(path)
-    }
-
-    suspend fun createDirectory(dirPath: String): Result<Unit> {
-        return fileManager.createDirectory(dirPath)
-    }
-
-    suspend fun createFile(filePath: String): Result<Unit> {
-        return fileManager.createFile(filePath)
-    }
-
-    suspend fun deleteFileOrDirectory(path: String): Result<Unit> {
-        return fileManager.deleteFileOrDirectory(path)
-    }
-
-    suspend fun renameFileOrDirectory(oldPath: String, newPath: String): Result<Unit> {
-        return fileManager.renameFileOrDirectory(oldPath, newPath)
-    }
-
-    suspend fun getFileSize(path: String): Long {
-        return fileManager.getFileSize(path)
-    }
-
-    fun isPathSafe(path: String): Boolean {
-        return fileManager.isPathSafe(path)
-    }
-
     fun getProjectDirectory(projectId: String): String {
         return fileManager.getProjectDirectory(projectId).absolutePath
     }

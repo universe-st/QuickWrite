@@ -122,31 +122,6 @@
     <string name="chapter_new_title">新建章节</string>
     <string name="chapter_field_title">章节标题</string>
 
-    <!-- ===== 文件管理页面 ===== -->
-    <string name="file_browser_title">文件管理</string>
-    <string name="file_browser_new">新建</string>
-    <string name="file_browser_new_file">新建文件</string>
-    <string name="file_browser_new_folder">新建文件夹</string>
-    <string name="file_browser_empty">此目录为空</string>
-    <string name="file_browser_empty_hint">点击右上角新建文件或文件夹</string>
-    <string name="file_browser_parent_dir">上级目录</string>
-    <string name="file_browser_close_preview">关闭预览</string>
-    <string name="file_browser_root">项目根目录</string>
-
-    <!-- ===== 文件对话框 ===== -->
-    <string name="file_dialog_new_folder_title">新建文件夹</string>
-    <string name="file_dialog_new_file_title">新建文件</string>
-    <string name="file_dialog_folder_name_label">文件夹名称</string>
-    <string name="file_dialog_file_name_label">文件名（含扩展名）</string>
-    <string name="file_dialog_folder_placeholder">新文件夹</string>
-    <string name="file_dialog_file_placeholder">新文件.md</string>
-    <string name="file_dialog_rename_title">重命名</string>
-    <string name="file_dialog_rename_label">新名称</string>
-    <string name="file_dialog_confirm_delete_title">确认删除</string>
-    <string name="file_dialog_confirm_delete_message">确定要删除%1$s「%2$s」吗？\n\n此操作不可恢复。</string>
-    <string name="file_dialog_type_folder">文件夹</string>
-    <string name="file_dialog_type_file">文件</string>
-
     <!-- ===== 文件错误 ===== -->
     <string name="file_error_not_found">文件不存在: %1$s</string>
     <string name="file_error_rename_failed">重命名失败</string>

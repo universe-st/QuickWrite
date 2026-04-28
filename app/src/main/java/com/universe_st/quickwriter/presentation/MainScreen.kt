@@ -48,9 +48,7 @@ import com.universe_st.quickwriter.presentation.viewmodel.ProjectListViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListViewModelFactory
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModelFactory
-import com.universe_st.quickwriter.presentation.ui.screens.FileBrowserScreen
 import com.universe_st.quickwriter.presentation.ui.screens.WritingScreen
-import com.universe_st.quickwriter.presentation.viewmodel.FileBrowserViewModelFactory
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModelFactory
 
@@ -64,9 +62,6 @@ sealed class Screen(val route: String) {
         fun createRoute(projectId: String) = "project_edit/$projectId"
     }
     object Writing : Screen("writing")
-    object FileBrowser : Screen("file_browser/{projectId}") {
-        fun createRoute(projectId: String) = "file_browser/$projectId"
-    }
     object Settings : Screen("settings")
 }
 
@@ -202,9 +197,6 @@ fun MainScreen() {
                             popUpTo(Screen.ProjectList.route)
                         }
                     },
-                    onFileBrowser = { id ->
-                        navController.navigate(Screen.FileBrowser.createRoute(id))
-                    },
                     viewModel = projectDetailViewModel
                 )
             }
@@ -242,21 +234,6 @@ fun MainScreen() {
                             popUpTo(Screen.ProjectList.route) { inclusive = true }
                         }
                     }
-                )
-            }
-
-            composable(
-                route = Screen.FileBrowser.route,
-                arguments = listOf(navArgument("projectId") { type = NavType.StringType })
-            ) { backStackEntry ->
-                selectedTab = 0
-                val projectId = backStackEntry.arguments?.getString("projectId") ?: return@composable
-                val fileBrowserViewModel: com.universe_st.quickwriter.presentation.viewmodel.FileBrowserViewModel = viewModel(
-                    factory = FileBrowserViewModelFactory(appContainer.projectManagementUseCase, projectId)
-                )
-                FileBrowserScreen(
-                    viewModel = fileBrowserViewModel,
-                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

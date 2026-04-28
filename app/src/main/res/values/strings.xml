@@ -122,31 +122,6 @@
     <string name="chapter_new_title">New Chapter</string>
     <string name="chapter_field_title">Chapter Title</string>
 
-    <!-- ===== File Browser Screen ===== -->
-    <string name="file_browser_title">File Manager</string>
-    <string name="file_browser_new">New</string>
-    <string name="file_browser_new_file">New File</string>
-    <string name="file_browser_new_folder">New Folder</string>
-    <string name="file_browser_empty">This directory is empty</string>
-    <string name="file_browser_empty_hint">Tap the button at top right to create files or folders</string>
-    <string name="file_browser_parent_dir">Parent Directory</string>
-    <string name="file_browser_close_preview">Close Preview</string>
-    <string name="file_browser_root">Project Root</string>
-
-    <!-- ===== File Dialog Strings ===== -->
-    <string name="file_dialog_new_folder_title">New Folder</string>
-    <string name="file_dialog_new_file_title">New File</string>
-    <string name="file_dialog_folder_name_label">Folder Name</string>
-    <string name="file_dialog_file_name_label">File Name (with extension)</string>
-    <string name="file_dialog_folder_placeholder">New Folder</string>
-    <string name="file_dialog_file_placeholder">New File.md</string>
-    <string name="file_dialog_rename_title">Rename</string>
-    <string name="file_dialog_rename_label">New Name</string>
-    <string name="file_dialog_confirm_delete_title">Confirm Deletion</string>
-    <string name="file_dialog_confirm_delete_message">Are you sure you want to delete %1$s "%2$s"?\n\nThis operation cannot be undone.</string>
-    <string name="file_dialog_type_folder">folder</string>
-    <string name="file_dialog_type_file">file</string>
-
     <!-- ===== File Errors ===== -->
     <string name="file_error_not_found">File not found: %1$s</string>
     <string name="file_error_rename_failed">Rename failed</string>
