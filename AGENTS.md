@@ -26,7 +26,7 @@ com.universe_st.quickwriter/
 │   ├── ui/
 │   │   ├── components/      # 可复用 UI 组件
 │   │   └── screens/         # 页面级 Composable (10 个页面)
-│   └── viewmodel/           # ViewModels (5 个)
+│   └── viewmodel/           # ViewModels (7 个)
 ├── domain/
 │   ├── usecase/             # 业务逻辑层
 │   └── model/               # 领域模型（当前直接使用 entity）
@@ -65,11 +65,13 @@ com.universe_st.quickwriter/
 - AI 模型配置管理系统（AiConfigScreen, AiModelConfigRepository）
 - 用户设置数据管理（UserSettingsRepository, SettingsUseCase）
 - 写作设置界面（WritingSettingsScreen）
+- 写作编辑器页面（WritingScreen，基于 markor-editor）
+- 文件浏览器页面（FileBrowserScreen，支持章节文件管理）
 - 关于界面（AboutScreen）
 - 数据验证和错误处理基本框架
 - 项目删除功能（长按交互 + 确认对话框）
 - 启动界面和闪屏（SplashScreen, QuickWriterApp）
-- 全部 5 个 ViewModel 实现（含工厂类）
+- 全部 7 个 ViewModel 实现（含工厂类）
 - Room TypeConverters 支持（List\<String\> 转换）
 - 项目排序功能（按创建时间、修改时间、名称）
 - markor-editor 模块导入（基于 Markor HighlightingEditor 移植，支持语法高亮、行号、自动格式化）
@@ -371,7 +373,13 @@ sealed class SomeUiState {
 - `di/AppContainer.kt`: 依赖注入容器
 - `data/local/database/AppDatabase.kt`: Room 数据库配置
 - `util/FileManager.kt`: 文件系统管理工具
+- `util/ChapterFileHelper.kt`: 章节文件 YAML Front Matter 解析与构建
+- `util/CoverImageProcessor.kt`: 封面图片处理工具
 - `util/UiText.kt`: 国际化文本包装类（支持字符串资源与动态字符串）
+- `util/AppEditorConfig.kt`: 编辑器配置（常用文件类型、扩展名等）
+- `util/LocaleHelper.kt`: 多语言环境切换辅助工具
+- `util/AppUtils.kt`: 通用应用工具（类型简称、日期格式化等）
+- `data/local/database/Converters.kt`: Room TypeConverters（List&lt;String&gt; 转换）
 - `domain/usecase/ProjectManagementUseCase.kt`: 项目管理的业务逻辑
 - `domain/usecase/SettingsUseCase.kt`: 设置管理的业务逻辑
 
@@ -383,17 +391,22 @@ sealed class SomeUiState {
 - `presentation/ui/screens/ProjectCreateScreen.kt`: 项目创建页面
 - `presentation/ui/screens/ProjectEditScreen.kt`: 项目编辑页面
 - `presentation/ui/screens/ProjectDetailScreen.kt`: 项目详情查看页面
+- `presentation/ui/screens/WritingScreen.kt`: 写作编辑器页面（基于 markor-editor）
+- `presentation/ui/screens/FileBrowserScreen.kt`: 文件浏览器页面
 - `presentation/ui/screens/SettingsScreen.kt`: 系统设置界面（含内部导航）
 - `presentation/ui/screens/AppSettingsScreen.kt`: 外观与字体设置
 - `presentation/ui/screens/WritingSettingsScreen.kt`: 写作设置界面
 - `presentation/ui/screens/AiConfigScreen.kt`: AI模型配置界面
 - `presentation/ui/screens/AboutScreen.kt`: 关于界面
 - `presentation/ui/components/ProjectCard.kt`: 项目卡片组件
+- `presentation/ui/components/ProjectCoverImage.kt`: 封面图片加载组件
 - `presentation/ui/components/SettingsComponents.kt`: 设置页面组件
 - `presentation/viewmodel/ProjectListViewModel.kt`: 项目列表 ViewModel
 - `presentation/viewmodel/ProjectCreateViewModel.kt`: 项目创建 ViewModel
 - `presentation/viewmodel/ProjectEditViewModel.kt`: 项目编辑 ViewModel
 - `presentation/viewmodel/ProjectDetailViewModel.kt`: 项目详情 ViewModel
+- `presentation/viewmodel/WritingViewModel.kt`: 写作编辑器 ViewModel
+- `presentation/viewmodel/FileBrowserViewModel.kt`: 文件浏览器 ViewModel
 - `presentation/viewmodel/SettingsViewModel.kt`: 设置页面 ViewModel
 
 ### 数据层文件
@@ -406,6 +419,63 @@ sealed class SomeUiState {
 - `data/local/entity/ProjectEntity.kt`: 项目数据库实体
 - `data/local/entity/AiModelConfigEntity.kt`: AI模型配置数据库实体
 - `data/local/entity/UserSettingEntity.kt`: 用户设置数据库实体
+
+## 构建系统配置
+
+### 版本信息
+| 组件 | 版本 |
+|---|---|
+| AGP (Android Gradle Plugin) | 9.2.0 |
+| Kotlin | 2.3.10 |
+| KSP | 2.3.7 |
+| Compose BOM | 2026.02.01 |
+| Room | 2.7.2 |
+| Retrofit | 2.11.0 |
+| OkHttp | 5.0.0-alpha.14 |
+| Navigation Compose | 2.8.7 |
+| Coil | 2.6.0 |
+| DataStore | 1.1.1 |
+
+### 版本目录
+项目使用 `gradle/libs.versions.toml` 统一管理依赖版本，所有依赖声明集中在版本目录文件中。
+
+### Maven 仓库
+使用阿里云 Maven 镜像加速（Google、Maven Central、Gradle Plugin），同时保留官方仓库作为回退。
+
+### 特殊配置
+- **compileSdk**: 36, **minSdk**: 24, **targetSdk**: 35
+- **Java**: VERSION_11
+- **BuildConfig**: 已启用 (`buildConfig = true`)
+- **KSP** 替代 kapt 进行 Room 编译时代码生成
+- **Minification**: 当前关闭 (`isMinifyEnabled = false`)
+- Hilt 依赖已在版本目录中声明但尚未启用（当前使用手动 DI）
+
+### markor-editor 模块
+独立的 Android Library 模块 (`:markor-editor`)，基于 Markor 应用的 HighlightingEditor 移植。
+
+**模块文件结构**:
+```
+markor-editor/src/main/
+├── kotlin/com/universe_st/markor_editor/
+│   ├── MarkorEditor.kt              # Compose 包装器
+│   └── EditorConfig.kt              # 编辑器配置
+├── java/net/gsantner/markor/
+│   ├── format/markdown/MarkdownSyntaxHighlighter.java
+│   ├── format/plaintext/PlaintextSyntaxHighlighter.java
+│   ├── format/general/ColorUnderlineSpan.java
+│   └── frontend/textview/
+│       ├── HighlightingEditor.java   # 核心编辑器控件
+│       ├── AutoTextFormatter.java    # 自动格式化
+│       ├── LineNumbersView.java      # 行号显示
+│       ├── SyntaxHighlighterBase.java # 语法高亮基类
+│       ├── TextViewUtils.java
+│       └── TextViewUndoRedo.java     # 撤销/重做
+└── java/other/writeily/format/      # 标题 span 样式
+```
+
+**依赖**: appcompat 1.7.1, Material 1.13.0, Compose BOM/ui/material3
+
+**参考文档**: `docs/markor-editor集成说明.md` — 详细移植记录
 
 ## 开发注意事项
 
@@ -457,8 +527,10 @@ sealed class SomeUiState {
 
 - **需求文档**: `docs/requirement.md` - 完整的产品需求和技术规范
 - **第一期需求**: `docs/第一期需求.md` - 第一期开发计划和进度
+- **第二期需求**: `docs/第二期需求.md` - 第二期开发计划和需求
 - **依赖清单**: `docs/依赖清单.md` - 使用的依赖库列表
 - **Markor Editor 集成说明**: `docs/markor-editor集成说明.md` - 编辑器移植详细记录
+- **编辑器需求文档**: `docs/编辑器需求文档.md` - 编辑器功能详细需求
 
 ## 联系方式
 
@@ -466,6 +538,6 @@ sealed class SomeUiState {
 
 ---
 
-**文档版本**: 2.3  
-**最后更新**: 2026-04-27  
+**文档版本**: 2.4  
+**最后更新**: 2026-04-28  
 **适用范围**: AI Agents 和开发团队
