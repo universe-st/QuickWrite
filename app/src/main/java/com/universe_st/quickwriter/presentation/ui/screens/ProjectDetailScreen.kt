@@ -27,9 +27,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.presentation.ui.components.ProjectCoverImage
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailUiState
@@ -50,6 +52,7 @@ fun ProjectDetailScreen(
     viewModel: ProjectDetailViewModel
 ) {
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(projectId) {
         viewModel.loadProject(projectId)
@@ -66,6 +69,8 @@ fun ProjectDetailScreen(
     var showDeleteCoverDialog by remember { mutableStateOf(false) }
     var startWritingTriggered by remember { mutableStateOf(false) }
 
+    var lastSuccessProject by remember { mutableStateOf<ProjectEntity?>(null) }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -79,7 +84,21 @@ fun ProjectDetailScreen(
         }
     }
 
+    val zipExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri: Uri? ->
+        uri?.let { targetUri ->
+            val projectTitle = when (val state = uiState) {
+                is ProjectDetailUiState.Success -> state.project.title
+                else -> "project"
+            }
+            val safeFileName = "${projectTitle.replace(Regex("[/\\\\:*?\"<>|]"), "_")}.zip"
+            viewModel.performExport(context, projectId, targetUri)
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("项目详情") },
@@ -97,18 +116,19 @@ fun ProjectDetailScreen(
                         onDismissRequest = { showExportMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("TXT 格式") },
+                            text = { Text(stringResource(R.string.project_detail_export_zip)) },
                             onClick = {
                                 showExportMenu = false
+                                val projectTitle = when (val state = uiState) {
+                                    is ProjectDetailUiState.Success -> state.project.title
+                                    else -> "project"
+                                }
+                                val safeFileName = projectTitle.replace(Regex("[/\\\\:*?\"<>|]"), "_")
+                                zipExportLauncher.launch(safeFileName)
                             },
-                            enabled = false
-                        )
-                        DropdownMenuItem(
-                            text = { Text("EPUB 格式") },
-                            onClick = {
-                                showExportMenu = false
-                            },
-                            enabled = false
+                            leadingIcon = {
+                                Icon(Icons.Default.FileDownload, contentDescription = null)
+                            }
                         )
                     }
                 },
@@ -135,6 +155,7 @@ fun ProjectDetailScreen(
                 }
                 is ProjectDetailUiState.Success -> {
                     val project = (uiState as ProjectDetailUiState.Success).project
+                    lastSuccessProject = project
 
                     ProjectDetailContent(
                         project = project,
@@ -164,8 +185,63 @@ fun ProjectDetailScreen(
                             modifier = Modifier
                     )
                 }
+                is ProjectDetailUiState.Exporting -> {
+                    lastSuccessProject?.let { project ->
+                        ProjectDetailContent(
+                            project = project,
+                            isCurrentProject = isCurrentProject,
+                            coverImagePath = coverImagePath,
+                            onEdit = { onEdit(project.id) },
+                            onDelete = { showDeleteDialog = true },
+                            onSetCurrent = {
+                                if (isCurrentProject) {
+                                    viewModel.unsetCurrentProject()
+                                } else {
+                                    viewModel.setCurrentProject(project.id)
+                                }
+                            },
+                            onStartWriting = {
+                                startWritingTriggered = true
+                                viewModel.setCurrentProject(project.id)
+                            },
+                            onCoverClick = { showCoverMenu = true },
+                            onAddCover = {
+                                imagePickerLauncher.launch(
+                                    arrayOf("image/jpeg", "image/png", "image/bmp", "image/x-bmp")
+                                )
+                            },
+                            onDeleteCover = { showDeleteCoverDialog = true },
+                            onFileBrowser = { onFileBrowser(project.id) },
+                            modifier = Modifier
+                        )
+                    }
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = Color.Black.copy(alpha = 0.4f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator()
+                                    Text(
+                                        text = stringResource(R.string.project_export_progress),
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
                 is ProjectDetailUiState.Error -> {
-                    val context = LocalContext.current
                     val errorMessage = (uiState as ProjectDetailUiState.Error).message
                     Column(
                         modifier = Modifier
@@ -258,7 +334,8 @@ fun ProjectDetailScreen(
     }
 
     LaunchedEffect(uiState) {
-        when (uiState) {
+        val state = uiState
+        when (state) {
             is ProjectDetailUiState.DeleteSuccess -> {
                 onNavigateBack()
             }
@@ -269,6 +346,21 @@ fun ProjectDetailScreen(
                 } else {
                     onNavigateBack()
                 }
+            }
+            ProjectDetailUiState.ExportSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.project_export_success)
+                )
+                viewModel.loadProject(projectId)
+            }
+            is ProjectDetailUiState.ExportError -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(
+                        R.string.project_export_failed_detail,
+                        state.message.asString(context)
+                    )
+                )
+                viewModel.loadProject(projectId)
             }
             else -> {}
         }

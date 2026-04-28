@@ -9,6 +9,7 @@ import com.universe_st.quickwriter.util.FileManager
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.io.File
 
 class ProjectManagementUseCase(
@@ -68,6 +69,9 @@ class ProjectManagementUseCase(
                 deleteProject(projectId)
                 return Result.failure(createDirResult.exceptionOrNull() ?: Exception("创建项目目录失败"))
             }
+            val project = result.getOrThrow()
+            val projectDir = File(project.storagePath)
+            fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.createdTime)
         }
 
         return result
@@ -246,6 +250,22 @@ class ProjectManagementUseCase(
             )
         }
         return saveResult
+    }
+
+    suspend fun exportProjectAsZip(projectId: String, outputFile: File): Result<Unit> {
+        val project = projectRepository.getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("Project not found"))
+        val computedPath = fileManager.getProjectDirectory(projectId).absolutePath
+        Timber.tag("ZipExport").i("DB storagePath=%s, computed getProjectDirectory=%s",
+            project.storagePath, computedPath)
+
+        val projectDir = File(project.storagePath)
+        val infoFile = File(projectDir, "info.json")
+        if (!infoFile.exists()) {
+            fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.createdTime)
+        }
+
+        return fileManager.zipProjectToFile(project.storagePath, outputFile)
     }
 
     suspend fun deleteCoverImage(projectId: String): Result<Unit> {

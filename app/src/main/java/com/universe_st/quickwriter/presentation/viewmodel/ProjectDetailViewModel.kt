@@ -10,10 +10,13 @@ import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
 import com.universe_st.quickwriter.util.UiText
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class ProjectDetailViewModel(
     private val projectManagementUseCase: ProjectManagementUseCase,
@@ -153,6 +156,53 @@ class ProjectDetailViewModel(
             }
         }
     }
+
+    fun performExport(context: Context, projectId: String, targetUri: android.net.Uri) {
+        val tag = "ProjectDetailVM.performExport"
+        Timber.tag(tag).d("Starting export: projectId=%s, uri=%s", projectId, targetUri)
+        viewModelScope.launch {
+            _uiState.value = ProjectDetailUiState.Exporting
+            try {
+                val tempFile = java.io.File(context.cacheDir, "${projectId}_export.zip")
+                Timber.tag(tag).d("Temp file: %s", tempFile.absolutePath)
+                try {
+                    withContext(Dispatchers.IO) {
+                        val zipResult = projectManagementUseCase.exportProjectAsZip(projectId, tempFile)
+                        if (zipResult.isFailure) {
+                            val ex = zipResult.exceptionOrNull()
+                            Timber.tag(tag).e(ex, "ZIP creation failed")
+                            throw java.io.IOException("ZIP creation failed", ex)
+                        }
+                        Timber.tag(tag).d("ZIP created: size=%d bytes", tempFile.length())
+
+                        val output = context.contentResolver.openOutputStream(targetUri)
+                        if (output == null) {
+                            Timber.tag(tag).e("openOutputStream returned null for uri=%s", targetUri)
+                            throw java.io.IOException("Cannot open output stream for target URI")
+                        }
+                        output.use { out ->
+                            tempFile.inputStream().use { input ->
+                                val copied = input.copyTo(out, 8192)
+                                Timber.tag(tag).d("Copied %d bytes to target URI", copied)
+                            }
+                        }
+                    }
+                } finally {
+                    withContext(Dispatchers.IO) {
+                        val deleted = tempFile.delete()
+                        Timber.tag(tag).d("Temp file deleted: %s", deleted)
+                    }
+                }
+                _uiState.value = ProjectDetailUiState.ExportSuccess
+                Timber.tag(tag).d("Export success")
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Export failed: %s", e.message)
+                _uiState.value = ProjectDetailUiState.ExportError(
+                    UiText.DynamicString(e.message ?: "Unknown error")
+                )
+            }
+        }
+    }
 }
 
 class ProjectDetailViewModelFactory(
@@ -174,4 +224,7 @@ sealed class ProjectDetailUiState {
     data class Error(val message: UiText) : ProjectDetailUiState()
     object DeleteSuccess : ProjectDetailUiState()
     object SetCurrentSuccess : ProjectDetailUiState()
+    object Exporting : ProjectDetailUiState()
+    object ExportSuccess : ProjectDetailUiState()
+    data class ExportError(val message: UiText) : ProjectDetailUiState()
 }

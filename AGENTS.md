@@ -140,6 +140,7 @@ com.universe_st.quickwriter/
 
 ```
 /{项目ID}/
+├── info.json                # 项目元数据（书名、作者、类型、创建时间等）
 ├── 简介.md                  # 项目基本信息
 ├── 正文/                    # 小说正文章节
 ├── 设定/
@@ -154,11 +155,40 @@ com.universe_st.quickwriter/
     └── 写作规范.md
 ```
 
+#### info.json 格式
+项目根目录下的 `info.json` 存储项目元数据，新建项目时自动生成，导出时若缺失则自动补建。
+
+```json
+{
+  "title": "书名",
+  "author": "作者",
+  "genre": "类型",
+  "createdTime": "2026-04-28T12:00:00.000Z",
+  "version": "1.0"
+}
+```
+
+- `createdTime` 使用 ISO 8601 UTC 格式
+- `version` 为格式版本号，当前固定 `"1.0"`
+- 生成位置：`FileManager.createInfoJson()` 方法，分别由项目创建（`ProjectManagementUseCase.createProject`）和 ZIP 导出（`ProjectManagementUseCase.exportProjectAsZip`）调用
+
 #### 文件操作
 - 使用 `FileManager` 进行所有文件操作
 - 统一使用 UTF-8 编码
 - 文件路径必须使用路径验证，防止目录遍历攻击
 - 所有文件操作必须是线程安全的
+
+#### 项目路径获取规范（重要）
+**必须使用数据库中的 `ProjectEntity.storagePath`，禁止在运行时重新计算项目目录路径。**
+
+原因：`FileManager.getProjectDirectory(projectId)` 基于 `context.filesDir` 实时计算路径，若 `filesDir` 因应用重装、系统升级等原因变化，会与数据库创建时记录的 `storagePath` 不一致，导致文件读取/写入指向错误（或不存在的空）目录。
+
+| 场景 | ✅ 正确做法 | ❌ 禁止做法 |
+|---|---|---|
+| ZIP 导出 | `project.storagePath` → `File(project.storagePath)` | `getProjectDirectory(projectId)` (会创建空目录) |
+| 文件浏览器 | `project.storagePath` (当前已正确) | — |
+| 章节文件操作 | `File(project.storagePath, "正文/...")` | `getProjectDirectory(projectId)` |
+| 目录创建 | 仅项目首次创建时调用 `createProjectDirectoryStructure(projectId)`；导出时如目录为空，调用 `createDirectoryStructureAt(projectDir)` 就地补建 | 重复调用 `getProjectDirectory(projectId)` |
 
 #### 章节文件格式（YAML Front Matter）
 每个章节 `.md` 文件使用标准 YAML 前置元数据格式：

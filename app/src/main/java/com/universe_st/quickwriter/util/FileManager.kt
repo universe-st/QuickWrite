@@ -4,8 +4,19 @@ import android.content.Context
 import com.universe_st.quickwriter.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import timber.log.Timber
+import java.io.BufferedInputStream
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class FileManager(private val context: Context) {
 
@@ -80,6 +91,20 @@ class FileManager(private val context: Context) {
             aiInstructionFile.createNewFile()
             aiInstructionFile.writeText("# AI写作指令\n\n", Charsets.UTF_8)
         }
+    }
+
+    fun createInfoJson(projectDir: File, title: String, author: String, genre: String, createdTime: Long) {
+        val infoFile = File(projectDir, "info.json")
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+        val json = JSONObject().apply {
+            put("title", title)
+            put("author", author)
+            put("genre", genre)
+            put("createdTime", dateFormat.format(Date(createdTime)))
+            put("version", "1.0")
+        }
+        infoFile.writeText(json.toString(2), Charsets.UTF_8)
     }
 
     private fun createWritingRulesFile(projectDir: File) {
@@ -228,5 +253,116 @@ class FileManager(private val context: Context) {
 
     fun hasCoverImage(projectId: String): Boolean {
         return CoverImageProcessor.hasCoverImage(getProjectDirectory(projectId).absolutePath)
+    }
+
+    suspend fun zipProjectToFile(projectDirPath: String, outputFile: File): Result<Unit> = withContext(Dispatchers.IO) {
+        val tag = "ZipExport"
+        try {
+            val projectDir = File(projectDirPath)
+            Timber.tag(tag).i("dir=%s, exists=%s, isDir=%s",
+                projectDir.absolutePath, projectDir.exists(), projectDir.isDirectory)
+
+            if (!projectDir.exists() || !projectDir.isDirectory) {
+                Timber.tag(tag).w("Project directory not found: %s", projectDir.absolutePath)
+                return@withContext Result.failure(IOException("Project directory not found: ${projectDir.absolutePath}"))
+            }
+
+            val basePath = projectDir.absolutePath.trimEnd(File.separatorChar) + File.separator
+            Timber.tag(tag).i("basePath=%s", basePath)
+
+            var allFiles = projectDir.walkTopDown().toList()
+            Timber.tag(tag).i("walkTopDown found %d total entries", allFiles.size)
+
+            var fileCount = 0
+            var dirCount = 0
+            allFiles.forEach { f ->
+                if (f.isDirectory) {
+                    dirCount++
+                    Timber.tag(tag).i("  DIR  [%d] %s", dirCount, f.absolutePath)
+                } else {
+                    fileCount++
+                    Timber.tag(tag).i("  FILE [%d] %s (%d bytes)", fileCount, f.absolutePath, f.length())
+                }
+            }
+            Timber.tag(tag).i("Summary: %d dirs, %d files", dirCount, fileCount)
+
+            if (fileCount == 0 && dirCount <= 1) {
+                Timber.tag(tag).w("Project directory is empty, creating structure")
+                createDirectoryStructureAt(projectDir)
+                allFiles = projectDir.walkTopDown().toList()
+                Timber.tag(tag).i("After structure creation: %d total entries", allFiles.size)
+                allFiles.forEach { f ->
+                    if (f.isDirectory) {
+                        Timber.tag(tag).i("  DIR  %s", f.absolutePath)
+                    } else {
+                        Timber.tag(tag).i("  FILE %s (%d bytes)", f.absolutePath, f.length())
+                    }
+                }
+            }
+
+            var entryCount = 0
+            FileOutputStream(outputFile).use { fileOut ->
+                ZipOutputStream(fileOut).use { zipOut ->
+                    allFiles.forEach { file ->
+                        val absPath = file.absolutePath
+                        if (!absPath.startsWith(basePath)) return@forEach
+                        val relativePath = absPath.substring(basePath.length).replace(File.separator, "/")
+                        if (relativePath.isEmpty() && file.isDirectory) return@forEach
+
+                        if (file.isDirectory) {
+                            zipOut.putNextEntry(ZipEntry("$relativePath/"))
+                            zipOut.closeEntry()
+                            entryCount++
+                        } else {
+                            zipOut.putNextEntry(ZipEntry(relativePath))
+                            BufferedInputStream(FileInputStream(file)).use { input ->
+                                input.copyTo(zipOut, 8192)
+                            }
+                            zipOut.closeEntry()
+                            entryCount++
+                        }
+                    }
+                }
+            }
+
+            val outputSize = outputFile.length()
+            Timber.tag(tag).i("ZIP complete: %d entries, %d bytes", entryCount, outputSize)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "ZIP creation failed for path=%s", projectDirPath)
+            if (outputFile.exists()) {
+                outputFile.delete()
+            }
+            Result.failure(e)
+        }
+    }
+
+    private fun createDirectoryStructureAt(projectDir: File) {
+        val dirs = listOf(
+            File(projectDir, "正文"),
+            File(projectDir, "设定${File.separator}人物"),
+            File(projectDir, "设定${File.separator}地点"),
+            File(projectDir, "设定${File.separator}组织"),
+            File(projectDir, "设定${File.separator}物品"),
+            File(projectDir, "时间线"),
+            File(projectDir, "记录"),
+            File(projectDir, "配置")
+        )
+        dirs.forEach { it.mkdirs() }
+
+        File(projectDir, "简介.md").createNewFile()
+
+        val aiFile = File(projectDir, "配置${File.separator}AI指令.md")
+        aiFile.parentFile?.mkdirs()
+        if (aiFile.createNewFile()) {
+            aiFile.writeText("# AI写作指令\n\n", Charsets.UTF_8)
+        }
+
+        val rulesFile = File(projectDir, "配置${File.separator}写作规范.md")
+        rulesFile.parentFile?.mkdirs()
+        if (rulesFile.createNewFile()) {
+            rulesFile.writeText("# 写作规范\n\n", Charsets.UTF_8)
+        }
     }
 }

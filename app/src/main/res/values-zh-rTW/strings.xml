@@ -58,6 +58,7 @@
     <string name="project_detail_export">匯出</string>
     <string name="project_detail_export_txt">TXT 格式</string>
     <string name="project_detail_export_epub">EPUB 格式</string>
+    <string name="project_detail_export_zip">ZIP 格式</string>
     <string name="project_detail_section_info">專案資訊</string>
     <string name="project_detail_label_description">描述</string>
     <string name="project_detail_label_created">建立時間</string>
@@ -351,6 +352,7 @@
     <string name="error_set_default_config_failed">設定預設設定失敗</string>
     <string name="error_delete_ai_config_failed">刪除AI設定失敗</string>
     <string name="error_update_language_failed">更新語言失敗</string>
+    <string name="error_export_failed">匯出專案失敗</string>
 
     <!-- ===== 成功訊息 ===== -->
     <string name="success_theme_updated">主題已更新</string>
@@ -368,6 +370,10 @@
     <string name="success_ai_config_set_default">已設為預設設定</string>
     <string name="success_ai_config_deleted">AI設定已刪除</string>
     <string name="success_language_updated">語言已更新</string>
+    <string name="project_export_success">專案匯出成功</string>
+    <string name="project_export_failed">匯出失敗</string>
+    <string name="project_export_failed_detail">匯出失敗：%1$s</string>
+    <string name="project_export_progress">正在匯出，請稍候...</string>
 
     <!-- ===== 時間格式 ===== -->
     <string name="time_just_now">剛剛</string>

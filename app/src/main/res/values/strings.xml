@@ -58,6 +58,7 @@
     <string name="project_detail_export">Export</string>
     <string name="project_detail_export_txt">TXT Format</string>
     <string name="project_detail_export_epub">EPUB Format</string>
+    <string name="project_detail_export_zip">ZIP Format</string>
     <string name="project_detail_section_info">Project Info</string>
     <string name="project_detail_label_description">Description</string>
     <string name="project_detail_label_created">Created</string>
@@ -351,6 +352,7 @@
     <string name="error_set_default_config_failed">Failed to set default configuration</string>
     <string name="error_delete_ai_config_failed">Failed to delete AI configuration</string>
     <string name="error_update_language_failed">Failed to update language</string>
+    <string name="error_export_failed">Failed to export project</string>
 
     <!-- ===== Success Messages ===== -->
     <string name="success_theme_updated">Theme updated</string>
@@ -368,6 +370,10 @@
     <string name="success_ai_config_set_default">Set as default configuration</string>
     <string name="success_ai_config_deleted">AI configuration deleted</string>
     <string name="success_language_updated">Language updated</string>
+    <string name="project_export_success">Project exported successfully</string>
+    <string name="project_export_failed">Export failed</string>
+    <string name="project_export_failed_detail">Export failed: %1$s</string>
+    <string name="project_export_progress">Exporting, please wait...</string>
 
     <!-- ===== Time Format ===== -->
     <string name="time_just_now">Just now</string>
