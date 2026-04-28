@@ -475,7 +475,7 @@ markor-editor/src/main/
 
 **依赖**: appcompat 1.7.1, Material 1.13.0, Compose BOM/ui/material3
 
-**参考文档**: `docs/markor-editor集成说明.md` — 详细移植记录
+**参考文档**: `docs/integration/markor-editor集成说明.md` — 详细移植记录
 
 ## 开发注意事项
 
@@ -525,12 +525,19 @@ markor-editor/src/main/
 
 ## 项目文档
 
-- **需求文档**: `docs/requirement.md` - 完整的产品需求和技术规范
-- **第一期需求**: `docs/第一期需求.md` - 第一期开发计划和进度
-- **第二期需求**: `docs/第二期需求.md` - 第二期开发计划和需求
-- **依赖清单**: `docs/依赖清单.md` - 使用的依赖库列表
-- **Markor Editor 集成说明**: `docs/markor-editor集成说明.md` - 编辑器移植详细记录
-- **编辑器需求文档**: `docs/编辑器需求文档.md` - 编辑器功能详细需求
+```
+docs/
+├── requirements/                  # 需求文档
+│   ├── requirement.md             # 完整的产品需求和技术规范
+│   └── 编辑器需求文档.md           # 编辑器功能详细需求
+├── planning/                      # 开发计划
+│   ├── 第一期需求.md               # 第一期开发计划和进度
+│   └── 第二期需求.md               # 第二期开发计划和需求
+├── technical/                     # 技术文档
+│   └── 依赖清单.md                 # 使用的依赖库列表
+└── integration/                   # 集成说明
+    └── markor-editor集成说明.md    # Markor 编辑器移植详细记录
+```
 
 ## 联系方式
 
@@ -538,6 +545,6 @@ markor-editor/src/main/
 
 ---
 
-**文档版本**: 2.4  
+**文档版本**: 2.5  
 **最后更新**: 2026-04-28  
 **适用范围**: AI Agents 和开发团队
