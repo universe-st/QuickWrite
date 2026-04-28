@@ -523,6 +523,19 @@ markor-editor/src/main/
 ### 4. 文档更新
 在使用 agents 时，如果发现文档不准确，建议更新此文件。
 
+### 5. 功能点实现文档约束
+
+`docs/implementation/` 目录包含各功能点的详细实现文档，**修改代码时必须同步更新相关文档**。
+
+**必须遵守的规则**：
+- **修改功能前**：必须先查看 `docs/implementation/README.md` 目录索引，找到对应的功能点实现文档，理解现有实现
+- **修改/添加功能后**：必须在同一 PR/commit 中同步更新或新增功能点实现文档
+- **保持一致性**：文档中的文件路径、类名、函数名、设计描述必须与实际代码匹配
+- **文档更新范围**：
+  - 修改了某个功能 → 更新对应的 `docs/implementation/XX-功能名.md`
+  - 新增了某个功能 → 在 `docs/implementation/` 下新建文档，并更新 `README.md` 索引
+  - 修改了跨功能的架构 → 更新所有受影响的功能文档 + `README.md`
+
 ## 项目文档
 
 ```
@@ -535,8 +548,23 @@ docs/
 │   └── 第二期需求.md               # 第二期开发计划和需求
 ├── technical/                     # 技术文档
 │   └── 依赖清单.md                 # 使用的依赖库列表
-└── integration/                   # 集成说明
-    └── markor-editor集成说明.md    # Markor 编辑器移植详细记录
+├── integration/                   # 集成说明
+│   └── markor-editor集成说明.md    # Markor 编辑器移植详细记录
+└── implementation/                # 功能点实现文档
+    ├── README.md                  # 目录索引
+    ├── 01-project-management.md   # 项目管理（CRUD、排序）
+    ├── 02-writing-editor.md       # 写作编辑器（markor-editor）
+    ├── 03-chapter-management.md   # 章节管理（YAML Front Matter）
+    ├── 04-ai-model-config.md      # AI 模型配置
+    ├── 05-settings-system.md      # 设置系统
+    ├── 06-theme-system.md         # 主题系统
+    ├── 07-file-system.md          # 文件系统管理
+    ├── 08-navigation.md           # 导航系统
+    ├── 09-data-layer.md           # 数据层（Room/DAO/Repository）
+    ├── 10-dependency-injection.md # 依赖注入（AppContainer）
+    ├── 11-internationalization.md # 国际化（UiText/LocaleHelper）
+    ├── 12-splash-and-entry.md     # 启动与入口
+    └── 13-utilities.md            # 工具类（AppUtils/CoverImageProcessor）
 ```
 
 ## 联系方式
@@ -545,6 +573,6 @@ docs/
 
 ---
 
-**文档版本**: 2.5  
+**文档版本**: 2.6  
 **最后更新**: 2026-04-28  
 **适用范围**: AI Agents 和开发团队
