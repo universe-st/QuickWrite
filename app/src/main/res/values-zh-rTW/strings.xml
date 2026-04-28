@@ -38,6 +38,8 @@
     <string name="project_list_empty_hint">點擊右下角按鈕建立您的第一個小說專案</string>
     <string name="project_list_loading_error">載入出錯</string>
     <string name="project_list_current_project">主專案</string>
+    <string name="project_list_menu">選單</string>
+    <string name="project_list_import">匯入專案</string>
 
     <!-- ===== 排序對話框 ===== -->
     <string name="project_sort_title">排序方式</string>

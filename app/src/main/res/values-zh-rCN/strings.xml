@@ -38,6 +38,8 @@
     <string name="project_list_empty_hint">点击右下角按钮创建您的第一个小说项目</string>
     <string name="project_list_loading_error">加载出错</string>
     <string name="project_list_current_project">主项目</string>
+    <string name="project_list_menu">菜单</string>
+    <string name="project_list_import">导入项目</string>
 
     <!-- ===== 排序对话框 ===== -->
     <string name="project_sort_title">排序方式</string>

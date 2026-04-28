@@ -38,6 +38,8 @@
     <string name="project_list_empty_hint">Tap the button at bottom right to create your first novel project</string>
     <string name="project_list_loading_error">Loading Failed</string>
     <string name="project_list_current_project">Main Project</string>
+    <string name="project_list_menu">Menu</string>
+    <string name="project_list_import">Import Project</string>
 
     <!-- ===== Project Sort Dialog ===== -->
     <string name="project_sort_title">Sort By</string>

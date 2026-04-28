@@ -147,6 +147,9 @@ fun MainScreen() {
                     onCreateProject = {
                         navController.navigate(Screen.ProjectCreate.route)
                     },
+                    onImportProject = {
+                        // TODO: Implement project import functionality
+                    },
                     viewModel = projectListViewModel
                 )
             }

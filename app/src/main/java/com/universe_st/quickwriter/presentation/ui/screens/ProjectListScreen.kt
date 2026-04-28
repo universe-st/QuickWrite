@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
@@ -28,6 +29,7 @@ fun ProjectListScreen(
     onCreateProject: () -> Unit,
     onProjectLongClick: (String) -> Unit,
     onProjectClick: (String) -> Unit,
+    onImportProject: () -> Unit,
     viewModel: ProjectListViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -35,6 +37,7 @@ fun ProjectListScreen(
     val currentProjectId by viewModel.currentProjectId.collectAsState()
 
     var showSortDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -45,6 +48,25 @@ fun ProjectListScreen(
                         onClick = { showSortDialog = true }
                     ) {
                         Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.project_list_sort))
+                    }
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true }
+                        ) {
+                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.project_list_menu))
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.project_list_import)) },
+                                onClick = {
+                                    showMenu = false
+                                    onImportProject()
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
