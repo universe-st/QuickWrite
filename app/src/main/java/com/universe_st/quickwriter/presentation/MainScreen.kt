@@ -54,6 +54,8 @@ import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModelFacto
 import com.universe_st.quickwriter.presentation.ui.screens.WritingScreen
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModelFactory
+import com.universe_st.quickwriter.presentation.viewmodel.AiChatViewModel
+import com.universe_st.quickwriter.presentation.viewmodel.AiChatViewModelFactory
 
 sealed class Screen(val route: String) {
     object ProjectList : Screen("project_list")
@@ -241,8 +243,15 @@ fun MainScreen() {
                 val writingViewModel: WritingViewModel = viewModel(
                     factory = WritingViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
                 )
+                val aiChatViewModel: AiChatViewModel = viewModel(
+                    factory = AiChatViewModelFactory(
+                        context.applicationContext as android.app.Application,
+                        appContainer.aiConversationRepository
+                    )
+                )
                 WritingScreen(
                     viewModel = writingViewModel,
+                    aiChatViewModel = aiChatViewModel,
                     onNavigateToProjectList = {
                         navController.navigate(Screen.ProjectList.route) {
                             popUpTo(Screen.ProjectList.route) { inclusive = true }

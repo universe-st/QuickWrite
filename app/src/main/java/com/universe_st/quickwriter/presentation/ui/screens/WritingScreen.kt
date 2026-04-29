@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.universe_st.markor_editor.HighlightingMode
 import com.universe_st.quickwriter.R
 import com.universe_st.markor_editor.MarkorEditor
+import com.universe_st.quickwriter.presentation.viewmodel.AiChatViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.ChapterFileInfo
 import com.universe_st.quickwriter.presentation.viewmodel.WritingUiState
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModel
@@ -45,6 +46,7 @@ import com.universe_st.quickwriter.util.AppEditorConfig
 @Composable
 fun WritingScreen(
     viewModel: WritingViewModel,
+    aiChatViewModel: AiChatViewModel,
     onNavigateToProjectList: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -103,7 +105,10 @@ fun WritingScreen(
                                 onDeleteChapter = { viewModel.deleteChapter(it) },
                                 onContentChange = { viewModel.updateEditorContent(it) }
                             )
-                            1 -> DialogPlaceholder()
+                            1 -> ChatTab(
+                        viewModel = aiChatViewModel,
+                        projectId = state.project.id
+                    )
                         }
                     }
                     is WritingUiState.Error -> {
@@ -597,28 +602,6 @@ private fun WritingStatusBar(uiState: WritingUiState) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun DialogPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stringResource(R.string.writing_ai_chat),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.writing_under_development),
-                style = MaterialTheme.typography.bodyLarge,
-                color = TextSecondary
             )
         }
     }

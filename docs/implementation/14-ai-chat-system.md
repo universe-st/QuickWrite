@@ -6,6 +6,13 @@
 
 ## 关键文件
 
+### UI 层 (新增)
+| 文件 | 路径 | 用途 |
+|------|------|------|
+| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听 (~220行) |
+| ChatTab | `presentation/ui/screens/ChatTab.kt` | 对话 Tab 主界面 — 会话列表、消息列表、输入区域 (~560行) |
+| ChatBubble | `presentation/ui/components/ChatBubble.kt` | 消息气泡组件 — 用户/AI/ToolCall/系统消息、复制/重试/删除 (~375行) |
+
 ### 数据层
 | 文件 | 路径 | 用途 |
 |------|------|------|
@@ -72,9 +79,17 @@
 
 ```
 ┌──────────────────────────────────────────────┐
-│  UI Layer (Compose)                          │
+│  UI Layer (Compose) — 已实现 ✅               │
 │  ChatTab → AiChatViewModel → Service 绑定     │
-│  仅负责：消息展示、输入交互、会话切换            │
+│  负责：消息展示、输入交互、会话切换、侧栏管理     │
+│  ┌────────────────────────────────────────┐   │
+│  │ ChatBubble                             │   │
+│  │  UserBubble (右对齐, PrimaryContainer)   │   │
+│  │  AssistantBubble (左对齐, Markdown渲染)  │   │
+│  │  ToolCallBubble (可展开/折叠工具调用)     │   │
+│  │  TypingIndicator (动画点指示器)          │   │
+│  │  工具栏: 复制/重试/删除                 │   │
+│  └────────────────────────────────────────┘   │
 ├──────────────────────────────────────────────┤
 │  AIChatService (Foreground Service)          │
 │  ┌──────────────┐  ┌───────────────────────┐ │
@@ -253,6 +268,73 @@ sendMessage(sessionId, content)
 | Tool Call 消息 | **立即**写入（assistant + tool result） |
 | 标题生成 | 更新 ai_sessions.title |
 
+## UI 层实现
+
+### AiChatViewModel
+
+| 方法 | 说明 |
+|------|------|
+| `bindToService()` | init 块中绑定 AIChatService，启动 Foreground Service |
+| `loadSessions(projectId)` | 从 Room Flow 加载项目会话列表，自动选中首个会话 |
+| `selectSession(sessionId)` | 切换会话 → 观察消息 Flow + 会话状态 Flow |
+| `createSession(projectId, systemPrompt?, modelConfigId?)` | 通过 Service 创建新会话 |
+| `sendMessage()` | 发送输入框文本到当前会话 |
+| `stopGeneration()` | 停止当前会话的生成 |
+| `retryLastMessage()` | 重试最后一条消息 |
+| `deleteMessage(index)` | 删除指定消息索引 |
+| `deleteSession(sessionId)` | 删除整个会话 |
+
+### 消息观察机制
+
+- **消息列表**: `AiConversationRepository.getVisibleMessages(sessionId)` Flow — Service 写入 Room → DAO Flow 自动推送到 UI
+- **会话状态**: `IChatService.observeSessionState(sessionId).asStateFlow()` — 通过修改后的 StateFlowWrapper 实时收集 Generating/Idle/Error 状态
+- **会话列表**: `AiConversationRepository.getSessionsByProject(projectId)` Flow — 按项目过滤的会话列表
+
+### ChatTab 组件结构
+
+```
+ChatTab(projectId)
+├── Row
+│   ├── SessionSidebar (AnimatedVisibility, 240dp宽)
+│   │   ├── Header (标题 + 新建 + 关闭按钮)
+│   │   └── LazyColumn of SessionListItem
+│   ├── VerticalDivider
+│   └── ChatContentArea (Modifier.weight(1f))
+│       ├── ChatTopBar (会话标题 + 侧栏切换)
+│       ├── ErrorBanner (SessionState.Error 时显示)
+│       ├── MessageList (LazyColumn, 自动滚底)
+│       │   ├── MessageBubble (按角色分发)
+│       │   └── TypingIndicator (生成中)
+│       └── ChatInputArea
+│           ├── OutlinedTextField (圆形, 多行)
+│           └── FilledIconButton (Send / Stop)
+├── DeleteSessionDialog (确认)
+└── DeleteMessageDialog (确认)
+```
+
+### 数据流向
+
+```
+用户输入 → sendMessage()
+  → IChatService.sendMessage(sessionId, text)
+    → SessionManager 创建 USER 消息 → Room (ai_messages)
+    → ApiDispatcher 调用 LLM API (流式 SSE)
+    → 每个 chunk 更新 SessionState.Generating(partialContent)
+      → StateFlowWrapper.asStateFlow() → AiChatViewModel._sessionState
+      → UI 显示实时流式文本
+    → 完成后: 持久化 ASSISTANT 消息 → Room
+      → DAO Flow 推送 → AiChatViewModel._messages
+      → LazyColumn 自动滚底显示完整回复
+```
+
+### 依赖变更
+
+| 变更 | 文件 | 说明 |
+|------|------|------|
+| StateFlowWrapper 增加 `asStateFlow()` | `data/remote/StateFlowWrapper.kt` | 支持 Binder StateFlow 的响应式收集 |
+| 新增 Compose Markdown 渲染库 | `gradle/libs.versions.toml` | `com.mikepenz:multiplatform-markdown-renderer-m3:0.34.0` |
+| 新增 ~20 个 chat UI 字符串 | `res/values*/strings.xml` | 三语言 (EN/zh-CN/zh-TW) |
+
 ## 已知问题/技术债务
 
 1. **API Key 仍为明文存储** — 需求要求加密（EncryptedSharedPreferences），当前未实现
@@ -264,6 +346,6 @@ sendMessage(sessionId, content)
 
 ---
 
-**文档版本**: 1.0  
+**文档版本**: 1.1  
 **最后更新**: 2026-04-29  
-**状态**: 完成（阶段一～三已实现，阶段四 UI 待开发）
+**状态**: 完成（阶段一～四全部实现，含 UI 层）

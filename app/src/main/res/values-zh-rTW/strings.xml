@@ -385,4 +385,27 @@
     <string name="ai_service_stop">停止</string>
     <string name="ai_service_channel_name">AI對話服務</string>
     <string name="ai_service_channel_desc">AI對話進行時顯示</string>
+
+    <!-- ===== AI對話介面 ===== -->
+    <string name="chat_new_session">新建對話</string>
+    <string name="chat_sessions_title">對話列表</string>
+    <string name="chat_no_sessions">暫無對話</string>
+    <string name="chat_input_hint">輸入訊息…</string>
+    <string name="chat_send">發送</string>
+    <string name="chat_stop">停止</string>
+    <string name="chat_typing">AI 思考中…</string>
+    <string name="chat_retry">重試</string>
+    <string name="chat_delete_session">刪除對話</string>
+    <string name="chat_delete_session_confirm">確定刪除此對話？</string>
+    <string name="chat_delete_message_confirm">確定刪除此訊息？</string>
+    <string name="chat_copy">複製</string>
+    <string name="chat_copied">已複製</string>
+    <string name="chat_tool_calls">工具調用（%1$d）</string>
+    <string name="chat_tool_call_title">%1$s</string>
+    <string name="chat_error_service">AI 服務不可用</string>
+    <string name="chat_empty_state">開始和 AI 助手對話</string>
+    <string name="chat_empty_state_hint">詢問任何關於小說的內容</string>
+    <string name="chat_model_info">模型：%1$s</string>
+    <string name="chat_sidebar_toggle">切換側欄</string>
+    <string name="chat_tool_call_details">工具調用詳情</string>
 </resources>

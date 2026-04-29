@@ -385,4 +385,27 @@
     <string name="ai_service_stop">Stop</string>
     <string name="ai_service_channel_name">AI Chat Service</string>
     <string name="ai_service_channel_desc">Shows when AI chat is active</string>
+
+    <!-- ===== AI Chat UI ===== -->
+    <string name="chat_new_session">New Chat</string>
+    <string name="chat_sessions_title">Conversations</string>
+    <string name="chat_no_sessions">No conversations yet</string>
+    <string name="chat_input_hint">Type a message…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_stop">Stop</string>
+    <string name="chat_typing">AI is thinking…</string>
+    <string name="chat_retry">Retry</string>
+    <string name="chat_delete_session">Delete conversation</string>
+    <string name="chat_delete_session_confirm">Delete this conversation?</string>
+    <string name="chat_delete_message_confirm">Delete this message?</string>
+    <string name="chat_copy">Copy</string>
+    <string name="chat_copied">Copied</string>
+    <string name="chat_tool_calls">Tool calls (%1$d)</string>
+    <string name="chat_tool_call_title">%1$s</string>
+    <string name="chat_error_service">AI service unavailable</string>
+    <string name="chat_empty_state">Start a conversation with AI</string>
+    <string name="chat_empty_state_hint">Ask anything about your novel</string>
+    <string name="chat_model_info">Model: %1$s</string>
+    <string name="chat_sidebar_toggle">Toggle sidebar</string>
+    <string name="chat_tool_call_details">Tool Call Details</string>
 </resources>

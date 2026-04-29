@@ -4,4 +4,6 @@ import kotlinx.coroutines.flow.StateFlow
 
 class StateFlowWrapper<T>(private val flow: StateFlow<T>) {
     val value: T get() = flow.value
+
+    fun asStateFlow(): StateFlow<T> = flow
 }
