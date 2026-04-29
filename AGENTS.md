@@ -65,13 +65,12 @@ com.universe_st.quickwriter/
 - AI 模型配置管理系统（AiConfigScreen, AiModelConfigRepository）
 - 用户设置数据管理（UserSettingsRepository, SettingsUseCase）
 - 写作设置界面（WritingSettingsScreen）
-- 写作编辑器页面（WritingScreen，基于 markor-editor）
-- 文件浏览器页面（FileBrowserScreen，支持章节文件管理）
+- 写作编辑器页面（WritingScreen，基于 markor-editor，含章节管理）
 - 关于界面（AboutScreen）
 - 数据验证和错误处理基本框架
 - 项目删除功能（长按交互 + 确认对话框）
 - 启动界面和闪屏（SplashScreen, QuickWriterApp）
-- 全部 7 个 ViewModel 实现（含工厂类）
+- 全部 6 个 ViewModel 实现（含工厂类）
 - Room TypeConverters 支持（List\<String\> 转换）
 - 项目排序功能（按创建时间、修改时间、名称）
 - markor-editor 模块导入（基于 Markor HighlightingEditor 移植，支持语法高亮、行号、自动格式化）
@@ -391,8 +390,7 @@ sealed class SomeUiState {
 - `presentation/ui/screens/ProjectCreateScreen.kt`: 项目创建页面
 - `presentation/ui/screens/ProjectEditScreen.kt`: 项目编辑页面
 - `presentation/ui/screens/ProjectDetailScreen.kt`: 项目详情查看页面
-- `presentation/ui/screens/WritingScreen.kt`: 写作编辑器页面（基于 markor-editor）
-- `presentation/ui/screens/FileBrowserScreen.kt`: 文件浏览器页面
+- `presentation/ui/screens/WritingScreen.kt`: 写作编辑器页面（基于 markor-editor，含章节管理）
 - `presentation/ui/screens/SettingsScreen.kt`: 系统设置界面（含内部导航）
 - `presentation/ui/screens/AppSettingsScreen.kt`: 外观与字体设置
 - `presentation/ui/screens/WritingSettingsScreen.kt`: 写作设置界面
@@ -405,8 +403,7 @@ sealed class SomeUiState {
 - `presentation/viewmodel/ProjectCreateViewModel.kt`: 项目创建 ViewModel
 - `presentation/viewmodel/ProjectEditViewModel.kt`: 项目编辑 ViewModel
 - `presentation/viewmodel/ProjectDetailViewModel.kt`: 项目详情 ViewModel
-- `presentation/viewmodel/WritingViewModel.kt`: 写作编辑器 ViewModel
-- `presentation/viewmodel/FileBrowserViewModel.kt`: 文件浏览器 ViewModel
+- `presentation/viewmodel/WritingViewModel.kt`: 写作编辑器 ViewModel（含章节管理逻辑）
 - `presentation/viewmodel/SettingsViewModel.kt`: 设置页面 ViewModel
 
 ### 数据层文件
@@ -587,6 +584,6 @@ docs/
 
 ---
 
-**文档版本**: 2.7  
+**文档版本**: 2.8  
 **最后更新**: 2026-04-29  
 **适用范围**: AI Agents 和开发团队
