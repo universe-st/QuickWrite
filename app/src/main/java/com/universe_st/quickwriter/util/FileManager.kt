@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -16,6 +17,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 class FileManager(private val context: Context) {
@@ -365,4 +367,64 @@ class FileManager(private val context: Context) {
             rulesFile.writeText("# 写作规范\n\n", Charsets.UTF_8)
         }
     }
+
+    data class InfoJsonData(
+        val title: String,
+        val author: String,
+        val genre: String,
+        val createdTime: Long
+    )
+
+    fun readInfoJson(projectDir: File): InfoJsonData? {
+        val infoFile = File(projectDir, "info.json")
+        if (!infoFile.exists()) return null
+        return try {
+            val json = JSONObject(infoFile.readText(Charsets.UTF_8))
+            val title = json.getString("title")
+            val author = json.getString("author")
+            val genre = json.getString("genre")
+            val createdTimeStr = json.getString("createdTime")
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+            dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val createdTime = dateFormat.parse(createdTimeStr)?.time ?: System.currentTimeMillis()
+            InfoJsonData(title, author, genre, createdTime)
+        } catch (e: Exception) {
+            Timber.tag("ImportProject").w(e, "Failed to parse info.json")
+            null
+        }
+    }
+
+    suspend fun extractZipTo(zipFile: File, outputDir: File): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (!outputDir.exists()) {
+                outputDir.mkdirs()
+            }
+            ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
+                var entry = zis.nextEntry
+                while (entry != null) {
+                    val entryFile = File(outputDir, entry.name)
+                    if (entry.isDirectory || entry.name.endsWith("/")) {
+                        entryFile.mkdirs()
+                    } else {
+                        entryFile.parentFile?.mkdirs()
+                        BufferedOutputStream(FileOutputStream(entryFile)).use { output ->
+                            val buffer = ByteArray(8192)
+                            var count: Int
+                            while (zis.read(buffer).also { count = it } != -1) {
+                                output.write(buffer, 0, count)
+                            }
+                        }
+                    }
+                    zis.closeEntry()
+                    entry = zis.nextEntry
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.tag("ImportProject").e(e, "Failed to extract ZIP")
+            outputDir.deleteRecursively()
+            Result.failure(e)
+        }
+    }
+
 }

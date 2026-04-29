@@ -120,6 +120,15 @@ class ProjectRepository(
         }
     }
 
+    suspend fun insertProjectDirect(project: ProjectEntity): Result<Unit> {
+        return try {
+            projectDao.insertProject(project)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateWordCount(projectId: String, wordCount: Int): Result<Unit> {
         return try {
             projectDao.updateWordCount(projectId, wordCount)

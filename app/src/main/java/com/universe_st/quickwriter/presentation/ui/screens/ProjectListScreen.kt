@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.universe_st.quickwriter.R
@@ -36,10 +37,34 @@ fun ProjectListScreen(
     val sortOption by viewModel.sortOption.collectAsState()
     val currentProjectId by viewModel.currentProjectId.collectAsState()
 
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
     var showSortDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is ProjectListUiState.ImportSuccess -> {
+                val title = state.message.asString(context)
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.project_import_success, title)
+                )
+                viewModel.resetImportState()
+            }
+            is ProjectListUiState.ImportError -> {
+                val msg = state.message.asString(context)
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.project_import_failed_detail, msg)
+                )
+                viewModel.resetImportState()
+            }
+            else -> {}
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.project_list_title)) },
@@ -93,10 +118,21 @@ fun ProjectListScreen(
                 .padding(innerPadding)
         ) {
             when (uiState) {
-                is ProjectListUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                is ProjectListUiState.Loading, is ProjectListUiState.Importing -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CircularProgressIndicator()
+                        if (uiState is ProjectListUiState.Importing) {
+                            Text(
+                                text = stringResource(R.string.project_importing),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
                 }
                 is ProjectListUiState.Empty -> {
                     Column(
@@ -151,6 +187,10 @@ fun ProjectListScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
+                }
+                is ProjectListUiState.ImportSuccess,
+                is ProjectListUiState.ImportError -> {
+                    // Handled via LaunchedEffect + Snackbar
                 }
             }
         }

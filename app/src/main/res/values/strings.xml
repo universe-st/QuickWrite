@@ -351,6 +351,9 @@
     <string name="project_export_failed">Export failed</string>
     <string name="project_export_failed_detail">Export failed: %1$s</string>
     <string name="project_export_progress">Exporting, please wait...</string>
+    <string name="project_import_success">Successfully imported project: %1$s</string>
+    <string name="project_import_failed_detail">Import failed: %1$s</string>
+    <string name="project_importing">Importing project, please wait...</string>
 
     <!-- ===== Time Format ===== -->
     <string name="time_just_now">Just now</string>

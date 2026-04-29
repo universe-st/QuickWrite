@@ -351,6 +351,9 @@
     <string name="project_export_failed">导出失败</string>
     <string name="project_export_failed_detail">导出失败：%1$s</string>
     <string name="project_export_progress">正在导出，请稍候...</string>
+    <string name="project_import_success">项目导入成功：%1$s</string>
+    <string name="project_import_failed_detail">导入失败：%1$s</string>
+    <string name="project_importing">正在导入项目，请稍候...</string>
 
     <!-- ===== 时间格式 ===== -->
     <string name="time_just_now">刚刚</string>

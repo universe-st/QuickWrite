@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 class ProjectManagementUseCase(
     private val projectRepository: ProjectRepository,
@@ -222,6 +224,86 @@ class ProjectManagementUseCase(
             )
         }
         return saveResult
+    }
+
+    suspend fun importProjectFromZip(context: Context, zipUri: Uri): Result<ProjectEntity> {
+        val tempDir = File(context.cacheDir, "import_${AppUtils.generateProjectId()}")
+        val tempZipFile = File(tempDir, "project.zip")
+        var storagePath: String? = null
+        try {
+            if (!tempDir.exists()) tempDir.mkdirs()
+
+            context.contentResolver.openInputStream(zipUri)?.use { input ->
+                FileOutputStream(tempZipFile).use { output ->
+                    input.copyTo(output, 8192)
+                }
+            } ?: return Result.failure(IOException("Cannot open ZIP file"))
+
+            val extractDir = File(tempDir, "extracted")
+            val extractResult = fileManager.extractZipTo(tempZipFile, extractDir)
+            if (extractResult.isFailure) {
+                return Result.failure(extractResult.exceptionOrNull() ?: Exception("Failed to extract ZIP"))
+            }
+
+            val infoData = fileManager.readInfoJson(extractDir)
+                ?: return Result.failure(IllegalArgumentException("info.json not found in the ZIP, not a valid project export"))
+
+            var title = infoData.title.ifBlank { "Imported Project" }
+            if (!projectRepository.isProjectTitleUnique(title)) {
+                var suffix = 1
+                while (!projectRepository.isProjectTitleUnique("$title ($suffix)")) {
+                    suffix++
+                }
+                title = "$title ($suffix)"
+            }
+
+            val projectId = AppUtils.generateProjectId()
+            storagePath = fileManager.getProjectDirectory(projectId).absolutePath
+            val targetDir = File(storagePath)
+            extractDir.copyRecursively(targetDir, overwrite = true)
+
+            val coverImagePath = if (CoverImageProcessor.hasCoverImage(storagePath)) {
+                CoverImageProcessor.getCoverFilePath(storagePath)
+            } else null
+
+            val project = ProjectEntity(
+                id = projectId,
+                title = title,
+                author = infoData.author.ifBlank { "" },
+                genre = if (FileManager.NOVEL_GENRES.contains(infoData.genre)) infoData.genre else "其他",
+                description = null,
+                coverImagePath = coverImagePath,
+                storagePath = storagePath,
+                createdTime = infoData.createdTime,
+                modifiedTime = AppUtils.getCurrentTimestamp(),
+                status = "active",
+                wordCount = 0,
+                chapterCount = countChapterFiles(storagePath)
+            )
+
+            projectRepository.insertProjectDirect(project)
+
+            val infoFile = File(targetDir, "info.json")
+            if (!infoFile.exists()) {
+                fileManager.createInfoJson(targetDir, project.title, project.author, project.genre, project.createdTime)
+            }
+
+            Timber.tag("ImportProject").i("Import successful: id=%s title=%s", projectId, title)
+            return Result.success(project)
+        } catch (e: Exception) {
+            Timber.tag("ImportProject").e(e, "Import failed")
+            storagePath?.let { try { File(it).deleteRecursively() } catch (_: Exception) {} }
+            return Result.failure(e)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    private fun countChapterFiles(storagePath: String): Int {
+        val chaptersDir = File(storagePath, "正文")
+        return if (chaptersDir.exists() && chaptersDir.isDirectory) {
+            chaptersDir.listFiles()?.count { it.isFile && it.name.endsWith(".md") } ?: 0
+        } else 0
     }
 
     suspend fun exportProjectAsZip(projectId: String, outputFile: File): Result<Unit> {

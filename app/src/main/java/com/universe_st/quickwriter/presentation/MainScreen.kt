@@ -1,6 +1,9 @@
 package com.universe_st.quickwriter.presentation
 
 import android.annotation.SuppressLint
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
@@ -80,6 +83,17 @@ fun MainScreen() {
     var showActionDialog by remember { mutableStateOf<String?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<String?>(null) }
 
+    val projectListViewModel: ProjectListViewModel = viewModel(
+        factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
+    )
+    val zipFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            projectListViewModel.importProject(context, it)
+        }
+    }
+
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
@@ -133,9 +147,6 @@ fun MainScreen() {
                 popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) }
             ) {
                 selectedTab = 0
-                val projectListViewModel: ProjectListViewModel = viewModel(
-                    factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
-                )
 
                 ProjectListScreen(
                     onProjectLongClick = { projectId ->
@@ -148,7 +159,7 @@ fun MainScreen() {
                         navController.navigate(Screen.ProjectCreate.route)
                     },
                     onImportProject = {
-                        // TODO: Implement project import functionality
+                        zipFilePickerLauncher.launch(arrayOf("application/zip"))
                     },
                     viewModel = projectListViewModel
                 )

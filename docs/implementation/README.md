@@ -6,13 +6,13 @@
 
 | 序号 | 文档 | 描述 | 核心文件数 |
 |------|------|------|-----------|
-| 01 | [项目管理](./01-project-management.md) | 项目 CRUD、列表展示、排序、删除、详情查看 | ~8 |
+| 01 | [项目管理](./01-project-management.md) | 项目 CRUD、列表展示、排序、删除、详情查看、ZIP 导入/导出 | ~8 |
 | 02 | [写作编辑器](./02-writing-editor.md) | 写作页面、markor-editor 集成、语法高亮 | ~18 |
 | 03 | [章节管理](./03-chapter-management.md) | 章节 YAML Front Matter 解析、增删改排序 | ~3 |
 | 04 | [AI 模型配置](./04-ai-model-config.md) | AI 服务商配置的 CRUD、默认模型管理 | ~4 |
 | 05 | [设置系统](./05-settings-system.md) | 外观/写作/自动保存等设置的持久化 | ~5 |
 | 06 | [主题系统](./06-theme-system.md) | 深蓝主题、Material 3 颜色方案、暗色模式 | ~3 |
-| 07 | [文件系统管理](./07-file-system.md) | 项目目录结构、文件 I/O、ZIP 导出 | ~2 |
+| 07 | [文件系统管理](./07-file-system.md) | 项目目录结构、文件 I/O、ZIP 导出/导入 | ~2 |
 | 08 | [导航系统](./08-navigation.md) | 底部导航、路由设计、子页面导航 | ~2 |
 | 09 | [数据层](./09-data-layer.md) | Room 数据库、实体、DAO、Repository | ~9 |
 | 10 | [依赖注入](./10-dependency-injection.md) | AppContainer 手动 DI 容器 | ~2 |

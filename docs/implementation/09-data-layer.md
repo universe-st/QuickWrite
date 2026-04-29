@@ -238,6 +238,8 @@ class ProjectRepository(private val projectDao: ProjectDao) {
     suspend fun createProject(project: ProjectEntity)
     suspend fun updateProject(project: ProjectEntity)
     suspend fun deleteProject(project: ProjectEntity)
+    suspend fun deleteProjectById(id: String)
+    suspend fun insertProjectDirect(project: ProjectEntity)   // 直接插入已构建的实体（导入场景）
     suspend fun isProjectTitleUnique(title: String, excludeId: String? = null): Boolean
     suspend fun updateWordCount(projectId: String, wordCount: Int)
     suspend fun incrementChapterCount(projectId: String)

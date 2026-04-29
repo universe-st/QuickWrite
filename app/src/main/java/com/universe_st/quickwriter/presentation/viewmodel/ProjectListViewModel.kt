@@ -1,5 +1,7 @@
 package com.universe_st.quickwriter.presentation.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -82,6 +84,37 @@ class ProjectListViewModel(
             }
         }
     }
+
+    fun importProject(context: Context, zipUri: Uri) {
+        viewModelScope.launch {
+            _uiState.value = ProjectListUiState.Importing
+            try {
+                val result = projectManagementUseCase.importProjectFromZip(context, zipUri)
+                if (result.isSuccess) {
+                    _uiState.value = ProjectListUiState.ImportSuccess(
+                        UiText.DynamicString(result.getOrThrow().title)
+                    )
+                    loadProjects()
+                } else {
+                    val error = result.exceptionOrNull()
+                    _uiState.value = ProjectListUiState.ImportError(
+                        UiText.DynamicString(error?.message ?: "Import failed")
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = ProjectListUiState.ImportError(
+                    UiText.DynamicString(e.message ?: "Import failed")
+                )
+            }
+        }
+    }
+
+    fun resetImportState() {
+        val current = _uiState.value
+        if (current is ProjectListUiState.ImportSuccess || current is ProjectListUiState.ImportError) {
+            _uiState.value = ProjectListUiState.Empty
+        }
+    }
 }
 
 class ProjectListViewModelFactory(
@@ -100,6 +133,9 @@ class ProjectListViewModelFactory(
 sealed class ProjectListUiState {
     object Loading : ProjectListUiState()
     object Empty : ProjectListUiState()
+    object Importing : ProjectListUiState()
     data class Success(val projects: List<ProjectEntity>) : ProjectListUiState()
     data class Error(val message: UiText) : ProjectListUiState()
+    data class ImportSuccess(val message: UiText) : ProjectListUiState()
+    data class ImportError(val message: UiText) : ProjectListUiState()
 }

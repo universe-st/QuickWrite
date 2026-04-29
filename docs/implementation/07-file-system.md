@@ -8,7 +8,7 @@
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| FileManager | `util/FileManager.kt` | 文件系统核心操作工具 (368行) |
+| FileManager | `util/FileManager.kt` | 文件系统核心操作工具 (430行) |
 | ChapterFileHelper | `util/ChapterFileHelper.kt` | 章节文件格式解析 (69行) |
 
 ## 核心类/函数
@@ -43,6 +43,20 @@ suspend fun getFileSize(path: String): Long
 suspend fun deleteProject(projectId: String): Result<Unit>
 fun isPathSafe(path: String): Boolean        // 路径遍历防护
 suspend fun zipProjectToFile(projectDirPath: String, outputFile: File): Result<Unit>
+suspend fun extractZipTo(zipFile: File, outputDir: File): Result<Unit>  // ZIP 解压
+```
+
+### 元数据
+```kotlin
+fun createInfoJson(projectDir: File, title: String, author: String, genre: String, createdTime: Long)
+fun readInfoJson(projectDir: File): InfoJsonData?  // 解析 info.json
+
+data class InfoJsonData(
+    val title: String,
+    val author: String,
+    val genre: String,
+    val createdTime: Long
+)
 ```
 
 ### 封面辅助
@@ -173,6 +187,33 @@ useCase.exportProjectAsZip(projectId, outputFile)  [IO]
     │   ├─ 目录 → putNextEntry("dir/")
     │   └─ 文件 → BufferedInputStream + copyTo (8KB buffer)
     └─ 日志记录条目数和输出大小
+```
+
+### ZIP 导入流程
+```
+ProjectManagementUseCase.importProjectFromZip()
+    │
+    ├─ 将 ZIP 从 URI 复制到临时文件 (cacheDir/import_{uuid}/project.zip)
+    │
+    ▼
+fileManager.extractZipTo(zipFile, extractDir)  [IO]
+    │
+    ├─ ZipInputStream 逐条目遍历
+    ├─ 目录 → entry.name.endsWith("/") → mkdirs()
+    ├─ 文件 → BufferedOutputStream (8KB buffer)
+    ├─ 每个条目 closeEntry() 后继续 nextEntry
+    └─ 失 败时删除 extractDir (deleteRecursively)
+    │
+    ▼
+fileManager.readInfoJson(extractDir)
+    │
+    ├─ 检查 info.json 文件是否存在
+    ├─ JSONObject 解析 title/author/genre/createdTime
+    └─ 返回 InfoJsonData；解析失败返回 null
+    │
+    ▼
+fileManager.getProjectDirectory(projectId) → 创建新目录
+extractDir.copyRecursively(targetDir) → 迁移文件
 ```
 
 ## 关键实现细节

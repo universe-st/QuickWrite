@@ -2,7 +2,7 @@
 
 ## 功能概述
 
-提供小说项目的完整生命周期管理：创建、查看列表、查看详情、编辑、删除和排序。支持当前项目标记、封面图片管理和 ZIP 导出。
+提供小说项目的完整生命周期管理：创建、查看列表、查看详情、编辑、删除、排序和 ZIP 导入/导出。支持当前项目标记、封面图片管理和 ZIP 导出/导入。
 
 ## 关键文件
 
@@ -56,8 +56,11 @@ data class ProjectEntity(
 sealed class ProjectListUiState {
     object Loading : ProjectListUiState()
     object Empty : ProjectListUiState()
+    object Importing : ProjectListUiState()
     data class Success(val projects: List<ProjectEntity>) : ProjectListUiState()
     data class Error(val message: UiText) : ProjectListUiState()
+    data class ImportSuccess(val message: UiText) : ProjectListUiState()
+    data class ImportError(val message: UiText) : ProjectListUiState()
 }
 ```
 
@@ -118,6 +121,26 @@ enum class SortOption {
 4. UseCase 先调用 `fileManager.deleteProject(projectId)` 删除文件目录
 5. 再调用 `projectRepository.deleteProject(projectId)` 删除数据库记录
 6. 如果被删除项目是当前项目，`settingsUseCase.setCurrentProjectId(null)` 清除
+
+### 项目导入（ZIP）
+1. 用户点击顶部菜单 "Import Project" → `onImportProject()` 触发系统文件选择器
+2. 文件选择器限制 MIME 类型为 `application/zip`
+3. 选择文件后 → `viewModel.importProject(context, uri)` → 状态变为 `Importing`
+4. `ProjectManagementUseCase.importProjectFromZip()`:
+   - 将 ZIP 复制到临时目录（`cacheDir/import_{uuid}/`）
+   - 调用 `fileManager.extractZipTo()` 解压到临时子目录
+   - 调用 `fileManager.readInfoJson()` 读取并解析 `info.json`
+   - 若 `info.json` 缺失 → 拒绝导入，返回错误 "info.json not found"
+   - 若标题与已有项目冲突 → 自动追加序号（如 `"书名 (2)"`）
+   - 生成新的 UUID → 创建项目目录 → 迁移解压文件
+   - 检测 `cover.jpg` 是否存在 → 设置 `coverImagePath`
+   - 类型不在 15 种小说类型中则默认 "其他"
+   - 通过 `projectRepository.insertProjectDirect()` 直接插入数据库（使用 info.json 中的 `createdTime`）
+   - 若 `info.json` 缺失（误删）→ 补建
+   - 失败时自动清理已创建的项目目录和临时文件
+5. 成功 → `ImportSuccess` 状态 → Snackbar 显示 "项目导入成功：{标题}" → 重新加载项目列表
+6. 失败 → `ImportError` 状态 → Snackbar 显示 "导入失败：{原因}"
+7. `resetImportState()` 消费瞬态状态，防止 Snackbar 重复显示
 
 ### 项目排序
 - 三种排序选项存储在 `ProjectListViewModel._sortOption: MutableStateFlow<SortOption>`
