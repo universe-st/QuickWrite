@@ -2,23 +2,32 @@
 
 ## 功能概述
 
-使用 Room 数据库进行本地持久化，包含 3 张数据表和对应的 DAO、Repository 层。通过 Flow 提供响应式数据流，支持协程异步操作。
+使用 Room 数据库进行本地持久化，包含 6 张数据表和对应的 DAO、Repository 层。通过 Flow 提供响应式数据流，支持协程异步操作。数据库通过 `Migrations.MIGRATION_1_2` 实现 v1→v2 升级（新增 3 张 AI 相关表）。
 
 ## 关键文件
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AppDatabase | `data/local/database/AppDatabase.kt` | Room 数据库配置 (50行) |
+| AppDatabase | `data/local/database/AppDatabase.kt` | Room 数据库配置 (版本 2) |
+| Migrations | `data/local/database/Migrations.kt` | v1→v2 迁移 (新增 3 表) |
 | Converters | `data/local/database/Converters.kt` | Room 类型转换器 |
 | ProjectEntity | `data/local/entity/ProjectEntity.kt` | 项目表实体 |
 | AiModelConfigEntity | `data/local/entity/AiModelConfigEntity.kt` | AI 配置表实体 |
 | UserSettingEntity | `data/local/entity/UserSettingEntity.kt` | 用户设置表实体 |
+| AiSessionEntity | `data/local/entity/AiSessionEntity.kt` | AI 会话表实体 (v2 新增) |
+| AiMessageEntity | `data/local/entity/AiMessageEntity.kt` | AI 消息表实体 (v2 新增) |
+| AiOperationEntity | `data/local/entity/AiOperationEntity.kt` | AI 操作记录表实体 (v2 新增) |
 | ProjectDao | `data/local/dao/ProjectDao.kt` | 项目 DAO |
 | AiModelConfigDao | `data/local/dao/AiModelConfigDao.kt` | AI 配置 DAO |
 | UserSettingDao | `data/local/dao/UserSettingDao.kt` | 设置 DAO |
+| AiSessionDao | `data/local/dao/AiSessionDao.kt` | AI 会话 DAO (v2 新增) |
+| AiMessageDao | `data/local/dao/AiMessageDao.kt` | AI 消息 DAO (v2 新增) |
+| AiOperationDao | `data/local/dao/AiOperationDao.kt` | AI 操作记录 DAO (v2 新增) |
 | ProjectRepository | `data/repository/ProjectRepository.kt` | 项目数据仓库 |
 | AiModelConfigRepository | `data/repository/AiModelConfigRepository.kt` | AI 配置数据仓库 |
 | UserSettingsRepository | `data/repository/UserSettingsRepository.kt` | 设置数据仓库 |
+| AiConversationRepository | `data/repository/AiConversationRepository.kt` | AI 会话+消息仓库 (v2 新增) |
+| AiServiceRepository | `data/repository/AiServiceRepository.kt` | AI API 调用仓库 (v2 新增) |
 
 ## 数据库配置
 
@@ -28,9 +37,12 @@
     entities = [
         ProjectEntity::class,
         AiModelConfigEntity::class,
-        UserSettingEntity::class
+        UserSettingEntity::class,
+        AiSessionEntity::class,     // v2
+        AiMessageEntity::class,     // v2
+        AiOperationEntity::class    // v2
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -38,6 +50,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
     abstract fun aiModelConfigDao(): AiModelConfigDao
     abstract fun userSettingDao(): UserSettingDao
+    abstract fun aiSessionDao(): AiSessionDao       // v2
+    abstract fun aiMessageDao(): AiMessageDao        // v2
+    abstract fun aiOperationDao(): AiOperationDao    // v2
 
     companion object {
         const val DATABASE_NAME = "quickwrite_database"
@@ -52,7 +67,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .fallbackToDestructiveMigration(false)
+                    .addMigrations(Migrations.MIGRATION_1_2)  // v2
                     .build()
                 INSTANCE = instance
                 instance

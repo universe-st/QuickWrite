@@ -377,4 +377,12 @@
     <!-- ===== 封面图片 ===== -->
     <string name="cover_cannot_open">无法打开图片文件</string>
     <string name="cover_cannot_decode">无法解码图片</string>
+
+    <!-- ===== AI对话服务 ===== -->
+    <string name="ai_service_title">QuickWrite AI</string>
+    <string name="ai_service_waiting">等待中…</string>
+    <string name="ai_service_generating">正在生成回复…</string>
+    <string name="ai_service_stop">停止</string>
+    <string name="ai_service_channel_name">AI对话服务</string>
+    <string name="ai_service_channel_desc">AI对话进行中时显示</string>
 </resources>

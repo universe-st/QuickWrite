@@ -5,10 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.universe_st.quickwriter.data.local.dao.AiMessageDao
 import com.universe_st.quickwriter.data.local.dao.AiModelConfigDao
+import com.universe_st.quickwriter.data.local.dao.AiOperationDao
+import com.universe_st.quickwriter.data.local.dao.AiSessionDao
 import com.universe_st.quickwriter.data.local.dao.ProjectDao
 import com.universe_st.quickwriter.data.local.dao.UserSettingDao
+import com.universe_st.quickwriter.data.local.entity.AiMessageEntity
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
+import com.universe_st.quickwriter.data.local.entity.AiOperationEntity
+import com.universe_st.quickwriter.data.local.entity.AiSessionEntity
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.data.local.entity.UserSettingEntity
 
@@ -16,9 +22,12 @@ import com.universe_st.quickwriter.data.local.entity.UserSettingEntity
     entities = [
         ProjectEntity::class,
         AiModelConfigEntity::class,
-        UserSettingEntity::class
+        UserSettingEntity::class,
+        AiSessionEntity::class,
+        AiMessageEntity::class,
+        AiOperationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -26,6 +35,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
     abstract fun aiModelConfigDao(): AiModelConfigDao
     abstract fun userSettingDao(): UserSettingDao
+    abstract fun aiSessionDao(): AiSessionDao
+    abstract fun aiMessageDao(): AiMessageDao
+    abstract fun aiOperationDao(): AiOperationDao
 
     companion object {
         const val DATABASE_NAME = "quickwrite_database"
@@ -40,7 +52,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .fallbackToDestructiveMigration(false)
+                    .addMigrations(Migrations.MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance

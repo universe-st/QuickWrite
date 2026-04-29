@@ -377,4 +377,12 @@
     <!-- ===== Cover Image ===== -->
     <string name="cover_cannot_open">Cannot open image file</string>
     <string name="cover_cannot_decode">Cannot decode image</string>
+
+    <!-- ===== AI Chat Service ===== -->
+    <string name="ai_service_title">QuickWrite AI</string>
+    <string name="ai_service_waiting">Waiting…</string>
+    <string name="ai_service_generating">Generating reply…</string>
+    <string name="ai_service_stop">Stop</string>
+    <string name="ai_service_channel_name">AI Chat Service</string>
+    <string name="ai_service_channel_desc">Shows when AI chat is active</string>
 </resources>

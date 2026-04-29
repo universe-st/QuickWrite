@@ -45,7 +45,7 @@ com.universe_st.quickwriter/
 
 ### 当前开发状态
 
-**完成度**: 70% | **状态**: 第二期开发中
+**完成度**: 80% | **状态**: 第二期开发中 (AI 核心基础设施已就绪)
 
 #### 已完成功能 ✅
 - 项目基础架构搭建（AppContainer, AppDatabase）
@@ -76,14 +76,17 @@ com.universe_st.quickwriter/
 - markor-editor 模块导入（基于 Markor HighlightingEditor 移植，支持语法高亮、行号、自动格式化）
 
 #### 进行中功能 🚧
-- AI 写作辅助功能集成
-- 网络请求层实现（AI模型配置与 API 集成）
+- AI 对话 UI (ChatTab) 待实现（Service 层已就绪）
 - 单元测试和集成测试编写
 
 #### 待开发功能 ⏳
 - Markdown 编辑器
 - 文档管理系统（文件管理界面）
 - 正文章节编辑器
+- 小说设定管理界面（人物/地点/组织/物品）
+- 时间线管理功能
+- AI对话 Tab UI (ChatBubble/MessageList/InputArea/SessionList)
+- 导出和分享功能
 - 小说设定管理界面（人物/地点/组织/物品）
 - 时间线管理功能
 - AI对话和写作助手界面

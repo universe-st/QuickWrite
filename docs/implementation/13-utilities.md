@@ -15,6 +15,9 @@
 | ChapterFileHelper | `util/ChapterFileHelper.kt` | 章节文件格式 (69行) |
 | UiText | `util/UiText.kt` | 国际化文本封装 (30行) |
 | LocaleHelper | `util/LocaleHelper.kt` | 语言环境切换 (98行) |
+| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析 (87行) |
+| TokenEstimator | `util/TokenEstimator.kt` | Token 近似估算 (12行) |
+| HashUtil | `domain/model/HashUtil.kt` | SHA-256 文件哈希 (17行) |
 
 > 注：FileManager、ChapterFileHelper、UiText、LocaleHelper 各有独立的功能文档，本文档聚焦于 AppUtils、CoverImageProcessor 和 AppEditorConfig 三个工具类。
 
