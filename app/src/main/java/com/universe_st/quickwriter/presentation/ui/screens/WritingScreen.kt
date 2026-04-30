@@ -47,7 +47,8 @@ import com.universe_st.quickwriter.util.AppEditorConfig
 fun WritingScreen(
     viewModel: WritingViewModel,
     aiChatViewModel: AiChatViewModel,
-    onNavigateToProjectList: () -> Unit
+    onNavigateToProjectList: () -> Unit,
+    onNavigateToAiConfig: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showNewChapterDialog by remember { mutableStateOf(false) }
@@ -112,7 +113,8 @@ fun WritingScreen(
                             )
                             1 -> ChatTab(
                         viewModel = aiChatViewModel,
-                        projectId = state.project.id
+                        projectId = state.project.id,
+                        onNavigateToAiConfig = onNavigateToAiConfig
                     )
                         }
                     }

@@ -2,6 +2,7 @@ package com.universe_st.quickwriter.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
@@ -302,7 +303,20 @@ class SettingsViewModel(
     }
 
     fun updateAiProvider(provider: String) {
-        _currentAiConfig.value = _currentAiConfig.value.copy(provider = provider)
+        val (baseUrl, modelName) = when (provider) {
+            AiModelConfigRepository.PROVIDER_OPENAI -> "https://api.openai.com" to AiModelConfigRepository.MODEL_GPT_35_TURBO
+            AiModelConfigRepository.PROVIDER_ANTHROPIC -> "https://api.anthropic.com" to AiModelConfigRepository.MODEL_CLAUDE_3
+            AiModelConfigRepository.PROVIDER_DEEPSEEK -> "https://api.deepseek.com" to AiModelConfigRepository.MODEL_DEEPSEEK_CHAT
+            AiModelConfigRepository.PROVIDER_ZHIPU -> "https://open.bigmodel.cn" to AiModelConfigRepository.MODEL_GLM4_FLASH
+            AiModelConfigRepository.PROVIDER_KIMI -> "https://api.moonshot.cn" to AiModelConfigRepository.MODEL_MOONSHOT_V1_8K
+            AiModelConfigRepository.PROVIDER_SILICONFLOW -> "https://api.siliconflow.cn" to AiModelConfigRepository.MODEL_DEEPSEEK_V3
+            else -> _currentAiConfig.value.baseUrl to _currentAiConfig.value.modelName
+        }
+        _currentAiConfig.value = _currentAiConfig.value.copy(
+            provider = provider,
+            baseUrl = baseUrl,
+            modelName = modelName
+        )
     }
 
     fun updateAiApiKey(apiKey: String) {

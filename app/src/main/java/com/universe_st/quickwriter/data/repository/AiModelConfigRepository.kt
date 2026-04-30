@@ -14,10 +14,18 @@ class AiModelConfigRepository(
         const val PROVIDER_OPENAI = "openai"
         const val PROVIDER_ANTHROPIC = "anthropic"
         const val PROVIDER_CUSTOM = "custom"
+        const val PROVIDER_DEEPSEEK = "deepseek"
+        const val PROVIDER_ZHIPU = "zhipu"
+        const val PROVIDER_KIMI = "kimi"
+        const val PROVIDER_SILICONFLOW = "siliconflow"
         
         const val MODEL_GPT_35_TURBO = "gpt-3.5-turbo"
         const val MODEL_GPT_4 = "gpt-4"
         const val MODEL_CLAUDE_3 = "claude-3-opus"
+        const val MODEL_DEEPSEEK_CHAT = "deepseek-chat"
+        const val MODEL_GLM4_FLASH = "glm-4-flash"
+        const val MODEL_MOONSHOT_V1_8K = "moonshot-v1-8k"
+        const val MODEL_DEEPSEEK_V3 = "deepseek-ai/DeepSeek-V3"
     }
 
     fun getAllConfigs(): Flow<List<AiModelConfigEntity>> {

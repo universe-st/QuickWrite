@@ -14,6 +14,13 @@ class AiServiceRepository(
 ) {
     private val serviceCache: MutableMap<String, AiApiService> = mutableMapOf()
 
+    private fun getChatCompletionsPath(provider: String): String {
+        return when (provider) {
+            AiModelConfigRepository.PROVIDER_ZHIPU -> "api/paas/v4/chat/completions"
+            else -> "v1/chat/completions"
+        }
+    }
+
     suspend fun chatCompletion(configId: Int, request: ChatCompletionRequest): Result<ChatCompletionResponse> {
         return try {
             val config = aiModelConfigDao.getConfigById(configId)
@@ -21,8 +28,9 @@ class AiServiceRepository(
 
             val service = getOrCreateService(config.baseUrl ?: "https://api.openai.com")
             val authHeader = "Bearer ${config.apiKey}"
+            val endpoint = getChatCompletionsPath(config.provider)
 
-            val response = service.chatCompletion(authHeader, request)
+            val response = service.chatCompletion(endpoint, authHeader, request)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
@@ -36,8 +44,9 @@ class AiServiceRepository(
 
             val service = getOrCreateService(config.baseUrl ?: "https://api.openai.com")
             val authHeader = "Bearer ${config.apiKey}"
+            val endpoint = getChatCompletionsPath(config.provider)
 
-            val response = service.chatCompletionStream(authHeader, request)
+            val response = service.chatCompletionStream(endpoint, authHeader, request)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

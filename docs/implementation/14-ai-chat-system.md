@@ -9,8 +9,8 @@
 ### UI 层 (新增)
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听 (~220行) |
-| ChatTab | `presentation/ui/screens/ChatTab.kt` | 对话 Tab 主界面 — 会话列表、消息列表、输入区域 (~560行) |
+| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听、模型配置检查 (~230行) |
+| ChatTab | `presentation/ui/screens/ChatTab.kt` | 对话 Tab 主界面 — 会话列表、消息列表、输入区域 (~590行) |
 | ChatBubble | `presentation/ui/components/ChatBubble.kt` | 消息气泡组件 — 用户/AI/ToolCall/系统消息、复制/重试/删除 (~375行) |
 
 ### 数据层
@@ -278,11 +278,19 @@ sendMessage(sessionId, content)
 | `loadSessions(projectId)` | 从 Room Flow 加载项目会话列表，自动选中首个会话 |
 | `selectSession(sessionId)` | 切换会话 → 观察消息 Flow + 会话状态 Flow |
 | `createSession(projectId, systemPrompt?, modelConfigId?)` | 通过 Service 创建新会话 |
-| `sendMessage()` | 发送输入框文本到当前会话 |
+| `sendMessage()` | 发送输入框文本到当前会话（先检查模型配置状态，无配置时不清空输入） |
 | `stopGeneration()` | 停止当前会话的生成 |
 | `retryLastMessage()` | 重试最后一条消息 |
 | `deleteMessage(index)` | 删除指定消息索引 |
 | `deleteSession(sessionId)` | 删除整个会话 |
+
+**依赖**: `AiConversationRepository` + `AiModelConfigRepository`（用于检查 `hasAnyConfig()` 状态）
+
+### 模型配置前置检查
+
+- `init` 和 `loadSessions()` 中调用 `hasAnyConfig()` 获取 `hasModelConfig` 状态
+- `sendMessage()` 中若 `!hasModelConfig`，直接 return，不清空输入框文本
+- ChatTab 中检测 `!hasModelConfig` 时展示 `NoModelConfigState` 引导页面，含"配置 AI 模型"按钮
 
 ### 消息观察机制
 
@@ -293,7 +301,9 @@ sendMessage(sessionId, content)
 ### ChatTab 组件结构
 
 ```
-ChatTab(projectId)
+ChatTab(projectId, onNavigateToAiConfig?)
+├── [无模型配置] → NoModelConfigState（含"配置 AI 模型"按钮 → 导航到 Settings > AI Config）
+├── [无会话] → ChatEmptyState（"新建对话"按钮）
 ├── Row
 │   ├── SessionSidebar (AnimatedVisibility, 240dp宽, 支持左滑关闭)
 │   │   ├── Header (标题 + 新建 + 关闭按钮)
@@ -337,8 +347,12 @@ ChatTab(projectId)
 | 变更 | 文件 | 说明 |
 |------|------|------|
 | StateFlowWrapper 增加 `asStateFlow()` | `data/remote/StateFlowWrapper.kt` | 支持 Binder StateFlow 的响应式收集 |
+| AiChatViewModel 依赖 `AiModelConfigRepository` | `AiChatViewModel.kt` | 用于检查 `hasAnyConfig()` 前置拦截 |
+| ChatTab 新增 `NoModelConfigState` 组件 | `ChatTab.kt` | 未配置模型时的引导页面 |
+| ChatTab 新增 `onNavigateToAiConfig` 回调 | `ChatTab.kt` / `WritingScreen.kt` / `MainScreen.kt` | 从对话界面一键导航到 AI 配置 |
+| SettingsScreen 新增 `initialSubScreen` 参数 | `SettingsScreen.kt` | 支持外部指定初始子页面 |
 | 新增 Compose Markdown 渲染库 | `gradle/libs.versions.toml` | `com.mikepenz:multiplatform-markdown-renderer-m3:0.34.0` |
-| 新增 ~20 个 chat UI 字符串 | `res/values*/strings.xml` | 三语言 (EN/zh-CN/zh-TW) |
+| 新增 chat 引导字符串 (chat_no_config_*) | `res/values*/strings.xml` | 三语言 (EN/zh-CN/zh-TW) |
 
 ## 已知问题/技术债务
 

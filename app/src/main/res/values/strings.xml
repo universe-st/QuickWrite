@@ -256,6 +256,10 @@
     <!-- ===== AI Provider Names ===== -->
     <string name="ai_provider_openai">OpenAI</string>
     <string name="ai_provider_anthropic">Anthropic</string>
+    <string name="ai_provider_deepseek">DeepSeek</string>
+    <string name="ai_provider_zhipu">Zhipu (GLM)</string>
+    <string name="ai_provider_kimi">Kimi (Moonshot)</string>
+    <string name="ai_provider_siliconflow">SiliconFlow</string>
     <string name="ai_provider_custom">Custom API</string>
 
     <!-- ===== About Screen ===== -->
@@ -408,4 +412,7 @@
     <string name="chat_model_info">Model: %1$s</string>
     <string name="chat_sidebar_toggle">Toggle sidebar</string>
     <string name="chat_tool_call_details">Tool Call Details</string>
+    <string name="chat_no_config_title">No AI Model Configured</string>
+    <string name="chat_no_config_message">You need to configure an AI model before you can use the chat feature. Please set up your API key and model in settings first.</string>
+    <string name="chat_no_config_action">Configure AI Model</string>
 </resources>

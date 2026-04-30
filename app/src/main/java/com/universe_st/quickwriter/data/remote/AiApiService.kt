@@ -8,18 +8,21 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Streaming
+import retrofit2.http.Url
 
 interface AiApiService {
 
-    @POST("/v1/chat/completions")
+    @POST
     suspend fun chatCompletion(
+        @Url endpoint: String,
         @Header("Authorization") authorization: String,
         @Body request: ChatCompletionRequest
     ): ChatCompletionResponse
 
-    @POST("/v1/chat/completions")
+    @POST
     @Streaming
     suspend fun chatCompletionStream(
+        @Url endpoint: String,
         @Header("Authorization") authorization: String,
         @Body request: ChatCompletionRequest
     ): Response<ResponseBody>

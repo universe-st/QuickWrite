@@ -17,6 +17,7 @@ import com.universe_st.quickwriter.data.remote.AIChatService
 import com.universe_st.quickwriter.data.remote.IChatService
 import com.universe_st.quickwriter.data.remote.SessionDetail
 import com.universe_st.quickwriter.data.repository.AiConversationRepository
+import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
 import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
@@ -28,7 +29,8 @@ import kotlinx.coroutines.launch
 
 class AiChatViewModel(
     application: Application,
-    private val conversationRepository: AiConversationRepository
+    private val conversationRepository: AiConversationRepository,
+    private val aiModelConfigRepository: AiModelConfigRepository
 ) : AndroidViewModel(application) {
 
     private var chatService: IChatService? = null
@@ -65,6 +67,8 @@ class AiChatViewModel(
         private set
     var inputText by mutableStateOf("")
     var showSidebar by mutableStateOf(false)
+    var hasModelConfig by mutableStateOf(false)
+        private set
 
     private var sessionListJob: Job? = null
     private var messagesJob: Job? = null
@@ -72,6 +76,9 @@ class AiChatViewModel(
 
     init {
         bindToService()
+        viewModelScope.launch {
+            hasModelConfig = aiModelConfigRepository.hasAnyConfig()
+        }
     }
 
     private fun bindToService() {
@@ -85,6 +92,9 @@ class AiChatViewModel(
     fun loadSessions(projectId: String) {
         if (selectedProjectId == projectId) return
         selectedProjectId = projectId
+        viewModelScope.launch {
+            hasModelConfig = aiModelConfigRepository.hasAnyConfig()
+        }
         if (isServiceBound) {
             startObservingSessions(projectId)
         }
@@ -191,6 +201,7 @@ class AiChatViewModel(
     fun sendMessage() {
         val content = inputText.trim()
         if (content.isEmpty()) return
+        if (!hasModelConfig) return
         val service = chatService ?: return
         val sessionId = currentSessionId ?: return
 
@@ -240,12 +251,13 @@ class AiChatViewModel(
 
 class AiChatViewModelFactory(
     private val application: Application,
-    private val conversationRepository: AiConversationRepository
+    private val conversationRepository: AiConversationRepository,
+    private val aiModelConfigRepository: AiModelConfigRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AiChatViewModel::class.java)) {
-            return AiChatViewModel(application, conversationRepository) as T
+            return AiChatViewModel(application, conversationRepository, aiModelConfigRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

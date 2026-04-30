@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +41,8 @@ import com.universe_st.quickwriter.util.UiText
 @Composable
 fun ChatTab(
     viewModel: AiChatViewModel,
-    projectId: String
+    projectId: String,
+    onNavigateToAiConfig: () -> Unit = {}
 ) {
     LaunchedEffect(projectId) {
         viewModel.loadSessions(projectId)
@@ -56,6 +58,11 @@ fun ChatTab(
 
     val isGenerating = sessionState is SessionState.Generating
     val partialContent = (sessionState as? SessionState.Generating)?.partialContent
+
+    if (!viewModel.hasModelConfig) {
+        NoModelConfigState(onNavigateToAiConfig = onNavigateToAiConfig)
+        return
+    }
 
     if (sessions.isEmpty() && viewModel.isServiceBound) {
         ChatEmptyState(
@@ -155,6 +162,44 @@ fun ChatTab(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun NoModelConfigState(
+    onNavigateToAiConfig: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.chat_no_config_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.chat_no_config_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onNavigateToAiConfig) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.chat_no_config_action))
+            }
+        }
     }
 }
 
@@ -475,8 +520,7 @@ private fun ChatInputArea(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-                .navigationBarsPadding(),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.Bottom
         ) {
             OutlinedTextField(

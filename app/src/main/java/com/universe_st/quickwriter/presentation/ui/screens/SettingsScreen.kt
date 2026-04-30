@@ -112,10 +112,17 @@ fun SettingsMainScreen(
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    initialSubScreen: SettingsSubScreen? = null
 ) {
     var currentSubScreen by remember { mutableStateOf<SettingsSubScreen?>(null) }
     var editingConfig by remember { mutableStateOf<AiModelConfigEntity?>(null) }
+
+    LaunchedEffect(initialSubScreen) {
+        if (initialSubScreen != null) {
+            currentSubScreen = initialSubScreen
+        }
+    }
 
     when (currentSubScreen) {
         null -> {

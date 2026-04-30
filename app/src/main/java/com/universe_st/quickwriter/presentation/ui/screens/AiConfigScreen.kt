@@ -190,6 +190,10 @@ fun AiConfigCard(
                 when (config.provider) {
                     AiModelConfigRepository.PROVIDER_OPENAI -> R.string.ai_provider_openai
                     AiModelConfigRepository.PROVIDER_ANTHROPIC -> R.string.ai_provider_anthropic
+                    AiModelConfigRepository.PROVIDER_DEEPSEEK -> R.string.ai_provider_deepseek
+                    AiModelConfigRepository.PROVIDER_ZHIPU -> R.string.ai_provider_zhipu
+                    AiModelConfigRepository.PROVIDER_KIMI -> R.string.ai_provider_kimi
+                    AiModelConfigRepository.PROVIDER_SILICONFLOW -> R.string.ai_provider_siliconflow
                     AiModelConfigRepository.PROVIDER_CUSTOM -> R.string.ai_provider_custom
                     else -> R.string.ai_provider_custom
                 }
@@ -272,6 +276,10 @@ fun AiConfigEditScreen(
                         when (formData.provider) {
                             AiModelConfigRepository.PROVIDER_OPENAI -> R.string.ai_provider_openai
                             AiModelConfigRepository.PROVIDER_ANTHROPIC -> R.string.ai_provider_anthropic
+                            AiModelConfigRepository.PROVIDER_DEEPSEEK -> R.string.ai_provider_deepseek
+                            AiModelConfigRepository.PROVIDER_ZHIPU -> R.string.ai_provider_zhipu
+                            AiModelConfigRepository.PROVIDER_KIMI -> R.string.ai_provider_kimi
+                            AiModelConfigRepository.PROVIDER_SILICONFLOW -> R.string.ai_provider_siliconflow
                             AiModelConfigRepository.PROVIDER_CUSTOM -> R.string.ai_provider_custom
                             else -> R.string.ai_provider_custom
                         }
@@ -290,8 +298,12 @@ fun AiConfigEditScreen(
                     onDismissRequest = { providerMenuExpanded = false }
                 ) {
                     listOf(
+                        AiModelConfigRepository.PROVIDER_DEEPSEEK to stringResource(R.string.ai_provider_deepseek),
+                        AiModelConfigRepository.PROVIDER_KIMI to stringResource(R.string.ai_provider_kimi),
+                        AiModelConfigRepository.PROVIDER_ZHIPU to stringResource(R.string.ai_provider_zhipu),
                         AiModelConfigRepository.PROVIDER_OPENAI to stringResource(R.string.ai_provider_openai),
                         AiModelConfigRepository.PROVIDER_ANTHROPIC to stringResource(R.string.ai_provider_anthropic),
+                        AiModelConfigRepository.PROVIDER_SILICONFLOW to stringResource(R.string.ai_provider_siliconflow),
                         AiModelConfigRepository.PROVIDER_CUSTOM to stringResource(R.string.ai_provider_custom)
                     ).forEach { (provider, name) ->
                         DropdownMenuItem(

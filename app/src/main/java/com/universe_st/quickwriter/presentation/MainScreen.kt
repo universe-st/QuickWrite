@@ -84,6 +84,7 @@ fun MainScreen() {
     var selectedTab by remember { mutableStateOf(0) }
     var showActionDialog by remember { mutableStateOf<String?>(null) }
     var showDeleteConfirmDialog by remember { mutableStateOf<String?>(null) }
+    var settingsInitialSubScreen by remember { mutableStateOf<com.universe_st.quickwriter.presentation.ui.screens.SettingsSubScreen?>(null) }
 
     val projectListViewModel: ProjectListViewModel = viewModel(
         factory = ProjectListViewModelFactory(appContainer.projectManagementUseCase, appContainer.settingsUseCase)
@@ -246,7 +247,8 @@ fun MainScreen() {
                 val aiChatViewModel: AiChatViewModel = viewModel(
                     factory = AiChatViewModelFactory(
                         context.applicationContext as android.app.Application,
-                        appContainer.aiConversationRepository
+                        appContainer.aiConversationRepository,
+                        appContainer.aiModelConfigRepository
                     )
                 )
                 WritingScreen(
@@ -255,6 +257,13 @@ fun MainScreen() {
                     onNavigateToProjectList = {
                         navController.navigate(Screen.ProjectList.route) {
                             popUpTo(Screen.ProjectList.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToAiConfig = {
+                        settingsInitialSubScreen = com.universe_st.quickwriter.presentation.ui.screens.SettingsSubScreen.AiConfigList
+                        selectedTab = 2
+                        navController.navigate(Screen.Settings.route) {
+                            popUpTo(Screen.ProjectList.route)
                         }
                     }
                 )
@@ -266,11 +275,17 @@ fun MainScreen() {
                     factory = SettingsViewModelFactory(appContainer.settingsUseCase)
                 )
 
+                val initialSub = settingsInitialSubScreen
+                LaunchedEffect(initialSub) {
+                    settingsInitialSubScreen = null
+                }
+
                 SettingsScreen(
                     viewModel = settingsViewModel,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    initialSubScreen = initialSub
                 )
             }
         }

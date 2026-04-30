@@ -2,7 +2,7 @@
 
 ## 功能概述
 
-管理 AI 服务商的模型配置，支持 OpenAI、Anthropic 和自定义 API 三种服务商类型。提供完整的配置 CRUD、默认模型设置和参数管理。
+管理 AI 服务商的模型配置，支持 OpenAI、Anthropic、DeepSeek、智谱 (GLM)、Kimi (Moonshot)、硅基流动和自定义 API 七种服务商类型。提供完整的配置 CRUD、默认模型设置和参数管理。
 
 ## 关键文件
 
@@ -13,6 +13,8 @@
 | AiModelConfigRepository | `data/repository/AiModelConfigRepository.kt` | 配置数据仓库 |
 | AiModelConfigEntity | `data/local/entity/AiModelConfigEntity.kt` | 数据库实体 |
 | AiModelConfigDao | `data/local/dao/AiModelConfigDao.kt` | Room DAO |
+| AiServiceRepository | `data/repository/AiServiceRepository.kt` | API 调用调度（含端点路径映射） |
+| AiApiService | `data/remote/AiApiService.kt` | Retrofit API 接口（@Url 动态端点） |
 
 ## 核心类/函数
 
@@ -40,32 +42,53 @@ data class AiModelConfigEntity(
 ### 支持的服务商
 ```kotlin
 // AiModelConfigRepository.kt
-const val PROVIDER_OPENAI = "OpenAI"
-const val PROVIDER_ANTHROPIC = "Anthropic"
-const val PROVIDER_CUSTOM = "Custom"
+const val PROVIDER_OPENAI = "openai"
+const val PROVIDER_ANTHROPIC = "anthropic"
+const val PROVIDER_DEEPSEEK = "deepseek"
+const val PROVIDER_ZHIPU = "zhipu"
+const val PROVIDER_KIMI = "kimi"
+const val PROVIDER_SILICONFLOW = "siliconflow"
+const val PROVIDER_CUSTOM = "custom"
 
 const val MODEL_GPT_35_TURBO = "gpt-3.5-turbo"
 const val MODEL_GPT_4 = "gpt-4"
-const val MODEL_CLAUDE_3 = "claude-3"
+const val MODEL_CLAUDE_3 = "claude-3-opus"
+const val MODEL_DEEPSEEK_CHAT = "deepseek-chat"
+const val MODEL_GLM4_FLASH = "glm-4-flash"
+const val MODEL_MOONSHOT_V1_8K = "moonshot-v1-8k"
+const val MODEL_DEEPSEEK_V3 = "deepseek-ai/DeepSeek-V3"
 ```
+
+### 服务商默认 Base URL 与模型
+
+| 服务商 | 默认模型 | 默认 Base URL |
+|--------|----------|---------------|
+| OpenAI | gpt-3.5-turbo | https://api.openai.com |
+| Anthropic | claude-3-opus | https://api.anthropic.com |
+| DeepSeek | deepseek-chat | https://api.deepseek.com |
+| 智谱 (GLM) | glm-4-flash | https://open.bigmodel.cn |
+| Kimi (Moonshot) | moonshot-v1-8k | https://api.moonshot.cn |
+| 硅基流动 | deepseek-ai/DeepSeek-V3 | https://api.siliconflow.cn |
+
+切换服务商时，`SettingsViewModel.updateAiProvider()` 会自动填充对应的默认 Base URL 和模型名称。选择"自定义 API"时保留用户已输入的 Base URL 和模型名称不变。
 
 ### 表单验证
 ```kotlin
 data class AiConfigFormData(
     val configName: String = "",
-    val provider: String = PROVIDER_OPENAI,
+    val provider: String = "openai",
     val apiKey: String = "",
     val baseUrl: String = "",
-    val modelName: String = "",
-    val temperature: Float = 0.8f,
+    val modelName: String = "gpt-3.5-turbo",
+    val temperature: Float = 0.7f,
     val maxTokens: Int = 2000,
     val topP: Float = 1.0f,
-    val topK: Int = 1,
+    val topK: Int = 50,
     val frequencyPenalty: Float = 0f,
     val presencePenalty: Float = 0f,
     val isDefault: Boolean = false,
-    val configNameError: String? = null,   // 名称验证错误
-    val apiKeyError: String? = null         // API Key 验证错误
+    val configNameError: UiText? = null,   // 名称验证错误
+    val apiKeyError: UiText? = null         // API Key 验证错误
 )
 ```
 
@@ -142,7 +165,7 @@ data class AiConfigFormData(
 - **Presence Penalty**: 0.0 ~ 2.0，步长 0.1，默认 0
 
 ### Custom 服务商
-当 provider 选择 "Custom" 时，额外显示 Base URL 输入框（必填）。OpenAI 和 Anthropic 使用内置的默认 URL，不显示此字段。
+当 provider 选择 "Custom" 时，额外显示 Base URL 输入框（必填）。其他已知服务商会自动填充默认 Base URL，不显示此字段。
 
 ### 安全注意
 API Key 当前以明文存储在 Room 数据库中，**未加密**。这是已知的安全风险。
@@ -152,3 +175,9 @@ API Key 当前以明文存储在 Room 数据库中，**未加密**。这是已�
 1. **API Key 明文存储**：需要实现加密存储（如 EncryptedSharedPreferences 或 Android Keystore）
 2. 缺少 API Key 有效性验证（可通过测试 API 调用实现）
 3. 网络请求层尚未实现，AI 配置当前仅存储参数
+
+### AI API 端点路径
+
+`AiApiService` 使用 Retrofit `@Url` 参数实现动态端点路径。`AiServiceRepository.getChatCompletionsPath()` 根据 provider 返回对应的 API 路径：
+- 大多数服务商使用 OpenaAI 兼容路径 `v1/chat/completions`
+- 智谱 (GLM) 使用专属路径 `api/paas/v4/chat/completions`
