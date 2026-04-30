@@ -15,7 +15,7 @@
 | ChapterFileHelper | `util/ChapterFileHelper.kt` | 章节文件格式 (69行) |
 | UiText | `util/UiText.kt` | 国际化文本封装 (30行) |
 | LocaleHelper | `util/LocaleHelper.kt` | 语言环境切换 (98行) |
-| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析 (87行) |
+| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 (~116行) |
 | TokenEstimator | `util/TokenEstimator.kt` | Token 近似估算 (12行) |
 | HashUtil | `domain/model/HashUtil.kt` | SHA-256 文件哈希 (17行) |
 

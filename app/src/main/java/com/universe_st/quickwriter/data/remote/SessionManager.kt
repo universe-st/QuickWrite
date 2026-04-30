@@ -123,13 +123,14 @@ class SessionManager(
     }
 
     fun deleteSession(sessionId: String) {
-        val entity = _sessionCache.remove(sessionId) ?: return
+        _sessionCache.remove(sessionId)
         _sessionStates.remove(sessionId)
         _sessionContexts.remove(sessionId)
 
         launch {
+            val entity = aiSessionDao.getSessionById(sessionId)
             aiSessionDao.deleteSession(sessionId)
-            refreshSessionList(entity.projectId)
+            entity?.let { refreshSessionList(it.projectId) }
         }
     }
 

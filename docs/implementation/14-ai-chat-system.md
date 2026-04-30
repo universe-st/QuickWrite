@@ -39,7 +39,7 @@
 | AIChatService | `data/remote/AIChatService.kt` | Foreground Service 入口 + 通知管理 (211行) |
 | IChatService | `data/remote/IChatService.kt` | Binder 暴露的服务接口 (43行) |
 | SessionManager | `data/remote/SessionManager.kt` | 会话生命周期管理 + 系统提示词构建 + 上下文维护 (284行) |
-| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题 + Tool Call 循环 (302行) |
+| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题 + Tool Call 循环 (~520行) |
 | ToolExecutor | `data/remote/ToolExecutor.kt` | 工具注册/分发/执行 + 修改前备份 + 操作记录 (315行) |
 | BackupManager | `data/remote/BackupManager.kt` | 备份存储 + FIFO 清理 (5GB上限) (86行) |
 | ToolRegistry | `data/remote/ToolRegistry.kt` | 13 个工具统一注册清单 (32行) |
@@ -72,7 +72,7 @@
 ### 工具类
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析 (87行) |
+| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 (~116行) |
 | TokenEstimator | `util/TokenEstimator.kt` | 字符数/4 近似 token 估算 (12行) |
 
 ## 设计架构
@@ -268,6 +268,42 @@ sendMessage(sessionId, content)
 | Tool Call 消息 | **立即**写入（assistant + tool result） |
 | 标题生成 | 更新 ai_sessions.title |
 
+### 8. 流式解析容错
+
+**格式兼容性** (StreamParser):
+- `data:` 前缀：同时接受 `data:` 和 `data: `（冒号后空格可选）
+- 内容提取路径（优先级递减）：
+  1. `choices[0].delta.content` — OpenAI/DeeepSeek 标准
+  2. `choices[0].content` — 部分平台直接放 choice 层
+  3. `choices[0].text` — 旧格式
+  4. 顶层 `content` — 极简格式
+- **JsonNull 安全处理**: 所有 `get("key")` 调用通过 `optString(key)` 扩展函数，先检查 `isJsonNull` 再调用 `asString()`，避免 `UnsupportedOperationException`
+
+**API 请求上下文修复** (ApiDispatcher.performSendMessage):
+- `context` 变量必须在用户消息追加到 `SessionContext` 之后再读取，否则 `buildMessagesForApi()` 只含 system 提示词、不含用户消息
+- 当前实现：通过 `sessionManager.getSessionContext(sessionId)` 重新获取上下文
+
+**HTTP 错误响应处理** (ApiDispatcher):
+- 新增 `response.isSuccessful` 检查，失败时读取 `errorBody()` 内容显示具体错误
+- 流结束后若 `fullContent` 为空且无 tool calls，设置错误状态（非静默回 Idle）
+
+**流式渲染防闪烁** (ChatTab / ChatBubble):
+- 生成中的气泡已合并到 `displayMessages` 列表中（`id = Long.MAX_VALUE` 为稳定 key），不再是 LazyColumn 中独立的 `item {}`，避免消息更新时重建
+- `LaunchedEffect` 仅依赖 `messages.size` 触发滚动，不再随每个 token 变化自动滚动
+- 流结束时先设置 `SessionState.Idle` 再持久化 AI 回复（避免生成中气泡与持久化消息双显示）
+- Markdown 渲染使用 `com.github.jeziellago:compose-markdown:0.7.2`
+
+### 9. 会话创建模型配置注入
+
+**createSession 流程** (AiChatViewModel):
+- 当 `modelConfigId` 参数为 `null` 时，通过 `AiModelConfigRepository.getDefaultConfig()` 查询默认配置 ID → 传递给 Service 创建会话
+- 若默认配置不存在则回退到 `getAllConfigs().first()`（首个可用配置）
+- ApiDispatcher 中 `performSendMessage` 增加二级容错：`getConfigById` 失败时回落 `getDefaultConfig()`
+
+**必需权限**:
+- `INTERNET` — HTTP API 调用必须声明，初始版本中缺失导致 `SecurityException`
+- `ACCESS_NETWORK_STATE` — 网络状态检查
+
 ## UI 层实现
 
 ### AiChatViewModel
@@ -323,6 +359,7 @@ ChatTab(projectId, onNavigateToAiConfig?)
 ```
 
 **会话侧栏交互**:
+- **点击内容区关闭**: 侧栏打开时，`ChatContentArea` 上方覆盖透明可点击层，点击对话内容/输入框等区域自动关闭侧栏
 - **左滑关闭**: `SessionSidebar` 使用 `pointerInput` + `detectHorizontalDragGestures` 检测左滑手势（阈值 120px），触发 `viewModel.showSidebar = false`
 - **长按删除**: `SessionListItem` 使用 `combinedClickable(onLongClick=...)` 触发删除确认对话框
 - **关闭按钮**: 侧栏顶部 Close 图标按钮，功能同上
@@ -351,7 +388,7 @@ ChatTab(projectId, onNavigateToAiConfig?)
 | ChatTab 新增 `NoModelConfigState` 组件 | `ChatTab.kt` | 未配置模型时的引导页面 |
 | ChatTab 新增 `onNavigateToAiConfig` 回调 | `ChatTab.kt` / `WritingScreen.kt` / `MainScreen.kt` | 从对话界面一键导航到 AI 配置 |
 | SettingsScreen 新增 `initialSubScreen` 参数 | `SettingsScreen.kt` | 支持外部指定初始子页面 |
-| 新增 Compose Markdown 渲染库 | `gradle/libs.versions.toml` | `com.mikepenz:multiplatform-markdown-renderer-m3:0.34.0` |
+| 新增 Compose Markdown 渲染库 | `gradle/libs.versions.toml` | `com.github.jeziellago:compose-markdown:0.7.2` |
 | 新增 chat 引导字符串 (chat_no_config_*) | `res/values*/strings.xml` | 三语言 (EN/zh-CN/zh-TW) |
 
 ## 已知问题/技术债务
@@ -363,8 +400,23 @@ ChatTab(projectId, onNavigateToAiConfig?)
 5. **并行会话 API 请求使用同一 OkHttp Dispatcher** — 默认 max 5 并发，未为不同 provider 创建独立 Dispatcher
 6. **Service 通知图标使用 ic_launcher_foreground** — 应使用专用通知图标
 
+## 已修复问题 (2026-04-30)
+
+| 问题 | 修复方式 | 涉及文件 |
+|------|---------|---------|
+| 新建会话 modelConfigId = 0 导致 API key 查找失败 | createSession 先查默认配置 ID | AiChatViewModel.kt |
+| performSendMessage 上下文变量捕获过早 | 用户消息追加后重新读取 context | ApiDispatcher.kt |
+| HTTP 非 2xx 响应未检测、错误不明确 | 添加 `isSuccessful` + `errorBody()` 检查 | ApiDispatcher.kt |
+| JsonNull 导致 `UnsupportedOperationException` | `optString()` 安全解析全部 8 处 | StreamParser.kt |
+| SSE `data:` 前缀变体不兼容 | 接受 `data:` 和 `data:`（空格可选） | StreamParser.kt |
+| 内容提取仅支持单一路径 | 新增 4 种 fallback 路径 | StreamParser.kt |
+| 生成中气泡 LazyColumn 独立 item 导致闪烁 | 合并为 `displayMessages` + 稳定 key | ChatTab.kt |
+| Markdown 组件重渲染闪烁 | 更新为 `jeziellago/compose-markdown` | ChatBubble.kt, libs.versions.toml |
+| `INTERNET` 权限缺失 | 添加 `INTERNET` + `ACCESS_NETWORK_STATE` | AndroidManifest.xml |
+| 流结束生成中气泡与持久化消息双显示 | 先设 Idle 再持久化 | ApiDispatcher.kt |
+
 ---
 
-**文档版本**: 1.2  
+**文档版本**: 1.3  
 **最后更新**: 2026-04-30  
-**状态**: 完成（阶段一～四全部实现，含 UI 层）
+**状态**: 完成（阶段一～四全部实现，含 UI 层 + 流式渲染/API/解析修复）

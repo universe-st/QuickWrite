@@ -25,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AiChatViewModel(
@@ -135,11 +136,24 @@ class AiChatViewModel(
         systemPrompt: String? = null,
         modelConfigId: Int? = null
     ) {
-        val service = chatService ?: return
-        try {
-            val sessionId = service.createSession(projectId, systemPrompt, modelConfigId)
-            selectSession(sessionId)
-        } catch (_: Exception) { }
+        if (modelConfigId != null) {
+            val service = chatService ?: return
+            try {
+                val sessionId = service.createSession(projectId, systemPrompt, modelConfigId)
+                selectSession(sessionId)
+            } catch (_: Exception) { }
+        } else {
+            viewModelScope.launch {
+                val config = aiModelConfigRepository.getDefaultConfig()
+                    ?: aiModelConfigRepository.getAllConfigs().first().firstOrNull()
+                    ?: return@launch
+                val service = chatService ?: return@launch
+                try {
+                    val sessionId = service.createSession(projectId, systemPrompt, config.id)
+                    selectSession(sessionId)
+                } catch (_: Exception) { }
+            }
+        }
     }
 
     fun deleteSession(sessionId: String) {

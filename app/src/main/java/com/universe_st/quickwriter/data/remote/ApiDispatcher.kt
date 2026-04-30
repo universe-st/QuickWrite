@@ -18,6 +18,7 @@ import com.universe_st.quickwriter.domain.model.ToolCallFunction
 import com.universe_st.quickwriter.util.StreamChunk
 import com.universe_st.quickwriter.util.StreamParser
 import com.universe_st.quickwriter.util.TokenEstimator
+import timber.log.Timber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -80,7 +81,10 @@ class ApiDispatcher(
                 return
             }
 
-        val modelConfig = aiModelConfigDao.getConfigById(context.modelConfigId)
+        var modelConfig = aiModelConfigDao.getConfigById(context.modelConfigId)
+        if (modelConfig == null) {
+            modelConfig = aiModelConfigDao.getDefaultConfig()
+        }
         if (modelConfig == null) {
             sessionManager.setSessionState(sessionId, SessionState.Error(
                 com.universe_st.quickwriter.util.UiText.DynamicString("AI model config not found")
@@ -110,10 +114,12 @@ class ApiDispatcher(
             sessionManager.appendMessageToContext(sessionId, userMessage)
         }
 
+        val apiContext = sessionManager.getSessionContext(sessionId) ?: context
+
         sessionManager.setSessionState(sessionId, SessionState.Generating(""))
 
         val tools = toolExecutor.getToolDefinitions()
-        val messagesForApi = buildMessagesForApi(context)
+        val messagesForApi = buildMessagesForApi(apiContext)
         val request = ChatCompletionRequest(
             model = modelConfig.modelName,
             messages = messagesForApi,
@@ -131,6 +137,19 @@ class ApiDispatcher(
 
         result.fold(
             onSuccess = { response ->
+                if (!response.isSuccessful) {
+                    val errorDetail = try {
+                        response.errorBody()?.string() ?: "HTTP ${response.code()}"
+                    } catch (_: Exception) {
+                        "HTTP ${response.code()}"
+                    }
+                    sessionManager.setSessionState(sessionId, SessionState.Error(
+                        com.universe_st.quickwriter.util.UiText.DynamicString(
+                            "API error (${response.code()}): ${errorDetail.take(200)}"
+                        )
+                    ))
+                    return
+                }
                 val body = response.body()
                 if (body == null) {
                     sessionManager.setSessionState(sessionId, SessionState.Error(
@@ -217,11 +236,16 @@ class ApiDispatcher(
         var usageTokens: Int? = null
         val toolCallAccumulators = mutableMapOf<Int, ToolCallAccumulator>()
         var finishReason: String? = null
+        var lineCount = 0
 
         try {
             reader.useLines { lines ->
                 lines.forEach { line ->
                     if (!isActive) return@useLines
+                    lineCount++
+                    if (lineCount <= 3) {
+                        Timber.d("SSE[%d]: %s", lineCount, line.take(200))
+                    }
 
                     val chunk = streamParser.parseLine(line) ?: return@forEach
 
@@ -278,11 +302,17 @@ class ApiDispatcher(
             return
         }
 
-        if (!fullContent.isEmpty()) {
+        if (fullContent.isNotEmpty()) {
+            sessionManager.setSessionState(sessionId, SessionState.Idle)
             persistAssistantMessage(sessionId, fullContent.toString(), usageTokens, sessionTitle, projectId)
+        } else {
+            sessionManager.setSessionState(sessionId, SessionState.Error(
+                com.universe_st.quickwriter.util.UiText.DynamicString(
+                    "AI model returned empty response. Check your API key and model configuration."
+                )
+            ))
+            return
         }
-
-        sessionManager.setSessionState(sessionId, SessionState.Idle)
         sessionManager.refreshSessionList(projectId)
     }
 

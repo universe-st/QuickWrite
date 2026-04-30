@@ -5,8 +5,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +34,7 @@ import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.*
 import com.universe_st.quickwriter.presentation.viewmodel.AiChatViewModel
 import com.universe_st.quickwriter.domain.model.ChatMessage
+import com.universe_st.quickwriter.domain.model.MessageRole
 import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
 import com.universe_st.quickwriter.util.UiText
@@ -94,19 +95,34 @@ fun ChatTab(
             VerticalDivider()
         }
 
-        ChatContentArea(
-            messages = messages,
-            sessionState = sessionState,
-            inputText = viewModel.inputText,
-            isGenerating = isGenerating,
-            partialContent = partialContent,
-            onInputChange = { viewModel.inputText = it },
-            onSend = { viewModel.sendMessage() },
-            onStop = { viewModel.stopGeneration() },
-            onRetry = { viewModel.retryLastMessage() },
-            onDeleteMessage = { deleteMessageIndex = it },
-            modifier = Modifier.weight(1f)
-        )
+        Box(modifier = Modifier.weight(1f)) {
+            ChatContentArea(
+                messages = messages,
+                sessionState = sessionState,
+                inputText = viewModel.inputText,
+                isGenerating = isGenerating,
+                partialContent = partialContent,
+                onInputChange = { viewModel.inputText = it },
+                onSend = { viewModel.sendMessage() },
+                onStop = { viewModel.stopGeneration() },
+                onRetry = { viewModel.retryLastMessage() },
+                onDeleteMessage = { deleteMessageIndex = it },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            if (showSidebar) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(
+                            interactionSource = null,
+                            indication = null
+                        ) {
+                            viewModel.showSidebar = false
+                        }
+                )
+            }
+        }
     }
 
     if (deleteConfirmTarget != null) {
@@ -355,10 +371,12 @@ private fun SessionListItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = { onLongClick() }
+                )
+            }
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -406,9 +424,28 @@ private fun ChatContentArea(
     val context = LocalContext.current
     var actionMessageIndex by remember { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(messages.size, partialContent) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
+    val displayMessages = remember(messages, isGenerating, partialContent) {
+        if (isGenerating) {
+            val generatingMsg = ChatMessage(
+                id = Long.MAX_VALUE,
+                role = MessageRole.ASSISTANT,
+                content = partialContent ?: "",
+                silent = false,
+                timestamp = System.currentTimeMillis()
+            )
+            if (messages.lastOrNull()?.role != MessageRole.ASSISTANT || messages.lastOrNull()?.id != Long.MAX_VALUE) {
+                messages + generatingMsg
+            } else {
+                messages.dropLast(1) + generatingMsg
+            }
+        } else {
+            messages
+        }
+    }
+
+    LaunchedEffect(messages.size) {
+        if (displayMessages.isNotEmpty()) {
+            listState.animateScrollToItem(displayMessages.size - 1)
         }
     }
 
@@ -442,7 +479,7 @@ private fun ChatContentArea(
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
         ) {
-            if (messages.isEmpty() && !isGenerating && sessionState !is SessionState.Error) {
+            if (displayMessages.isEmpty() && sessionState !is SessionState.Error) {
                 item {
                     Box(
                         modifier = Modifier
@@ -459,37 +496,32 @@ private fun ChatContentArea(
                 }
             }
 
-            itemsIndexed(messages) { index, message ->
+            itemsIndexed(
+                items = displayMessages,
+                key = { index, message -> message.id }
+            ) { index, message ->
                 var showActions by remember { mutableStateOf(false) }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showActions = !showActions }
-                ) {
-                    MessageBubble(
-                        message = message,
-                        showActions = showActions,
-                        onRetry = if (message.role == com.universe_st.quickwriter.domain.model.MessageRole.USER) {
-                            { onRetry() }
-                        } else null,
-                        onDelete = { onDeleteMessage(index) }
-                    )
-                }
-            }
-
-            if (isGenerating && partialContent != null) {
-                item {
+                val isGeneratingItem = message.id == Long.MAX_VALUE
+                if (isGeneratingItem) {
                     AssistantMessageBubble(
-                        content = partialContent,
+                        content = message.content,
                         isGenerating = true
                     )
-                }
-            } else if (isGenerating && partialContent == null) {
-                item {
-                    AssistantMessageBubble(
-                        content = "",
-                        isGenerating = true
-                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showActions = !showActions }
+                    ) {
+                        MessageBubble(
+                            message = message,
+                            showActions = showActions,
+                            onRetry = if (message.role == MessageRole.USER) {
+                                { onRetry() }
+                            } else null,
+                            onDelete = { onDeleteMessage(index) }
+                        )
+                    }
                 }
             }
         }

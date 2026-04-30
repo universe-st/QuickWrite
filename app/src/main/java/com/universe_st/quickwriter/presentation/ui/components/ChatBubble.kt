@@ -36,7 +36,7 @@ import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.MessageRole
 import com.universe_st.quickwriter.domain.model.ToolCall
-import com.mikepenz.markdown.m3.Markdown
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 fun MessageBubble(
@@ -175,8 +175,8 @@ fun AssistantMessageBubble(
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             if (content.isNotBlank()) {
-                Markdown(
-                    content = content
+                MarkdownText(
+                    markdown = content
                 )
             } else if (isGenerating) {
                 TypingIndicator()
