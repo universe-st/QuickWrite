@@ -82,6 +82,14 @@ class SettingsUseCase(
         return userSettingsRepository.setDefaultTopP(topP)
     }
 
+    suspend fun getMaxToolCallRounds(): Int {
+        return userSettingsRepository.getMaxToolCallRounds()
+    }
+
+    suspend fun setMaxToolCallRounds(rounds: Int): Result<Unit> {
+        return userSettingsRepository.setMaxToolCallRounds(rounds)
+    }
+
     fun getAllAiConfigs(): Flow<List<AiModelConfigEntity>> {
         return aiModelConfigRepository.getAllConfigs()
     }

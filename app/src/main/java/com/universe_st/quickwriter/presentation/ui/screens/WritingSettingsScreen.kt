@@ -110,6 +110,18 @@ fun WritingSettingsScreen(
                 )
             }
 
+            SettingsSection(title = stringResource(R.string.writing_settings_section_advanced)) {
+                SettingsSliderItem(
+                    title = stringResource(R.string.writing_settings_max_tool_rounds),
+                    subtitle = stringResource(R.string.writing_settings_max_tool_rounds_desc),
+                    value = appSettings.maxToolCallRounds.toFloat(),
+                    onValueChange = { viewModel.updateMaxToolCallRounds(it.toInt()) },
+                    valueRange = 5f..100f,
+                    steps = 18,
+                    valueText = appSettings.maxToolCallRounds.toString()
+                )
+            }
+
             SettingsSection(title = stringResource(R.string.writing_settings_section_info)) {
                 Column(
                     modifier = Modifier

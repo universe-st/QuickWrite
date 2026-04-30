@@ -95,5 +95,6 @@ class AppContainer(private val context: Context) {
         AppServiceContainer.fileManager = fileManager
         AppServiceContainer.projectRepository = projectRepository
         AppServiceContainer.projectManagementUseCase = projectManagementUseCase
+        AppServiceContainer.userSettingsRepository = userSettingsRepository
     }
 }

@@ -38,7 +38,7 @@ class CreateFileTool : ChatTool {
         val relativePath = arguments.optString("relativePath", "")
         val content = arguments.optString("content", "")
 
-        if (relativePath.isEmpty()) return """{"error": "relativePath is required"}"""
+        if (relativePath.isEmpty()) return """{"error": "relativePath is required. Call get_folder_structure first to see the directory layout, then use a valid relative path."}"""
 
         val project = context.projectRepository.getProjectById(projectId)
             ?: return """{"error": "Project not found: $projectId"}"""

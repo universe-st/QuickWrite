@@ -27,6 +27,7 @@ data class AppSettingsData(
     val defaultTemperature: Float = 0.8f,
     val defaultMaxTokens: Int = 2000,
     val defaultTopP: Float = 1.0f,
+    val maxToolCallRounds: Int = 30,
     val modelConfigTemperature: Float = 0.7f,
     val modelConfigMaxTokens: Int = 2000,
     val modelConfigTopP: Float = 1.0f,
@@ -91,6 +92,7 @@ class SettingsViewModel(
                     defaultTemperature = settingsUseCase.getDefaultTemperature(),
                     defaultMaxTokens = settingsUseCase.getDefaultMaxTokens(),
                     defaultTopP = settingsUseCase.getDefaultTopP(),
+                    maxToolCallRounds = settingsUseCase.getMaxToolCallRounds(),
                     modelConfigTemperature = defaultConfig?.temperature ?: 0.7f,
                     modelConfigMaxTokens = defaultConfig?.maxTokens ?: 2000,
                     modelConfigTopP = defaultConfig?.topP ?: 1.0f,
@@ -255,6 +257,18 @@ class SettingsViewModel(
                 _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_top_p_updated))
             } catch (e: Exception) {
                 _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_top_p_failed))
+            }
+        }
+    }
+
+    fun updateMaxToolCallRounds(rounds: Int) {
+        viewModelScope.launch {
+            try {
+                settingsUseCase.setMaxToolCallRounds(rounds)
+                _appSettingsData.value = _appSettingsData.value.copy(maxToolCallRounds = rounds)
+                _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_max_tool_rounds_updated))
+            } catch (e: Exception) {
+                _uiState.value = SettingsUiState.Error(UiText.StringResource(R.string.error_update_max_tool_rounds_failed))
             }
         }
     }

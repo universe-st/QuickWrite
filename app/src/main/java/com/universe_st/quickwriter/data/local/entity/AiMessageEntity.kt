@@ -40,6 +40,8 @@ data class AiMessageEntity(
     val toolCallsJson: String? = null,
     @ColumnInfo(name = "is_silent")
     val isSilent: Boolean = false,
+    @ColumnInfo(name = "reasoning_content")
+    val reasoningContent: String? = null,
     @ColumnInfo(name = "created_at")
     val createdAt: Long
 )

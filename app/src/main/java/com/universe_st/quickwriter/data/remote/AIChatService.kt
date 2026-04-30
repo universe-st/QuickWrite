@@ -19,6 +19,7 @@ import com.universe_st.quickwriter.data.local.dao.AiSessionDao
 import com.universe_st.quickwriter.data.local.dao.ProjectDao
 import com.universe_st.quickwriter.data.repository.AiServiceRepository
 import com.universe_st.quickwriter.data.repository.ProjectRepository
+import com.universe_st.quickwriter.data.repository.UserSettingsRepository
 import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
@@ -60,7 +61,8 @@ class AIChatService : Service(), IChatService {
             aiMessageDao = AppServiceContainer.aiMessageDao,
             aiModelConfigDao = AppServiceContainer.aiModelConfigDao,
             sessionManager = sessionManager,
-            toolExecutor = toolExecutor
+            toolExecutor = toolExecutor,
+            userSettingsRepository = AppServiceContainer.userSettingsRepository
         )
     }
 
@@ -208,4 +210,5 @@ object AppServiceContainer {
     lateinit var fileManager: FileManager
     lateinit var projectRepository: ProjectRepository
     lateinit var projectManagementUseCase: ProjectManagementUseCase
+    lateinit var userSettingsRepository: UserSettingsRepository
 }

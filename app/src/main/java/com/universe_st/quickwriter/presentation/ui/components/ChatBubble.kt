@@ -161,34 +161,39 @@ fun AssistantMessageBubble(
     isGenerating: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val hasContent = content.isNotBlank()
+    val hasToolCalls = toolCalls != null && toolCalls.isNotEmpty()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 340.dp)
-                .clip(RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-        ) {
-            if (content.isNotBlank()) {
-                MarkdownText(
-                    markdown = content
-                )
-            } else if (isGenerating) {
-                TypingIndicator()
+        if (hasContent || isGenerating) {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 340.dp)
+                    .clip(RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                if (hasContent) {
+                    MarkdownText(markdown = content)
+                } else if (isGenerating) {
+                    TypingIndicator()
+                }
             }
         }
 
-        if (toolCalls != null && toolCalls.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
+        if (hasToolCalls) {
+            if (hasContent || isGenerating) {
+                Spacer(modifier = Modifier.height(4.dp))
+            }
             ToolCallBubble(toolCalls = toolCalls)
         }
 
-        if (isGenerating && content.isNotBlank()) {
+        if (isGenerating && hasContent) {
             Spacer(modifier = Modifier.height(4.dp))
             TypingIndicator()
         }

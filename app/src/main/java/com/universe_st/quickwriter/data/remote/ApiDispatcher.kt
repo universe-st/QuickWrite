@@ -10,6 +10,7 @@ import com.universe_st.quickwriter.data.remote.dto.ToolCallDto
 import com.universe_st.quickwriter.data.remote.dto.ToolCallFunctionDto
 import com.universe_st.quickwriter.data.remote.dto.ToolDefinitionDto
 import com.universe_st.quickwriter.data.repository.AiServiceRepository
+import com.universe_st.quickwriter.data.repository.UserSettingsRepository
 import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.MessageRole
 import com.universe_st.quickwriter.domain.model.SessionState
@@ -35,7 +36,8 @@ class ApiDispatcher(
     private val aiMessageDao: AiMessageDao,
     private val aiModelConfigDao: AiModelConfigDao,
     private val sessionManager: SessionManager,
-    private val toolExecutor: ToolExecutor
+    private val toolExecutor: ToolExecutor,
+    private val userSettingsRepository: UserSettingsRepository
 ) : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.IO) {
 
     private val activeJobs = ConcurrentHashMap<String, Job>()
@@ -43,14 +45,20 @@ class ApiDispatcher(
     private val gson = Gson()
 
     fun sendMessage(sessionId: String, content: String, attachedFiles: List<String> = emptyList()) {
-        if (sessionManager.isGenerating(sessionId)) return
+        if (sessionManager.isGenerating(sessionId)) {
+            Timber.w("ApiDispatcher.sendMessage: session %s is already generating, ignoring", sessionId)
+            return
+        }
 
+        Timber.d("ApiDispatcher.sendMessage: sessionId=%s content=\"%s\"", sessionId, content.take(100))
         val job = launch {
             try {
                 performSendMessage(sessionId, content, attachedFiles)
             } catch (e: kotlinx.coroutines.CancellationException) {
+                Timber.d("ApiDispatcher.sendMessage: cancelled for session %s", sessionId)
                 sessionManager.setSessionState(sessionId, SessionState.Idle)
             } catch (e: Exception) {
+                Timber.e(e, "ApiDispatcher.sendMessage: unhandled exception for session %s", sessionId)
                 sessionManager.setSessionState(sessionId, SessionState.Error(
                     com.universe_st.quickwriter.util.UiText.DynamicString(e.message ?: "Unknown error")
                 ))
@@ -66,12 +74,16 @@ class ApiDispatcher(
         attachedFiles: List<String>,
         toolRound: Int = 0
     ) {
-        if (toolRound > MAX_TOOL_CALL_ROUNDS) {
+        val maxRounds = getMaxToolCallRounds()
+        if (toolRound > maxRounds) {
+            Timber.e("ApiDispatcher.performSendMessage: MAX_TOOL_CALL_ROUNDS (%d) exceeded for session %s", maxRounds, sessionId)
             sessionManager.setSessionState(sessionId, SessionState.Error(
-                com.universe_st.quickwriter.util.UiText.DynamicString("Max tool call rounds exceeded")
+                com.universe_st.quickwriter.util.UiText.DynamicString("Max tool call rounds exceeded ($maxRounds). Adjust in writing settings.")
             ))
             return
         }
+
+        Timber.d("ApiDispatcher.performSendMessage: sessionId=%s toolRound=%d", sessionId, toolRound)
 
         val context = sessionManager.getSessionContext(sessionId)
             ?: sessionManager.loadSessionContext(sessionId) ?: run {
@@ -194,7 +206,11 @@ class ApiDispatcher(
 
     companion object {
         private const val MAX_CONTEXT_TOKENS = 6000
-        private const val MAX_TOOL_CALL_ROUNDS = 10
+        private const val DEFAULT_MAX_TOOL_CALL_ROUNDS = 30
+    }
+
+    private suspend fun getMaxToolCallRounds(): Int {
+        return userSettingsRepository.getMaxToolCallRounds()
     }
 
     private fun buildUserContent(content: String, attachedFiles: List<String>): String {
@@ -233,6 +249,7 @@ class ApiDispatcher(
     ) {
         val reader = BufferedReader(InputStreamReader(body.byteStream()))
         val fullContent = StringBuilder()
+        val reasoningContent = StringBuilder()
         var usageTokens: Int? = null
         val toolCallAccumulators = mutableMapOf<Int, ToolCallAccumulator>()
         var finishReason: String? = null
@@ -250,6 +267,9 @@ class ApiDispatcher(
                     val chunk = streamParser.parseLine(line) ?: return@forEach
 
                     when (chunk) {
+                        is StreamChunk.ReasoningContent -> {
+                            reasoningContent.append(chunk.text)
+                        }
                         is StreamChunk.Content -> {
                             fullContent.append(chunk.text)
                             if (isActive) {
@@ -257,21 +277,29 @@ class ApiDispatcher(
                             }
                         }
                         is StreamChunk.ToolCallBegin -> {
-                            val index = toolCallAccumulators.size
-                            toolCallAccumulators[index] = ToolCallAccumulator(
+                            toolCallAccumulators[chunk.index] = ToolCallAccumulator(
                                 id = chunk.id,
-                                name = chunk.name
+                                name = chunk.name,
+                                argsBuilder = StringBuilder(chunk.initialArgsDelta)
                             )
                         }
                         is StreamChunk.ToolCallArgs -> {
-                            val lastAcc = toolCallAccumulators[toolCallAccumulators.size - 1]
-                            if (lastAcc != null && chunk.id.isNotEmpty()) {
-                                lastAcc.argsBuilder.append(chunk.argsDelta)
+                            val acc = toolCallAccumulators[chunk.index]
+                                ?: toolCallAccumulators.keys.maxOrNull()?.let { fallbackIndex ->
+                                    toolCallAccumulators[fallbackIndex]
+                                }
+                            if (acc != null) {
+                                acc.argsBuilder.append(chunk.argsDelta)
+                            } else {
+                                Timber.w("ApiDispatcher: ToolCallArgs dropped — no accumulator for index=%d argsDelta=\"%s\"",
+                                    chunk.index, chunk.argsDelta.take(80))
                             }
                         }
                         is StreamChunk.Done -> {
                             usageTokens = chunk.usage?.totalTokens
                             finishReason = "stop"
+                            Timber.d("ApiDispatcher: StreamChunk.Done — toolCallAccumulators.size=%d, fullContent.length=%d, totalLines=%d",
+                                toolCallAccumulators.size, fullContent.length, lineCount)
                         }
                         is StreamChunk.Error -> {
                             if (isActive && fullContent.isEmpty()) {
@@ -284,12 +312,12 @@ class ApiDispatcher(
                 }
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
-            savePartialResponse(sessionId, fullContent, usageTokens, projectId, sessionTitle, toolRound, toolCallAccumulators)
+            savePartialResponse(sessionId, fullContent, reasoningContent, usageTokens, projectId, sessionTitle, toolRound, toolCallAccumulators)
             sessionManager.setSessionState(sessionId, SessionState.Idle)
             sessionManager.refreshSessionList(projectId)
             return
         } catch (e: Exception) {
-            savePartialResponse(sessionId, fullContent, usageTokens, projectId, sessionTitle, toolRound, toolCallAccumulators)
+            savePartialResponse(sessionId, fullContent, reasoningContent, usageTokens, projectId, sessionTitle, toolRound, toolCallAccumulators)
             sessionManager.setSessionState(sessionId, SessionState.Idle)
             sessionManager.refreshSessionList(projectId)
             return
@@ -297,15 +325,20 @@ class ApiDispatcher(
             body.close()
         }
 
-        if (toolCallAccumulators.isNotEmpty() && fullContent.isEmpty()) {
-            handleToolCalls(sessionId, toolCallAccumulators, projectId, sessionTitle, toolRound)
+        if (toolCallAccumulators.isNotEmpty()) {
+            val textContent = fullContent.toString()
+            Timber.d("ApiDispatcher: BRANCH tool_calls — %d accumulators, textContent=\"%s\", calling handleToolCalls",
+                toolCallAccumulators.size, textContent.take(100))
+            handleToolCalls(sessionId, toolCallAccumulators, textContent, reasoningContent.toString(), projectId, sessionTitle, toolRound)
             return
         }
 
         if (fullContent.isNotEmpty()) {
+            Timber.d("ApiDispatcher: BRANCH text_only — persisting %d chars, setting Idle", fullContent.length)
             sessionManager.setSessionState(sessionId, SessionState.Idle)
-            persistAssistantMessage(sessionId, fullContent.toString(), usageTokens, sessionTitle, projectId)
+            persistAssistantMessage(sessionId, fullContent.toString(), reasoningContent.toString(), usageTokens, sessionTitle, projectId)
         } else {
+            Timber.e("ApiDispatcher: BRANCH empty_response_ERROR — fullContent is empty, toolCallAccumulators is empty, setting Error state")
             sessionManager.setSessionState(sessionId, SessionState.Error(
                 com.universe_st.quickwriter.util.UiText.DynamicString(
                     "AI model returned empty response. Check your API key and model configuration."
@@ -319,6 +352,8 @@ class ApiDispatcher(
     private suspend fun handleToolCalls(
         sessionId: String,
         accumulators: Map<Int, ToolCallAccumulator>,
+        textContent: String,
+        reasoningContent: String,
         projectId: String,
         sessionTitle: String,
         toolRound: Int
@@ -333,6 +368,9 @@ class ApiDispatcher(
             )
         }
 
+        Timber.d("ApiDispatcher: handleToolCalls — toolRound=%d, toolCount=%d, tools=[%s]",
+            toolRound, toolCalls.size, toolCalls.joinToString { "${it.function.name}(${it.function.arguments.take(80)})" })
+
         val toolCallsJson = gson.toJson(toolCalls.map { tc ->
             mapOf(
                 "id" to tc.id,
@@ -344,12 +382,13 @@ class ApiDispatcher(
             )
         })
 
-        val contentSummary = toolCalls.joinToString("; ") { "${it.function.name}(${it.function.arguments.take(50)})" }
+        val displayContent = textContent.ifBlank { "" }
         val assistantMsg = ChatMessage(
             role = MessageRole.ASSISTANT,
-            content = "[Tool calls: $contentSummary]",
+            content = displayContent,
             toolCalls = toolCalls,
-            tokenCount = TokenEstimator.estimateTokenCount(contentSummary),
+            reasoningContent = reasoningContent.ifEmpty { null },
+            tokenCount = TokenEstimator.estimateTokenCount(displayContent),
             timestamp = System.currentTimeMillis()
         )
 
@@ -361,6 +400,7 @@ class ApiDispatcher(
             content = assistantMsg.content,
             tokenCount = assistantMsg.tokenCount,
             toolCallsJson = toolCallsJson,
+            reasoningContent = reasoningContent.ifEmpty { null },
             createdAt = assistantMsg.timestamp
         )
         aiMessageDao.insertMessage(assistantEntity)
@@ -378,6 +418,8 @@ class ApiDispatcher(
                 projectId = projectId,
                 sessionId = sessionId
             )
+
+            Timber.d("ApiDispatcher: tool result — name=\"${toolCall.function.name}\" result=\"${result.take(200)}\"")
 
             val toolMsg = ChatMessage(
                 role = MessageRole.TOOL,
@@ -399,12 +441,15 @@ class ApiDispatcher(
             sessionManager.appendMessageToContext(sessionId, toolMsg)
         }
 
+        Timber.d("ApiDispatcher: handleToolCalls — all %d tools done, calling performSendMessage (toolRound=%d)",
+            toolCalls.size, toolRound + 1)
         performSendMessage(sessionId, "", emptyList(), toolRound + 1)
     }
 
     private suspend fun savePartialResponse(
         sessionId: String,
         fullContent: StringBuilder,
+        reasoningContent: StringBuilder,
         usageTokens: Int?,
         projectId: String,
         sessionTitle: String,
@@ -412,13 +457,14 @@ class ApiDispatcher(
         accumulators: Map<Int, ToolCallAccumulator>
     ) {
         if (fullContent.isNotEmpty()) {
-            persistAssistantMessage(sessionId, fullContent.toString(), usageTokens, sessionTitle, projectId)
+            persistAssistantMessage(sessionId, fullContent.toString(), reasoningContent.toString(), usageTokens, sessionTitle, projectId)
         }
     }
 
     private suspend fun persistAssistantMessage(
         sessionId: String,
         content: String,
+        reasoningContent: String,
         usageTokens: Int?,
         sessionTitle: String,
         projectId: String
@@ -432,6 +478,7 @@ class ApiDispatcher(
             role = "assistant",
             content = content,
             tokenCount = tokenCount,
+            reasoningContent = reasoningContent.ifEmpty { null },
             createdAt = System.currentTimeMillis()
         )
         aiMessageDao.insertMessage(entity)
@@ -441,6 +488,7 @@ class ApiDispatcher(
             role = MessageRole.ASSISTANT,
             content = content,
             tokenCount = tokenCount,
+            reasoningContent = reasoningContent.ifEmpty { null },
             timestamp = entity.createdAt
         )
         sessionManager.appendMessageToContext(sessionId, assistantMsg)
@@ -514,6 +562,7 @@ private fun ChatMessage.toDto(): ChatMessageDto {
         role = role.name.lowercase(),
         content = content,
         toolCalls = toolCallsDto,
-        toolCallId = toolCallId
+        toolCallId = toolCallId,
+        reasoningContent = reasoningContent
     )
 }

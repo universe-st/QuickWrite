@@ -22,6 +22,7 @@ import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
 import kotlinx.coroutines.Job
+import timber.log.Timber
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -141,7 +142,7 @@ class AiChatViewModel(
             try {
                 val sessionId = service.createSession(projectId, systemPrompt, modelConfigId)
                 selectSession(sessionId)
-            } catch (_: Exception) { }
+            } catch (e: Exception) { Timber.e(e, "AiChatViewModel.createSession(1) failed") }
         } else {
             viewModelScope.launch {
                 val config = aiModelConfigRepository.getDefaultConfig()
@@ -151,7 +152,7 @@ class AiChatViewModel(
                 try {
                     val sessionId = service.createSession(projectId, systemPrompt, config.id)
                     selectSession(sessionId)
-                } catch (_: Exception) { }
+                } catch (e: Exception) { Timber.e(e, "AiChatViewModel.createSession(2) failed") }
             }
         }
     }
@@ -167,7 +168,7 @@ class AiChatViewModel(
                     selectSession(remaining.first().sessionId)
                 }
             }
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.deleteSession failed") }
     }
 
     fun selectSession(sessionId: String) {
@@ -222,34 +223,34 @@ class AiChatViewModel(
         inputText = ""
         try {
             service.sendMessage(sessionId, content)
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.sendMessage failed — message dropped") }
     }
 
     fun stopGeneration() {
         val sessionId = currentSessionId ?: return
         try {
             chatService?.stopGeneration(sessionId)
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.stopGeneration failed") }
     }
 
     fun retryLastMessage() {
         val sessionId = currentSessionId ?: return
         try {
             chatService?.retryLastMessage(sessionId)
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.retryLastMessage failed") }
     }
 
     fun deleteMessage(messageIndex: Int) {
         val sessionId = currentSessionId ?: return
         try {
             chatService?.deleteMessage(sessionId, messageIndex)
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.deleteMessage failed") }
     }
 
     fun renameSession(sessionId: String, title: String) {
         try {
             chatService?.renameSession(sessionId, title)
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.renameSession failed") }
     }
 
     override fun onCleared() {
@@ -259,7 +260,7 @@ class AiChatViewModel(
         sessionStateJob?.cancel()
         try {
             getApplication<Application>().unbindService(serviceConnection)
-        } catch (_: Exception) { }
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.onCleared unbind failed") }
     }
 }
 

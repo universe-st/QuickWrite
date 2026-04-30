@@ -27,7 +27,7 @@ import com.universe_st.quickwriter.data.local.entity.UserSettingEntity
         AiMessageEntity::class,
         AiOperationEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -52,7 +52,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(Migrations.MIGRATION_1_2)
+                    .addMigrations(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

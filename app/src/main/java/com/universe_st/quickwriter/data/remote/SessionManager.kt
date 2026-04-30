@@ -394,6 +394,7 @@ private fun AiMessageEntity.toChatMessage(): ChatMessage {
         toolCalls = toolCalls,
         toolCallId = toolCallId,
         silent = isSilent,
+        reasoningContent = reasoningContent,
         timestamp = createdAt
     )
 }

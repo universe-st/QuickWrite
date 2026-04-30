@@ -20,7 +20,9 @@ data class ChatMessageDto(
     @SerializedName("tool_calls")
     val toolCalls: List<ToolCallDto>? = null,
     @SerializedName("tool_call_id")
-    val toolCallId: String? = null
+    val toolCallId: String? = null,
+    @SerializedName("reasoning_content")
+    val reasoningContent: String? = null
 )
 
 data class ToolDefinitionDto(
@@ -63,7 +65,9 @@ data class DeltaDto(
     val role: String? = null,
     val content: String? = null,
     @SerializedName("tool_calls")
-    val toolCalls: List<ToolCallChunkDto>? = null
+    val toolCalls: List<ToolCallChunkDto>? = null,
+    @SerializedName("reasoning_content")
+    val reasoningContent: String? = null
 )
 
 data class ToolCallChunkDto(

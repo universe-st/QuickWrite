@@ -23,6 +23,7 @@ data class ChatMessage(
     val toolCalls: List<ToolCall>? = null,
     val toolCallId: String? = null,
     val silent: Boolean = false,
+    val reasoningContent: String? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 

@@ -37,7 +37,7 @@ class DeleteFileTool : ChatTool {
         val projectId = arguments.optString("projectId", context.projectId)
         val relativePath = arguments.optString("relativePath", "")
 
-        if (relativePath.isEmpty()) return """{"error": "relativePath is required"}"""
+        if (relativePath.isEmpty()) return """{"error": "relativePath is required. Call get_folder_structure first to discover available file paths."}"""
 
         val project = context.projectRepository.getProjectById(projectId)
             ?: return """{"error": "Project not found: $projectId"}"""

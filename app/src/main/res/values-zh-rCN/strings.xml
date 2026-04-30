@@ -210,6 +210,9 @@
     <string name="writing_settings_top_p">Top P</string>
     <string name="writing_settings_top_p_desc">控制词汇采样的多样性和质量</string>
     <string name="writing_settings_section_info">参数说明</string>
+    <string name="writing_settings_section_advanced">高级设置</string>
+    <string name="writing_settings_max_tool_rounds">最大工具调用轮数</string>
+    <string name="writing_settings_max_tool_rounds_desc">每次对话允许的最大工具调用轮数。数值越大AI可执行的操作越多，但可能降低响应速度。</string>
     <string name="writing_settings_temp_info_title">温度</string>
     <string name="writing_settings_temp_info_desc">低值（0.1-0.3）：输出更确定、更保守\n中值（0.4-0.7）：平衡多样性和准确性\n高值（0.8-2.0）：更有创意和多样性</string>
     <string name="writing_settings_max_tokens_info_title">最大生成长度</string>
@@ -328,6 +331,7 @@
     <string name="error_update_temperature_failed">更新默认温度失败</string>
     <string name="error_update_max_tokens_failed">更新默认最大Token数失败</string>
     <string name="error_update_top_p_failed">更新默认Top P失败</string>
+    <string name="error_update_max_tool_rounds_failed">更新最大工具调用轮数失败</string>
     <string name="error_update_param_source_failed">更新参数来源失败</string>
     <string name="error_save_ai_config_failed">保存AI配置失败</string>
     <string name="error_set_default_config_failed">设置默认配置失败</string>
@@ -345,6 +349,7 @@
     <string name="success_temperature_updated">默认温度已更新</string>
     <string name="success_max_tokens_updated">默认最大Token数已更新</string>
     <string name="success_top_p_updated">默认Top P已更新</string>
+    <string name="success_max_tool_rounds_updated">最大工具调用轮数已更新</string>
     <string name="success_param_source_updated">参数来源已更新</string>
     <string name="success_ai_config_updated">AI配置已更新</string>
     <string name="success_ai_config_created">AI配置已创建</string>

@@ -210,6 +210,9 @@
     <string name="writing_settings_top_p">Top P</string>
     <string name="writing_settings_top_p_desc">Controls vocabulary sampling diversity and quality.</string>
     <string name="writing_settings_section_info">Parameter Reference</string>
+    <string name="writing_settings_section_advanced">Advanced Settings</string>
+    <string name="writing_settings_max_tool_rounds">Max Tool Call Rounds</string>
+    <string name="writing_settings_max_tool_rounds_desc">Maximum rounds of tool calls per conversation turn. Higher values allow AI to explore more but may slow down responses.</string>
     <string name="writing_settings_temp_info_title">Temperature</string>
     <string name="writing_settings_temp_info_desc">Low (0.1-0.3): More deterministic, conservative\nMedium (0.4-0.7): Balance diversity and accuracy\nHigh (0.8-2.0): More creative and diverse</string>
     <string name="writing_settings_max_tokens_info_title">Max Output Length</string>
@@ -328,6 +331,7 @@
     <string name="error_update_temperature_failed">Failed to update default temperature</string>
     <string name="error_update_max_tokens_failed">Failed to update default max tokens</string>
     <string name="error_update_top_p_failed">Failed to update default Top P</string>
+    <string name="error_update_max_tool_rounds_failed">Failed to update max tool call rounds</string>
     <string name="error_update_param_source_failed">Failed to update parameter source</string>
     <string name="error_save_ai_config_failed">Failed to save AI configuration</string>
     <string name="error_set_default_config_failed">Failed to set default configuration</string>
@@ -345,6 +349,7 @@
     <string name="success_temperature_updated">Default temperature updated</string>
     <string name="success_max_tokens_updated">Default max tokens updated</string>
     <string name="success_top_p_updated">Default Top P updated</string>
+    <string name="success_max_tool_rounds_updated">Max tool call rounds updated</string>
     <string name="success_param_source_updated">Parameter source updated</string>
     <string name="success_ai_config_updated">AI configuration updated</string>
     <string name="success_ai_config_created">AI configuration created</string>

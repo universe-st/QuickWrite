@@ -26,6 +26,8 @@ class UserSettingsRepository(
         const val DEFAULT_TEMPERATURE_KEY = "default_temperature"
         const val DEFAULT_MAX_TOKENS_KEY = "default_max_tokens"
         const val DEFAULT_TOP_P_KEY = "default_top_p"
+        const val MAX_TOOL_CALL_ROUNDS_KEY = "max_tool_call_rounds"
+        const val DEFAULT_MAX_TOOL_CALL_ROUNDS = "30"
         const val AI_WRITING_CATEGORY = "ai_writing"
         
         const val ENABLE_DARK_MODE_KEY = "enable_dark_mode"
@@ -156,6 +158,14 @@ class UserSettingsRepository(
 
     suspend fun setDefaultTopP(topP: Float): Result<Unit> {
         return setSetting(DEFAULT_TOP_P_KEY, topP.toString(), AI_WRITING_CATEGORY)
+    }
+
+    suspend fun getMaxToolCallRounds(): Int {
+        return getSetting(MAX_TOOL_CALL_ROUNDS_KEY, DEFAULT_MAX_TOOL_CALL_ROUNDS).toIntOrNull() ?: DEFAULT_MAX_TOOL_CALL_ROUNDS.toInt()
+    }
+
+    suspend fun setMaxToolCallRounds(rounds: Int): Result<Unit> {
+        return setSetting(MAX_TOOL_CALL_ROUNDS_KEY, rounds.toString(), AI_WRITING_CATEGORY)
     }
 
     suspend fun getCurrentProjectId(): String? {

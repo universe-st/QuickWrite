@@ -11,8 +11,14 @@ import timber.log.Timber
 
 sealed class StreamChunk {
     data class Content(val text: String) : StreamChunk()
-    data class ToolCallBegin(val id: String, val name: String) : StreamChunk()
-    data class ToolCallArgs(val id: String, val argsDelta: String) : StreamChunk()
+    data class ReasoningContent(val text: String) : StreamChunk()
+    data class ToolCallBegin(
+        val index: Int,
+        val id: String,
+        val name: String,
+        val initialArgsDelta: String = ""
+    ) : StreamChunk()
+    data class ToolCallArgs(val index: Int, val argsDelta: String) : StreamChunk()
     data class Done(val usage: UsageDto?) : StreamChunk()
     data class Error(val message: String) : StreamChunk()
 }
@@ -46,6 +52,11 @@ class StreamParser {
         return if (el != null && !el.isJsonNull) el.asString else null
     }
 
+    private fun JsonObject.optInt(key: String, defaultValue: Int): Int {
+        val el = get(key)
+        return if (el != null && !el.isJsonNull) el.asInt else defaultValue
+    }
+
     private fun parseJsonChunk(json: JsonObject): StreamChunk? {
         val choices = json.getAsJsonArray("choices")
         if (choices != null && choices.size() > 0) {
@@ -63,6 +74,7 @@ class StreamParser {
     private fun parseChoiceFormat(json: JsonObject, choice: JsonObject): StreamChunk? {
         val finishReason = choice.optString("finish_reason")
         if (finishReason == "stop" || finishReason == "length" || finishReason == "tool_calls") {
+            Timber.d("StreamParser: finish_reason=\"%s\", emitting Done", finishReason)
             val usageJson = json.getAsJsonObject("usage")
             val usage = if (usageJson != null) gson.fromJson(usageJson, UsageDto::class.java) else null
             return StreamChunk.Done(usage)
@@ -70,6 +82,11 @@ class StreamParser {
 
         val delta = choice.getAsJsonObject("delta")
         if (delta != null) {
+            val reasoningContent = delta.optString("reasoning_content")
+            if (!reasoningContent.isNullOrEmpty()) {
+                return StreamChunk.ReasoningContent(reasoningContent)
+            }
+
             val content = delta.optString("content")
             if (!content.isNullOrEmpty()) {
                 return StreamChunk.Content(content)
@@ -101,17 +118,39 @@ class StreamParser {
     }
 
     private fun parseToolCallChunk(toolCalls: com.google.gson.JsonArray): StreamChunk? {
+        val toolCallCount = toolCalls.size()
         val first = toolCalls[0].asJsonObject
+        val index = first.optInt("index", 0)
         val id = first.optString("id")
         val function = first.getAsJsonObject("function")
 
         val name = function?.optString("name")
         val arguments = function?.optString("arguments")
 
-        return when {
-            !name.isNullOrEmpty() && id != null -> StreamChunk.ToolCallBegin(id, name)
-            !arguments.isNullOrEmpty() && id != null -> StreamChunk.ToolCallArgs(id, arguments)
-            else -> null
+        if (toolCallCount > 1) {
+            Timber.w("StreamParser: multiple tool_calls (%d) in single delta — only first is processed", toolCallCount)
         }
+
+        val chunk = when {
+            !name.isNullOrEmpty() && id != null -> {
+                Timber.d("StreamParser: ToolCallBegin index=%d id=\"%s\" name=\"%s\"", index, id, name)
+                StreamChunk.ToolCallBegin(
+                    index = index,
+                    id = id,
+                    name = name,
+                    initialArgsDelta = arguments.orEmpty()
+                )
+            }
+            !arguments.isNullOrEmpty() -> {
+                Timber.d("StreamParser: ToolCallArgs index=%d args=\"%s\"", index, arguments.take(80))
+                StreamChunk.ToolCallArgs(index, arguments)
+            }
+            else -> {
+                Timber.w("StreamParser: parseToolCallChunk — no name/args, id=\"%s\" name=\"%s\" args=\"%s\"",
+                    id ?: "(null)", name ?: "(null)", arguments?.take(80) ?: "(null)")
+                null
+            }
+        }
+        return chunk
     }
 }

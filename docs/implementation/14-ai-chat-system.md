@@ -17,18 +17,18 @@
 | 文件 | 路径 | 用途 |
 |------|------|------|
 | AiSessionEntity | `data/local/entity/AiSessionEntity.kt` | ai_sessions 表 — 会话元数据 (34行) |
-| AiMessageEntity | `data/local/entity/AiMessageEntity.kt` | ai_messages 表 — 消息记录 (40行) |
+| AiMessageEntity | `data/local/entity/AiMessageEntity.kt` | ai_messages 表 — 消息记录 (42行) |
 | AiOperationEntity | `data/local/entity/AiOperationEntity.kt` | ai_operations 表 — AI 操作回溯 (40行) |
 | AiSessionDao | `data/local/dao/AiSessionDao.kt` | 会话 CRUD (39行) |
 | AiMessageDao | `data/local/dao/AiMessageDao.kt` | 消息 CRUD + 静默过滤 (40行) |
 | AiOperationDao | `data/local/dao/AiOperationDao.kt` | 操作记录 CRUD (21行) |
-| Migrations | `data/local/database/Migrations.kt` | v1→v2 数据库迁移 (88行) |
+| Migrations | `data/local/database/Migrations.kt` | v1→v2→v3 数据库迁移 (94行) |
 | AiConversationRepository | `data/repository/AiConversationRepository.kt` | 会话+消息持久化封装 + Entity↔Domain 转换 (97行) |
 
 ### 网络层
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AiModels (DTO) | `data/remote/dto/AiModels.kt` | API 请求/响应/流式 DTO (88行) |
+| AiModels (DTO) | `data/remote/dto/AiModels.kt` | API 请求/响应/流式 DTO (93行) |
 | AiApiService | `data/remote/AiApiService.kt` | Retrofit API 接口 (流式+非流式) (28行) |
 | AiApiClient | `data/remote/AiApiClient.kt` | OkHttp + Retrofit 实例工厂 (27行) |
 | AiServiceRepository | `data/repository/AiServiceRepository.kt` | API 调用封装 + Service 缓存 (55行) |
@@ -39,7 +39,7 @@
 | AIChatService | `data/remote/AIChatService.kt` | Foreground Service 入口 + 通知管理 (211行) |
 | IChatService | `data/remote/IChatService.kt` | Binder 暴露的服务接口 (43行) |
 | SessionManager | `data/remote/SessionManager.kt` | 会话生命周期管理 + 系统提示词构建 + 上下文维护 (284行) |
-| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题 + Tool Call 循环 (~520行) |
+| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题 + Tool Call 循环 (~530行) |
 | ToolExecutor | `data/remote/ToolExecutor.kt` | 工具注册/分发/执行 + 修改前备份 + 操作记录 (315行) |
 | BackupManager | `data/remote/BackupManager.kt` | 备份存储 + FIFO 清理 (5GB上限) (86行) |
 | ToolRegistry | `data/remote/ToolRegistry.kt` | 13 个工具统一注册清单 (32行) |
@@ -65,14 +65,14 @@
 ### 领域模型
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| ChatModels | `domain/model/ChatModels.kt` | ChatMessage / MessageRole / SessionState / SessionSummary / SessionContext / ToolCall (60行) |
+| ChatModels | `domain/model/ChatModels.kt` | ChatMessage / MessageRole / SessionState / SessionSummary / SessionContext / ToolCall (55行) |
 | ChatTool | `domain/model/ChatTool.kt` | ChatTool 接口 / ToolDefinition / ToolContext (30行) |
 | AiOperation | `domain/model/AiOperation.kt` | AiOperation 抽象基类 + 8 种子类 + OperationType 枚举 + HashUtil (276行) |
 
 ### 工具类
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 (~116行) |
+| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 + reasoning_content (~123行) |
 | TokenEstimator | `util/TokenEstimator.kt` | 字符数/4 近似 token 估算 (12行) |
 
 ## 设计架构
@@ -414,9 +414,11 @@ ChatTab(projectId, onNavigateToAiConfig?)
 | Markdown 组件重渲染闪烁 | 更新为 `jeziellago/compose-markdown` | ChatBubble.kt, libs.versions.toml |
 | `INTERNET` 权限缺失 | 添加 `INTERNET` + `ACCESS_NETWORK_STATE` | AndroidManifest.xml |
 | 流结束生成中气泡与持久化消息双显示 | 先设 Idle 再持久化 | ApiDispatcher.kt |
+| DeepSeek thinking mode reasoning_content 未回传导致 API 400 错误 | 流式解析 `reasoning_content` → 持久化到 DB → 下次请求回传给 API | AiModels.kt, ChatModels.kt, StreamParser.kt, ApiDispatcher.kt, AiMessageEntity.kt, Migrations.kt, SessionManager.kt, AiConversationRepository.kt |
+| 流式 Tool Call 参数丢失导致 `view_file` 循环缺少 `relativePath` | arguments chunk 不再依赖 `id`，按 `index` 累积到对应 ToolCall，并保留首 chunk 中的初始 arguments | StreamParser.kt, ApiDispatcher.kt, StreamParserTest.kt |
 
 ---
 
-**文档版本**: 1.3  
+**文档版本**: 1.5  
 **最后更新**: 2026-04-30  
-**状态**: 完成（阶段一～四全部实现，含 UI 层 + 流式渲染/API/解析修复）
+**状态**: 完成（阶段一～四全部实现，含 UI 层 + 流式渲染/API/解析修复 + DeepSeek reasoning_content 支持）

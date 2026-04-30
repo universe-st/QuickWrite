@@ -107,6 +107,7 @@ fun AiMessageEntity.toDomain(): ChatMessage {
         toolCalls = toolCalls,
         toolCallId = toolCallId,
         silent = isSilent,
+        reasoningContent = reasoningContent,
         timestamp = createdAt
     )
 }
