@@ -53,6 +53,8 @@ fun WritingScreen(
     var showNewChapterDialog by remember { mutableStateOf(false) }
     var showChapterList by remember { mutableStateOf(false) }
 
+    val isChatTab = uiState is WritingUiState.Success && (uiState as WritingUiState.Success).selectedTab == 1
+
     Scaffold(
         topBar = {
             WritingTopBar(
@@ -60,7 +62,10 @@ fun WritingScreen(
                 onBack = onNavigateToProjectList,
                 onSave = { viewModel.saveCurrentChapter() },
                 showChapterList = showChapterList,
-                onToggleChapterList = { showChapterList = !showChapterList }
+                onToggleChapterList = { showChapterList = !showChapterList },
+                isChatTab = isChatTab,
+                showChatSidebar = aiChatViewModel.showSidebar,
+                onToggleChatSidebar = { aiChatViewModel.showSidebar = !aiChatViewModel.showSidebar }
             )
         },
         bottomBar = {
@@ -175,7 +180,10 @@ private fun WritingTopBar(
     onBack: () -> Unit,
     onSave: () -> Unit,
     showChapterList: Boolean,
-    onToggleChapterList: () -> Unit
+    onToggleChapterList: () -> Unit,
+    isChatTab: Boolean = false,
+    showChatSidebar: Boolean = false,
+    onToggleChatSidebar: () -> Unit = {}
 ) {
     val title = when (uiState) {
         is WritingUiState.Success -> uiState.project.title
@@ -228,17 +236,26 @@ private fun WritingTopBar(
                     strokeWidth = 2.dp
                 )
             }
-            if (hasChapters) {
-                IconButton(onClick = onToggleChapterList) {
+            if (isChatTab) {
+                IconButton(onClick = onToggleChatSidebar) {
                     Icon(
-                        if (showChapterList) Icons.Default.Close else Icons.Default.Menu,
-                        contentDescription = if (showChapterList) stringResource(R.string.writing_hide_chapter_list) else stringResource(R.string.writing_show_chapter_list)
+                        if (showChatSidebar) Icons.Default.Close else Icons.Default.Menu,
+                        contentDescription = stringResource(R.string.chat_sidebar_toggle)
                     )
                 }
-            }
-            if (showSaveButton) {
-                IconButton(onClick = onSave) {
-                    Icon(Icons.Default.Save, contentDescription = stringResource(R.string.writing_save_content_desc))
+            } else {
+                if (hasChapters) {
+                    IconButton(onClick = onToggleChapterList) {
+                        Icon(
+                            if (showChapterList) Icons.Default.Close else Icons.Default.Menu,
+                            contentDescription = if (showChapterList) stringResource(R.string.writing_hide_chapter_list) else stringResource(R.string.writing_show_chapter_list)
+                        )
+                    }
+                }
+                if (showSaveButton) {
+                    IconButton(onClick = onSave) {
+                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.writing_save_content_desc))
+                    }
                 }
             }
         },

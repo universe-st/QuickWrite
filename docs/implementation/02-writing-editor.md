@@ -192,7 +192,7 @@ fun countWords(text: String): Int {
 ```
 
 ### Chat 标签页
-当前显示 "Under Development" 占位内容，后续将集成 AI 对话功能。
+集成 AI 对话功能，详见 [14-AI 对话系统](./14-ai-chat-system.md)。`SessionSidebar` 支持左滑手势关闭，`SessionListItem` 支持长按触发删除确认。
 
 ## 已知问题/技术债务
 

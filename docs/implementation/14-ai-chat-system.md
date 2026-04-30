@@ -295,9 +295,9 @@ sendMessage(sessionId, content)
 ```
 ChatTab(projectId)
 ├── Row
-│   ├── SessionSidebar (AnimatedVisibility, 240dp宽)
+│   ├── SessionSidebar (AnimatedVisibility, 240dp宽, 支持左滑关闭)
 │   │   ├── Header (标题 + 新建 + 关闭按钮)
-│   │   └── LazyColumn of SessionListItem
+│   │   └── LazyColumn of SessionListItem (长按删除)
 │   ├── VerticalDivider
 │   └── ChatContentArea (Modifier.weight(1f))
 │       ├── ChatTopBar (会话标题 + 侧栏切换)
@@ -311,6 +311,11 @@ ChatTab(projectId)
 ├── DeleteSessionDialog (确认)
 └── DeleteMessageDialog (确认)
 ```
+
+**会话侧栏交互**:
+- **左滑关闭**: `SessionSidebar` 使用 `pointerInput` + `detectHorizontalDragGestures` 检测左滑手势（阈值 120px），触发 `viewModel.showSidebar = false`
+- **长按删除**: `SessionListItem` 使用 `combinedClickable(onLongClick=...)` 触发删除确认对话框
+- **关闭按钮**: 侧栏顶部 Close 图标按钮，功能同上
 
 ### 数据流向
 
@@ -346,6 +351,6 @@ ChatTab(projectId)
 
 ---
 
-**文档版本**: 1.1  
-**最后更新**: 2026-04-29  
+**文档版本**: 1.2  
+**最后更新**: 2026-04-30  
 **状态**: 完成（阶段一～四全部实现，含 UI 层）

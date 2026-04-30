@@ -64,7 +64,7 @@ class AiChatViewModel(
     var selectedProjectId: String? by mutableStateOf(null)
         private set
     var inputText by mutableStateOf("")
-    var showSidebar by mutableStateOf(true)
+    var showSidebar by mutableStateOf(false)
 
     private var sessionListJob: Job? = null
     private var messagesJob: Job? = null

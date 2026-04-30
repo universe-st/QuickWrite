@@ -5,15 +5,16 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Stop
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -89,7 +91,6 @@ fun ChatTab(
             messages = messages,
             sessionState = sessionState,
             inputText = viewModel.inputText,
-            sessionTitle = viewModel.currentSessionDetail?.title ?: "",
             isGenerating = isGenerating,
             partialContent = partialContent,
             onInputChange = { viewModel.inputText = it },
@@ -97,7 +98,6 @@ fun ChatTab(
             onStop = { viewModel.stopGeneration() },
             onRetry = { viewModel.retryLastMessage() },
             onDeleteMessage = { deleteMessageIndex = it },
-            onToggleSidebar = { viewModel.showSidebar = !viewModel.showSidebar },
             modifier = Modifier.weight(1f)
         )
     }
@@ -198,9 +198,29 @@ private fun SessionSidebar(
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var dragOffsetX by remember { mutableStateOf(0f) }
+
     Column(
         modifier = modifier
+            .offset(x = dragOffsetX.coerceAtMost(0f).dp)
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragOffsetX < -120f) {
+                            onClose()
+                        }
+                        dragOffsetX = 0f
+                    },
+                    onDragCancel = { dragOffsetX = 0f },
+                    onHorizontalDrag = { _, dragAmount ->
+                        // only respond to leftward drag
+                        if (dragAmount < 0f) {
+                            dragOffsetX += dragAmount
+                        }
+                    }
+                )
+            }
     ) {
         Row(
             modifier = Modifier
@@ -241,12 +261,15 @@ private fun SessionSidebar(
         LazyColumn(
             modifier = Modifier.weight(1f)
         ) {
-            itemsIndexed(sessions) { _, session ->
+            items(
+                items = sessions,
+                key = { it.sessionId }
+            ) { session ->
                 SessionListItem(
                     session = session,
                     isSelected = session.sessionId == currentSessionId,
                     onClick = { onSelect(session.sessionId) },
-                    onDelete = { onDelete(session.sessionId) }
+                    onLongClick = { onDelete(session.sessionId) }
                 )
             }
         }
@@ -269,7 +292,7 @@ private fun SessionListItem(
     session: SessionSummary,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onLongClick: () -> Unit
 ) {
     val bgColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -287,7 +310,10 @@ private fun SessionListItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -314,18 +340,6 @@ private fun SessionListItem(
                 )
             }
         }
-
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.size(24.dp)
-        ) {
-            Icon(
-                Icons.Default.Delete,
-                contentDescription = stringResource(R.string.common_delete),
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-            )
-        }
     }
 }
 
@@ -334,7 +348,6 @@ private fun ChatContentArea(
     messages: List<ChatMessage>,
     sessionState: SessionState,
     inputText: String,
-    sessionTitle: String,
     isGenerating: Boolean,
     partialContent: String?,
     onInputChange: (String) -> Unit,
@@ -342,7 +355,6 @@ private fun ChatContentArea(
     onStop: () -> Unit,
     onRetry: () -> Unit,
     onDeleteMessage: (Int) -> Unit,
-    onToggleSidebar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -356,11 +368,6 @@ private fun ChatContentArea(
     }
 
     Column(modifier = modifier.fillMaxHeight()) {
-        ChatTopBar(
-            sessionTitle = sessionTitle,
-            onToggleSidebar = onToggleSidebar
-        )
-
         if (sessionState is SessionState.Error) {
             Surface(
                 color = MaterialTheme.colorScheme.errorContainer,
@@ -449,46 +456,6 @@ private fun ChatContentArea(
             onSend = onSend,
             onStop = onStop
         )
-    }
-}
-
-@Composable
-private fun ChatTopBar(
-    sessionTitle: String,
-    onToggleSidebar: () -> Unit
-) {
-    Surface(
-        tonalElevation = 2.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onToggleSidebar,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    Icons.Default.Menu,
-                    contentDescription = stringResource(R.string.chat_sidebar_toggle),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Text(
-                text = sessionTitle.ifBlank { stringResource(R.string.writing_chat_tab) },
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
-            )
-        }
     }
 }
 
