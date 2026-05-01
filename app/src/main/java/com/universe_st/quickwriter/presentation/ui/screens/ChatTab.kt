@@ -37,6 +37,10 @@ import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.MessageRole
 import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
+import com.universe_st.quickwriter.domain.model.ExpandableItem
+import com.universe_st.quickwriter.domain.model.StatItem
+import com.universe_st.quickwriter.domain.model.ToolResultParsed
+import com.universe_st.quickwriter.util.ToolResultParser
 import com.universe_st.quickwriter.util.UiText
 
 @Composable
@@ -179,6 +183,63 @@ fun ChatTab(
             }
         )
     }
+}
+
+private sealed class DisplayItem {
+    data class Message(val message: ChatMessage) : DisplayItem()
+    data class ToolCard(
+        val toolName: String,
+        val parsed: ToolResultParsed?,
+        val isLoading: Boolean
+    ) : DisplayItem()
+}
+
+private fun preprocessMessages(
+    messages: List<ChatMessage>,
+    isGenerating: Boolean
+): List<DisplayItem> {
+    val items = mutableListOf<DisplayItem>()
+    val toolCallResults = mutableMapOf<String, String>()
+    val toolCallArgs = mutableMapOf<String, String>()
+
+    for (msg in messages) {
+        if (msg.role == MessageRole.TOOL && msg.toolCallId != null) {
+            toolCallResults[msg.toolCallId] = msg.content
+        }
+        if (msg.role == MessageRole.ASSISTANT && msg.toolCalls != null) {
+            for (tc in msg.toolCalls) {
+                toolCallArgs[tc.id] = tc.function.arguments
+            }
+        }
+    }
+
+    for (msg in messages) {
+        if (msg.role == MessageRole.SYSTEM) continue
+        if (msg.role == MessageRole.TOOL) continue
+
+        if (msg.role == MessageRole.ASSISTANT && msg.toolCalls != null && msg.toolCalls.isNotEmpty()) {
+            val strippedMsg = msg.copy(toolCalls = null, id = msg.id)
+            if (strippedMsg.content.isNotBlank()) {
+                items.add(DisplayItem.Message(strippedMsg))
+            }
+            for (tc in msg.toolCalls) {
+                val resultJson = toolCallResults[tc.id]
+                val argsJson = toolCallArgs[tc.id]
+                if (resultJson != null) {
+                    val parsed = ToolResultParser.parse(tc.function.name, resultJson, argsJson)
+                    items.add(DisplayItem.ToolCard(tc.function.name, parsed, isLoading = false))
+                } else if (isGenerating) {
+                    items.add(DisplayItem.ToolCard(tc.function.name, null, isLoading = true))
+                } else {
+                    items.add(DisplayItem.ToolCard(tc.function.name, null, isLoading = false))
+                }
+            }
+        } else {
+            items.add(DisplayItem.Message(msg))
+        }
+    }
+
+    return items
 }
 
 @Composable
@@ -422,30 +483,30 @@ private fun ChatContentArea(
 ) {
     val listState = rememberLazyListState()
     val context = LocalContext.current
-    var actionMessageIndex by remember { mutableStateOf<Int?>(null) }
 
-    val displayMessages = remember(messages, isGenerating, partialContent) {
+    val baseItems = remember(messages, isGenerating) {
+        preprocessMessages(messages, isGenerating)
+    }
+
+    val displayItems = buildList {
+        addAll(baseItems)
         if (isGenerating) {
-            val generatingMsg = ChatMessage(
-                id = Long.MAX_VALUE,
-                role = MessageRole.ASSISTANT,
-                content = partialContent ?: "",
-                silent = false,
-                timestamp = System.currentTimeMillis()
+            add(
+                DisplayItem.Message(
+                    ChatMessage(
+                        id = Long.MAX_VALUE,
+                        role = MessageRole.ASSISTANT,
+                        content = partialContent ?: "",
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
             )
-            if (messages.lastOrNull()?.role != MessageRole.ASSISTANT || messages.lastOrNull()?.id != Long.MAX_VALUE) {
-                messages + generatingMsg
-            } else {
-                messages.dropLast(1) + generatingMsg
-            }
-        } else {
-            messages
         }
     }
 
-    LaunchedEffect(messages.size) {
-        if (displayMessages.isNotEmpty()) {
-            listState.animateScrollToItem(displayMessages.size - 1)
+    LaunchedEffect(messages.size, isGenerating) {
+        if (displayItems.isNotEmpty()) {
+            listState.animateScrollToItem(displayItems.size - 1)
         }
     }
 
@@ -479,7 +540,7 @@ private fun ChatContentArea(
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
         ) {
-            if (displayMessages.isEmpty() && sessionState !is SessionState.Error) {
+            if (displayItems.isEmpty() && sessionState !is SessionState.Error) {
                 item {
                     Box(
                         modifier = Modifier
@@ -497,29 +558,45 @@ private fun ChatContentArea(
             }
 
             itemsIndexed(
-                items = displayMessages,
-                key = { index, message -> message.id }
-            ) { index, message ->
-                var showActions by remember { mutableStateOf(false) }
-                val isGeneratingItem = message.id == Long.MAX_VALUE
-                if (isGeneratingItem) {
-                    AssistantMessageBubble(
-                        content = message.content,
-                        isGenerating = true
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showActions = !showActions }
-                    ) {
-                        MessageBubble(
-                            message = message,
-                            showActions = showActions,
-                            onRetry = if (message.role == MessageRole.USER) {
-                                { onRetry() }
-                            } else null,
-                            onDelete = { onDeleteMessage(index) }
+                items = displayItems,
+                key = { index, item ->
+                    when (item) {
+                        is DisplayItem.Message -> item.message.id
+                        is DisplayItem.ToolCard -> "tool_${item.toolName}_$index"
+                    }
+                }
+            ) { index, item ->
+                when (item) {
+                    is DisplayItem.Message -> {
+                        var showActions by remember { mutableStateOf(false) }
+                        val isGeneratingItem = item.message.id == Long.MAX_VALUE
+                        if (isGeneratingItem) {
+                            AssistantMessageBubble(
+                                content = item.message.content,
+                                isGenerating = true
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showActions = !showActions }
+                            ) {
+                                MessageBubble(
+                                    message = item.message,
+                                    showActions = showActions,
+                                    onRetry = if (item.message.role == MessageRole.USER) {
+                                        { onRetry() }
+                                    } else null,
+                                    onDelete = { onDeleteMessage(index) }
+                                )
+                            }
+                        }
+                    }
+                    is DisplayItem.ToolCard -> {
+                        ToolExecutionCard(
+                            toolName = item.toolName,
+                            parsed = item.parsed,
+                            isLoading = item.isLoading
                         )
                     }
                 }

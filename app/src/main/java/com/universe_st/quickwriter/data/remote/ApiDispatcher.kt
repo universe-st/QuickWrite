@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.BufferedReader
@@ -422,6 +423,8 @@ class ApiDispatcher(
         aiMessageDao.insertMessage(assistantEntity)
         sessionManager.appendMessageToContext(sessionId, assistantMsg)
 
+        delay(150) // Let UI observe tool cards via Room Flow before executing tools
+
         val context = sessionManager.getSessionContext(sessionId) ?: return
 
         for (toolCall in toolCalls) {
@@ -455,6 +458,8 @@ class ApiDispatcher(
             )
             aiMessageDao.insertMessage(toolEntity)
             sessionManager.appendMessageToContext(sessionId, toolMsg)
+
+            delay(100) // Let UI observe each tool result via Room Flow
         }
 
         Timber.d("ApiDispatcher: handleToolCalls — all %d tools done, calling performSendMessage (toolRound=%d)",

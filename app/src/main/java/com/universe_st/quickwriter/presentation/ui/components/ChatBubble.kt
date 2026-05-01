@@ -37,6 +37,7 @@ import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.MessageRole
 import com.universe_st.quickwriter.domain.model.ToolCall
 import dev.jeziellago.compose.markdowntext.MarkdownText
+import kotlinx.coroutines.delay
 
 @Composable
 fun MessageBubble(
@@ -60,10 +61,7 @@ fun MessageBubble(
             isGenerating = false,
             modifier = modifier
         )
-        MessageRole.TOOL -> ToolResultBubble(
-            content = message.content,
-            modifier = modifier
-        )
+        MessageRole.TOOL -> { }
         MessageRole.SYSTEM -> SystemMessageBubble(
             content = message.content,
             modifier = modifier
@@ -178,24 +176,134 @@ fun AssistantMessageBubble(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
-                if (hasContent) {
-                    MarkdownText(markdown = content)
-                } else if (isGenerating) {
-                    TypingIndicator()
+                when {
+                    isGenerating && hasContent -> {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            TypewriterText(
+                                fullText = content,
+                                isStreaming = true,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            PulsingCursor()
+                        }
+                    }
+                    isGenerating && !hasContent -> {
+                        LoadingPlaceholder()
+                    }
+                    else -> {
+                        MarkdownText(markdown = content)
+                    }
                 }
             }
         }
 
-        if (hasToolCalls) {
-            if (hasContent || isGenerating) {
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            ToolCallBubble(toolCalls = toolCalls)
+        // Tool calls now rendered as ToolExecutionCard in ChatTab via message preprocessing
+        if (hasToolCalls && (hasContent || isGenerating)) {
+            Spacer(modifier = Modifier.height(0.dp))
         }
+    }
+}
 
-        if (isGenerating && hasContent) {
-            Spacer(modifier = Modifier.height(4.dp))
-            TypingIndicator()
+@Composable
+private fun TypewriterText(
+    fullText: String,
+    isStreaming: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var displayedLength by remember { mutableStateOf(0) }
+
+    val prevText = remember { mutableStateOf("") }
+    if (displayedLength > fullText.length || 
+        (fullText.isEmpty() && prevText.value.isNotEmpty())) {
+        displayedLength = 0
+    }
+    prevText.value = fullText
+
+    LaunchedEffect(fullText, isStreaming) {
+        if (isStreaming && fullText.isNotEmpty()) {
+            while (displayedLength < fullText.length) {
+                delay(25)
+                displayedLength++
+            }
+        }
+    }
+
+    val visibleText = fullText.take(displayedLength.coerceAtMost(fullText.length))
+
+    if (visibleText.isNotEmpty()) {
+        Text(
+            text = visibleText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun PulsingCursor(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulsingCursor")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
+
+    Box(
+        modifier = modifier
+            .width(2.dp)
+            .height(16.dp)
+            .background(
+                MaterialTheme.colorScheme.primary.copy(alpha = alpha),
+                RoundedCornerShape(1.dp)
+            )
+    )
+}
+
+@Composable
+private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "loadingPlaceholder")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "loadingAlpha"
+    )
+
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.chat_typing),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            repeat(3) { index ->
+                val dotAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.2f,
+                    targetValue = 1.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(400, delayMillis = index * 150),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "loadingDot$index"
+                )
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dotAlpha)
+                        )
+                )
+            }
         }
     }
 }

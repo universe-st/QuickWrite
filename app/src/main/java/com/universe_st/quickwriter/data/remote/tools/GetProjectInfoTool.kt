@@ -15,18 +15,14 @@ class GetProjectInfoTool : ChatTool {
         description = "Get detailed information about a specific project, including metadata and directory statistics",
         parameters = mapOf(
             "type" to "object",
-            "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                )
+            "properties" to mapOf<String, Any>(
             ),
-            "required" to listOf("projectId")
+            "required" to emptyList<String>()
         )
     )
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val project = context.projectRepository.getProjectById(projectId)
             ?: return """{"error": "Project not found: $projectId"}"""
 

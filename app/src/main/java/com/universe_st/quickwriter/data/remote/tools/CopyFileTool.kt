@@ -16,10 +16,6 @@ class CopyFileTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "sourcePath" to mapOf(
                     "type" to "string",
                     "description" to "Relative path of the source file"
@@ -29,12 +25,12 @@ class CopyFileTool : ChatTool {
                     "description" to "Relative path for the copy (including new filename)"
                 )
             ),
-            "required" to listOf("projectId", "sourcePath", "targetPath")
+            "required" to listOf("sourcePath", "targetPath")
         )
     )
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val sourcePath = arguments.optString("sourcePath", "")
         val targetPath = arguments.optString("targetPath", "")
 

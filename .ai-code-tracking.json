@@ -88,12 +88,23 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 2
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/ui/screens/ChatTab.kt",
+      "timestamp": 1777603593719,
+      "startOffset": 17380,
+      "endOffset": 17942,
+      "codeContent": "baseItems \u003d remember(messages, isGenerating) {\n        preprocessMessages(messages, isGenerating)\n    }\n\n    val displayItems \u003d buildList {\n        addAll(baseItems)\n        if (isGenerating) {\n            add(\n                DisplayItem.Message(\n                    ChatMessage(\n                        id \u003d Long.MAX_VALUE,\n                        role \u003d MessageRole.ASSISTANT,\n                        content \u003d partialContent ?: \"\",\n                        timestamp \u003d System.currentTimeMillis()\n                    )\n                )\n            )\n        }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 18
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 8,
-      "totalLines": 88
+      "usageCount": 9,
+      "totalLines": 106
     }
   }
 }

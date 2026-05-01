@@ -16,10 +16,6 @@ class EditFileTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "relativePath" to mapOf(
                     "type" to "string",
                     "description" to "Relative path of the file from project root"
@@ -37,12 +33,12 @@ class EditFileTool : ChatTool {
                     "description" to "New content to insert (multi-line text)"
                 )
             ),
-            "required" to listOf("projectId", "relativePath", "startLine", "endLine", "newContent")
+            "required" to listOf("relativePath", "startLine", "endLine", "newContent")
         )
     )
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val relativePath = arguments.optString("relativePath", "")
         val startLine = arguments.optInt("startLine", 1)
         val endLine = arguments.optInt("endLine", -1)

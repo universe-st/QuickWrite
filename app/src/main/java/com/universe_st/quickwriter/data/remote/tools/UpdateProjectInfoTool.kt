@@ -17,21 +17,17 @@ class UpdateProjectInfoTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "fields" to mapOf(
                     "type" to "object",
                     "description" to "Key-value pairs of fields to update. Supported: title, author, genre, description, status"
                 )
             ),
-            "required" to listOf("projectId", "fields")
+            "required" to listOf("fields")
         )
     )
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val fields = arguments.optJSONObject("fields")
 
         if (fields == null || fields.length() == 0) {

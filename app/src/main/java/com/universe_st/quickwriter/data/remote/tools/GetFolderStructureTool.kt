@@ -17,21 +17,17 @@ class GetFolderStructureTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "relativePath" to mapOf(
                     "type" to "string",
                     "description" to "Relative path from project root (default: empty = root)"
                 )
             ),
-            "required" to listOf("projectId")
+            "required" to emptyList<String>()
         )
     )
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val relativePath = arguments.optString("relativePath", "")
 
         val project = context.projectRepository.getProjectById(projectId)

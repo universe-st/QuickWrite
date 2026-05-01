@@ -17,10 +17,6 @@ class SearchInProjectTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "relativePath" to mapOf(
                     "type" to "string",
                     "description" to "Starting directory for search (default: project root)"
@@ -38,7 +34,7 @@ class SearchInProjectTool : ChatTool {
                     "description" to "Maximum number of results to return (default: 20)"
                 )
             ),
-            "required" to listOf("projectId", "query")
+            "required" to listOf("query")
         )
     )
 
@@ -48,7 +44,7 @@ class SearchInProjectTool : ChatTool {
     }
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val relativePath = arguments.optString("relativePath", "")
         val query = arguments.optString("query", "")
         val useRegex = arguments.optBoolean("useRegex", false)

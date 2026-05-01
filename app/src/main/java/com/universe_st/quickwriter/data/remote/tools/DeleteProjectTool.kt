@@ -18,7 +18,7 @@ class DeleteProjectTool : ChatTool {
             "properties" to mapOf(
                 "projectId" to mapOf(
                     "type" to "string",
-                    "description" to "The ID of the project to delete"
+                    "description" to "The ID of the project to delete (must be explicitly specified)"
                 ),
                 "confirmTitle" to mapOf(
                     "type" to "string",

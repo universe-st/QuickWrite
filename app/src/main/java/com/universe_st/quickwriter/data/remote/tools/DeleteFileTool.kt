@@ -16,16 +16,12 @@ class DeleteFileTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "relativePath" to mapOf(
                     "type" to "string",
                     "description" to "Relative path of the file/directory to delete"
                 )
             ),
-            "required" to listOf("projectId", "relativePath")
+            "required" to listOf("relativePath")
         )
     )
 
@@ -34,7 +30,7 @@ class DeleteFileTool : ChatTool {
     }
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val relativePath = arguments.optString("relativePath", "")
 
         if (relativePath.isEmpty()) return """{"error": "relativePath is required. Call get_folder_structure first to discover available file paths."}"""

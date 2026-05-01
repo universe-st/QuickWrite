@@ -16,10 +16,6 @@ class ViewFileTool : ChatTool {
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
-                "projectId" to mapOf(
-                    "type" to "string",
-                    "description" to "The ID of the project"
-                ),
                 "relativePath" to mapOf(
                     "type" to "string",
                     "description" to "Relative path of the file from project root"
@@ -33,7 +29,7 @@ class ViewFileTool : ChatTool {
                     "description" to "Ending line number (1-indexed, default: 0 = all lines)"
                 )
             ),
-            "required" to listOf("projectId", "relativePath")
+            "required" to listOf("relativePath")
         )
     )
 
@@ -42,7 +38,7 @@ class ViewFileTool : ChatTool {
     }
 
     override suspend fun execute(arguments: JSONObject, context: ToolContext): String {
-        val projectId = arguments.optString("projectId", context.projectId)
+        val projectId = context.projectId
         val relativePath = arguments.optString("relativePath", "")
         val startLine = arguments.optInt("startLine", 1).coerceAtLeast(1)
         val endLine = arguments.optInt("endLine", 0)
