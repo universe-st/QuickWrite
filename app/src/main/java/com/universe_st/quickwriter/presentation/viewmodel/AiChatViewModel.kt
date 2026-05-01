@@ -18,6 +18,7 @@ import com.universe_st.quickwriter.data.remote.IChatService
 import com.universe_st.quickwriter.data.remote.SessionDetail
 import com.universe_st.quickwriter.data.repository.AiConversationRepository
 import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
+import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
@@ -32,7 +33,8 @@ import kotlinx.coroutines.launch
 class AiChatViewModel(
     application: Application,
     private val conversationRepository: AiConversationRepository,
-    private val aiModelConfigRepository: AiModelConfigRepository
+    private val aiModelConfigRepository: AiModelConfigRepository,
+    private val projectRepository: ProjectRepository
 ) : AndroidViewModel(application) {
 
     private var chatService: IChatService? = null
@@ -137,20 +139,33 @@ class AiChatViewModel(
         systemPrompt: String? = null,
         modelConfigId: Int? = null
     ) {
-        if (modelConfigId != null) {
-            val service = chatService ?: return
+        val service = chatService ?: return
+        if (systemPrompt != null && modelConfigId != null) {
             try {
                 val sessionId = service.createSession(projectId, systemPrompt, modelConfigId)
                 selectSession(sessionId)
             } catch (e: Exception) { Timber.e(e, "AiChatViewModel.createSession(1) failed") }
         } else {
             viewModelScope.launch {
-                val config = aiModelConfigRepository.getDefaultConfig()
+                val config = modelConfigId?.let { id ->
+                    aiModelConfigRepository.getConfigById(id)
+                } ?: aiModelConfigRepository.getDefaultConfig()
                     ?: aiModelConfigRepository.getAllConfigs().first().firstOrNull()
                     ?: return@launch
-                val service = chatService ?: return@launch
                 try {
-                    val sessionId = service.createSession(projectId, systemPrompt, config.id)
+                    val sessionId = if (systemPrompt != null) {
+                        service.createSession(projectId, systemPrompt, config.id)
+                    } else {
+                        val project = projectRepository.getProjectById(projectId)
+                        if (project != null) {
+                            service.createSessionWithProjectInfo(
+                                projectId, project.title, project.author,
+                                project.genre, project.storagePath, config.id
+                            )
+                        } else {
+                            service.createSession(projectId, null, config.id)
+                        }
+                    }
                     selectSession(sessionId)
                 } catch (e: Exception) { Timber.e(e, "AiChatViewModel.createSession(2) failed") }
             }
@@ -267,12 +282,13 @@ class AiChatViewModel(
 class AiChatViewModelFactory(
     private val application: Application,
     private val conversationRepository: AiConversationRepository,
-    private val aiModelConfigRepository: AiModelConfigRepository
+    private val aiModelConfigRepository: AiModelConfigRepository,
+    private val projectRepository: ProjectRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AiChatViewModel::class.java)) {
-            return AiChatViewModel(application, conversationRepository, aiModelConfigRepository) as T
+            return AiChatViewModel(application, conversationRepository, aiModelConfigRepository, projectRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

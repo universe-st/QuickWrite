@@ -248,7 +248,8 @@ fun MainScreen() {
                     factory = AiChatViewModelFactory(
                         context.applicationContext as android.app.Application,
                         appContainer.aiConversationRepository,
-                        appContainer.aiModelConfigRepository
+                        appContainer.aiModelConfigRepository,
+                        appContainer.projectRepository
                     )
                 )
                 WritingScreen(

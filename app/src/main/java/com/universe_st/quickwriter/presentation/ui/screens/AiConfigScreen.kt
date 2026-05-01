@@ -24,6 +24,7 @@ import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.universe_st.quickwriter.R
+import com.universe_st.quickwriter.presentation.ui.components.SettingsIntEditItem
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSliderItem
 import com.universe_st.quickwriter.presentation.viewmodel.AiConfigFormData
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
@@ -363,14 +364,11 @@ fun AiConfigEditScreen(
 
                 SettingsDivider()
 
-                SettingsSliderItem(
+                SettingsIntEditItem(
                     title = stringResource(R.string.ai_config_param_max_tokens),
                     subtitle = stringResource(R.string.ai_config_param_max_tokens_desc),
-                    value = formData.maxTokens.toFloat(),
-                    onValueChange = { viewModel.updateAiMaxTokens(it.toInt()) },
-                    valueRange = 100f..8000f,
-                    steps = 78,
-                    valueText = formData.maxTokens.toString()
+                    value = formData.maxTokens,
+                    onValueChange = { viewModel.updateAiMaxTokens(it) }
                 )
 
                 SettingsDivider()

@@ -30,7 +30,7 @@ data class AiModelConfigEntity(
     val baseUrl: String? = null,     // 自定义 Base URL
     val modelName: String,           // 模型名称 (如 gpt-4)
     val temperature: Float = 0.8f,
-    val maxTokens: Int = 2000,
+    val maxTokens: Int = 50000,
     val topP: Float = 1.0f,
     val topK: Int = 1,
     val frequencyPenalty: Float = 0f,
@@ -81,7 +81,7 @@ data class AiConfigFormData(
     val baseUrl: String = "",
     val modelName: String = "gpt-3.5-turbo",
     val temperature: Float = 0.7f,
-    val maxTokens: Int = 2000,
+    val maxTokens: Int = 50000,
     val topP: Float = 1.0f,
     val topK: Int = 50,
     val frequencyPenalty: Float = 0f,
@@ -155,14 +155,14 @@ data class AiConfigFormData(
 
 ## 关键实现细节
 
-### 参数滑块
-编辑页面使用 Material 3 `Slider` 组件：
-- **Temperature**: 0.1 ~ 2.0，步长 0.1，默认 0.8
-- **Max Tokens**: 100 ~ 8000，步长 100，默认 2000
-- **Top P**: 0.0 ~ 1.0，步长 0.05，默认 1.0
-- **Top K**: 1 ~ 100，步长 1，默认 1
-- **Frequency Penalty**: 0.0 ~ 2.0，步长 0.1，默认 0
-- **Presence Penalty**: 0.0 ~ 2.0，步长 0.1，默认 0
+### 参数输入
+编辑页面使用 Material 3 组件：
+- **Temperature**: `SettingsSliderItem` — 0.1 ~ 2.0，步长 0.1，默认 0.8
+- **Max Tokens**: `SettingsIntEditItem` — `OutlinedTextField` + `KeyboardType.Number`，仅允许正整数输入，默认 50000
+- **Top P**: `SettingsSliderItem` — 0.0 ~ 1.0，步长 0.05，默认 1.0
+- **Top K**: `SettingsSliderItem` — 1 ~ 100，步长 1，默认 50
+- **Frequency Penalty**: `SettingsSliderItem` — -2.0 ~ 2.0，步长 0.1，默认 0
+- **Presence Penalty**: `SettingsSliderItem` — -2.0 ~ 2.0，步长 0.1，默认 0
 
 ### Custom 服务商
 当 provider 选择 "Custom" 时，额外显示 Base URL 输入框（必填）。其他已知服务商会自动填充默认 Base URL，不显示此字段。
@@ -181,3 +181,9 @@ API Key 当前以明文存储在 Room 数据库中，**未加密**。这是已�
 `AiApiService` 使用 Retrofit `@Url` 参数实现动态端点路径。`AiServiceRepository.getChatCompletionsPath()` 根据 provider 返回对应的 API 路径：
 - 大多数服务商使用 OpenaAI 兼容路径 `v1/chat/completions`
 - 智谱 (GLM) 使用专属路径 `api/paas/v4/chat/completions`
+
+---
+
+**文档版本**: 1.1  
+**最后更新**: 2026-05-01  
+**变更**: maxTokens 默认值 2000 → 50000，Max Tokens 输入从 `Slider` 改为 `SettingsIntEditItem`（整数编辑框）

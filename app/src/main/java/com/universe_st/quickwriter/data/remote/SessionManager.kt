@@ -15,6 +15,7 @@ import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
 import com.universe_st.quickwriter.domain.model.ToolCall
 import com.universe_st.quickwriter.domain.model.ToolCallFunction
+import com.universe_st.quickwriter.util.PromptManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,7 +32,8 @@ class SessionManager(
     private val aiMessageDao: AiMessageDao,
     private val aiOperationDao: AiOperationDao,
     private val projectDao: ProjectDao,
-    private val aiModelConfigDao: AiModelConfigDao
+    private val aiModelConfigDao: AiModelConfigDao,
+    private val promptManager: PromptManager
 ) : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.IO) {
 
     private val _sessionStates = ConcurrentHashMap<String, MutableStateFlow<SessionState>>()
@@ -56,7 +58,7 @@ class SessionManager(
         val now = System.currentTimeMillis()
 
         val resolvedModelConfigId = modelConfigId ?: 0
-        val resolvedSystemPrompt = systemPrompt ?: "You are a helpful writing assistant."
+        val resolvedSystemPrompt = systemPrompt ?: promptManager.getDefaultAssistantPrompt()
 
         val entity = AiSessionEntity(
             sessionId = sessionId,
@@ -315,42 +317,12 @@ class SessionManager(
         return _sessionStates[sessionId]?.value is SessionState.Generating
     }
 
+    fun buildSystemPrompt(title: String, author: String, genre: String, storagePath: String): String {
+        return promptManager.getNovelWritingAssistantPrompt(title, author, genre, storagePath)
+    }
+
     companion object {
         private const val IDLE_RECYCLE_DELAY_MS = 5 * 60 * 1000L
-
-        fun buildSystemPrompt(title: String, author: String, genre: String, storagePath: String): String {
-            return """
-You are a professional novel writing assistant, helping the author create 《$title》.
-
-## Project Information
-- Author: $author
-- Genre: $genre
-- Project Path: $storagePath
-
-## Project Directory Structure
-- 正文/ — Novel chapter files
-- 设定/人物/ — Character setting documents
-- 设定/地点/ — Location setting documents
-- 设定/组织/ — Organization setting documents
-- 设定/物品/ — Item setting documents
-- 时间线/ — Timeline and event records
-- 记录/ — Writing process records
-- 配置/ — AI instructions and writing guidelines
-
-## Working Principles
-1. Base all answers on information from project documents
-2. When uncertain, proactively search relevant documents using available tools
-3. Ensure suggestions do not conflict with existing settings
-4. Prioritize information already in documents, avoid groundless creation
-
-## Available Tools
-You have file system read/write access and can use function calling to:
-- Browse project directory structure
-- Read and modify file contents
-- Search project documents
-- Create and delete files
-""".trimIndent()
-        }
     }
 }
 

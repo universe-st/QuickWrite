@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.universe_st.quickwriter.presentation.ui.components.SettingsDivider
+import com.universe_st.quickwriter.presentation.ui.components.SettingsIntEditItem
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSliderItem
 import androidx.compose.ui.res.stringResource
@@ -85,14 +86,11 @@ fun WritingSettingsScreen(
 
                 SettingsDivider()
 
-                SettingsSliderItem(
+                SettingsIntEditItem(
                     title = stringResource(R.string.writing_settings_max_tokens),
                     subtitle = stringResource(R.string.writing_settings_max_tokens_desc),
-                    value = displayMaxTokens.toFloat(),
-                    onValueChange = { viewModel.updateDefaultMaxTokens(it.toInt()) },
-                    valueRange = 100f..8000f,
-                    steps = 78,
-                    valueText = displayMaxTokens.toString(),
+                    value = displayMaxTokens,
+                    onValueChange = { viewModel.updateDefaultMaxTokens(it) },
                     enabled = sliderEnabled
                 )
 
@@ -111,14 +109,11 @@ fun WritingSettingsScreen(
             }
 
             SettingsSection(title = stringResource(R.string.writing_settings_section_advanced)) {
-                SettingsSliderItem(
+                SettingsIntEditItem(
                     title = stringResource(R.string.writing_settings_max_tool_rounds),
                     subtitle = stringResource(R.string.writing_settings_max_tool_rounds_desc),
-                    value = appSettings.maxToolCallRounds.toFloat(),
-                    onValueChange = { viewModel.updateMaxToolCallRounds(it.toInt()) },
-                    valueRange = 5f..100f,
-                    steps = 18,
-                    valueText = appSettings.maxToolCallRounds.toString()
+                    value = appSettings.maxToolCallRounds,
+                    onValueChange = { viewModel.updateMaxToolCallRounds(it) }
                 )
             }
 

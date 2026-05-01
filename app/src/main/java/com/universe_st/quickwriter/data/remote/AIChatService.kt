@@ -24,6 +24,7 @@ import com.universe_st.quickwriter.domain.model.SessionState
 import com.universe_st.quickwriter.domain.model.SessionSummary
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
 import com.universe_st.quickwriter.util.FileManager
+import com.universe_st.quickwriter.util.PromptManager
 
 class AIChatService : Service(), IChatService {
 
@@ -31,6 +32,10 @@ class AIChatService : Service(), IChatService {
 
     private val backupManager: BackupManager by lazy {
         BackupManager(filesDir)
+    }
+
+    private val promptManager: PromptManager by lazy {
+        PromptManager(this)
     }
 
     private val toolExecutor: ToolExecutor by lazy {
@@ -51,7 +56,8 @@ class AIChatService : Service(), IChatService {
             aiMessageDao = AppServiceContainer.aiMessageDao,
             aiOperationDao = AppServiceContainer.aiOperationDao,
             projectDao = AppServiceContainer.projectDao,
-            aiModelConfigDao = AppServiceContainer.aiModelConfigDao
+            aiModelConfigDao = AppServiceContainer.aiModelConfigDao,
+            promptManager = promptManager
         )
     }
 
@@ -62,7 +68,8 @@ class AIChatService : Service(), IChatService {
             aiModelConfigDao = AppServiceContainer.aiModelConfigDao,
             sessionManager = sessionManager,
             toolExecutor = toolExecutor,
-            userSettingsRepository = AppServiceContainer.userSettingsRepository
+            userSettingsRepository = AppServiceContainer.userSettingsRepository,
+            promptManager = promptManager
         )
     }
 
@@ -95,6 +102,19 @@ class AIChatService : Service(), IChatService {
 
     override fun createSession(projectId: String, systemPrompt: String?, modelConfigId: Int?): String {
         return sessionManager.createSession(projectId, systemPrompt, modelConfigId)
+    }
+
+    override fun createSessionWithProjectInfo(
+        projectId: String,
+        projectTitle: String,
+        projectAuthor: String,
+        projectGenre: String,
+        storagePath: String,
+        modelConfigId: Int?
+    ): String {
+        return sessionManager.createSessionWithProjectInfo(
+            projectId, projectTitle, projectAuthor, projectGenre, storagePath, modelConfigId
+        )
     }
 
     override fun deleteSession(sessionId: String) {

@@ -17,6 +17,7 @@
 | LocaleHelper | `util/LocaleHelper.kt` | 语言环境切换 (98行) |
 | StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 (~116行) |
 | TokenEstimator | `util/TokenEstimator.kt` | Token 近似估算 (12行) |
+| PromptManager | `util/PromptManager.kt` | AI 提示词模板管理 (~54行) |
 | HashUtil | `domain/model/HashUtil.kt` | SHA-256 文件哈希 (17行) |
 
 > 注：FileManager、ChapterFileHelper、UiText、LocaleHelper 各有独立的功能文档，本文档聚焦于 AppUtils、CoverImageProcessor 和 AppEditorConfig 三个工具类。
@@ -131,6 +132,33 @@ saveCoverImage(context, sourceUri, projectDir)  [IO Dispatcher]
 - 质量：JPEG 压缩质量 90
 - 文件名：固定 `cover.jpg`
 
+## PromptManager
+
+### 实现
+```kotlin
+class PromptManager(context: Context) {
+    fun resolve(templateKey: String, variables: Map<String, String> = emptyMap()): String
+    fun getDefaultAssistantPrompt(): String
+    fun getNovelWritingAssistantPrompt(title, author, genre, storagePath): String
+    fun getTitleGeneratorPrompt(): String
+}
+```
+
+### 模板文件
+```
+assets/prompts/
+├── default_assistant.md          # 无变量：默认助手提示词
+├── novel_writing_assistant.md    # 含 {{title}} {{author}} {{genre}} {{storagePath}} 占位符
+└── title_generator.md            # 无变量：标题生成器提示词
+```
+
+### 设计要点
+- **加载时机**：构造函数中读取 `assets/prompts/` 下所有 `.md` 文件到内存 Map
+- **占位符语法**：`{{变量名}}` — 调用 `resolve()` 时通过字符串替换注入
+- **容错**：模板文件不存在或加载失败时返回空字符串，记录 Timber 警告
+- **修改提示词**：直接编辑 `assets/prompts/*.md`，无需改 Kotlin 代码
+- **注入方式**：由 `AIChatService` 创建并传入 `SessionManager` 和 `ApiDispatcher`
+
 ## AppEditorConfig
 
 ### 实现
@@ -177,3 +205,9 @@ AppContainer
 2. `CoverImageProcessor.saveCoverImage()` 处理大图时可能导致 OOM（OutOfMemoryError），缺少采样率控制
 3. `AppEditorConfig` 的字体族设置当前固定为 "default"，未与 `UserSettingsRepository.getFontFamily()` 联动
 4. `sanitizeFileName()` 使用下划线替换非法字符，但未处理连续多个非法字符或前后空格
+
+---
+
+**文档版本**: 1.1  
+**最后更新**: 2026-05-01  
+**变更**: 新增 `PromptManager` 类

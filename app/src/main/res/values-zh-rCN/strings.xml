@@ -337,6 +337,7 @@
     <string name="error_set_default_config_failed">设置默认配置失败</string>
     <string name="error_delete_ai_config_failed">删除AI配置失败</string>
     <string name="error_update_language_failed">更新语言失败</string>
+    <string name="error_tool_json_truncated">工具调用参数被截断（JSON不完整）。通常是因为max_tokens设置过低导致AI输出被截断，请在设置 > 写作设置中增大该值后重试。</string>
     <string name="error_export_failed">导出项目失败</string>
 
     <!-- ===== 成功消息 ===== -->

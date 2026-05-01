@@ -7,7 +7,7 @@ data class ChatCompletionRequest(
     val messages: List<ChatMessageDto>,
     val temperature: Float = 0.7f,
     @SerializedName("max_tokens")
-    val maxTokens: Int = 4096,
+    val maxTokens: Int = 50000,
     val stream: Boolean = true,
     val tools: List<ToolDefinitionDto>? = null,
     @SerializedName("tool_choice")

@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "records": [
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/ui/screens/WritingSettingsScreen.kt",
+      "timestamp": 1777562096965,
+      "startOffset": 637,
+      "endOffset": 719,
+      "codeContent": "IntEditItem\nimport com.universe_st.quickwriter.presentation.ui.components.Settings",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/ui/screens/AiConfigScreen.kt",
+      "timestamp": 1777562142118,
+      "startOffset": 1355,
+      "endOffset": 1437,
+      "codeContent": "IntEditItem\nimport com.universe_st.quickwriter.presentation.ui.components.Settings",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/data/remote/ToolExecutor.kt",
+      "timestamp": 1777591230383,
+      "startOffset": 2892,
+      "endOffset": 3310,
+      "codeContent": "try {\n                    JSONObject(argumentsJson)\n                } catch (je: org.json.JSONException) {\n                    return \"\"\"{\"error\": \"Tool call arguments appear to be truncated (invalid JSON). This usually means max_tokens is too low — the AI output was cut off before the JSON completed. Please increase max_tokens in Settings \u003e Writing Settings and retry. (Detail: ${je.message})\"}\"\"\"\n                }",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 5
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/data/remote/IChatService.kt",
+      "timestamp": 1777594358485,
+      "startOffset": 302,
+      "endOffset": 530,
+      "codeContent": "createSessionWithProjectInfo(\n        projectId: String,\n        projectTitle: String,\n        projectAuthor: String,\n        projectGenre: String,\n        storagePath: String,\n        modelConfigId: Int?\n    ): String\n\n    fun ",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 10
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/data/remote/AIChatService.kt",
+      "timestamp": 1777594373523,
+      "startOffset": 3962,
+      "endOffset": 4370,
+      "codeContent": "createSessionWithProjectInfo(\n        projectId: String,\n        projectTitle: String,\n        projectAuthor: String,\n        projectGenre: String,\n        storagePath: String,\n        modelConfigId: Int?\n    ): String {\n        return sessionManager.createSessionWithProjectInfo(\n            projectId, projectTitle, projectAuthor, projectGenre, storagePath, modelConfigId\n        )\n    }\n\n    override fun ",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 14
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/viewmodel/AiChatViewModel.kt",
+      "timestamp": 1777594388556,
+      "startOffset": 951,
+      "endOffset": 1653,
+      "codeContent": "ata.repository.ProjectRepository\nimport com.universe_st.quickwriter.domain.model.ChatMessage\nimport com.universe_st.quickwriter.domain.model.SessionState\nimport com.universe_st.quickwriter.domain.model.SessionSummary\nimport kotlinx.coroutines.Job\nimport timber.log.Timber\nimport kotlinx.coroutines.flow.MutableStateFlow\nimport kotlinx.coroutines.flow.StateFlow\nimport kotlinx.coroutines.flow.asStateFlow\nimport kotlinx.coroutines.flow.first\nimport kotlinx.coroutines.launch\n\nclass AiChatViewModel(\n    application: Application,\n    private val conversationRepository: AiConversationRepository,\n    private val aiModelConfigRepository: AiModelConfigRepository,\n    private val projectRepository: Project",
+      "aiProbability": 95,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 17
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/viewmodel/AiChatViewModel.kt",
+      "timestamp": 1777594403576,
+      "startOffset": 5486,
+      "endOffset": 7343,
+      "codeContent": "val service \u003d chatService ?: return\n        if (systemPrompt !\u003d null \u0026\u0026 modelConfigId !\u003d null) {\n            try {\n                val sessionId \u003d service.createSession(projectId, systemPrompt, modelConfigId)\n                selectSession(sessionId)\n            } catch (e: Exception) { Timber.e(e, \"AiChatViewModel.createSession(1) failed\") }\n        } else {\n            viewModelScope.launch {\n                val config \u003d modelConfigId?.let { id -\u003e\n                    aiModelConfigRepository.getConfigById(id)\n                } ?: aiModelConfigRepository.getDefaultConfig()\n                    ?: aiModelConfigRepository.getAllConfigs().first().firstOrNull()\n                    ?: return@launch\n                val sp \u003d systemPrompt ?: run {\n                    val project \u003d projectRepository.getProjectById(projectId)\n                    if (project !\u003d null) {\n                        service.createSessionWithProjectInfo(\n                            projectId \u003d projectId,\n                            projectTitle \u003d project.title,\n                            projectAuthor \u003d project.author,\n                            projectGenre \u003d project.genre,\n                            storagePath \u003d project.storagePath,\n                            modelConfigId \u003d config.id\n                        )\n                    } else {\n                        service.createSession(projectId, null, config.id)\n                    }\n                }\n                if (systemPrompt !\u003d null) {\n                    try {\n                        val sessionId \u003d service.createSession(projectId, systemPrompt, config.id)\n                        selectSession(sessionId)\n                    } catch (e: Exception) { Timber.e(e, \"AiChatViewModel.createSession(2) failed\") }\n                } else if (sp !\u003d null) {\n                    selectSession(sp)\n               ",
+      "aiProbability": 70,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 36
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/MainScreen.kt",
+      "timestamp": 1777594478651,
+      "startOffset": 12052,
+      "endOffset": 12108,
+      "codeContent": ",\n                        appContainer.projectRepository",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 2
+    }
+  ],
+  "toolStats": {
+    "AI Assistant": {
+      "usageCount": 8,
+      "totalLines": 88
+    }
+  }
+}

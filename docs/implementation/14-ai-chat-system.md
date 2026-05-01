@@ -38,8 +38,8 @@
 |------|------|------|
 | AIChatService | `data/remote/AIChatService.kt` | Foreground Service 入口 + 通知管理 (211行) |
 | IChatService | `data/remote/IChatService.kt` | Binder 暴露的服务接口 (43行) |
-| SessionManager | `data/remote/SessionManager.kt` | 会话生命周期管理 + 系统提示词构建 + 上下文维护 (284行) |
-| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题 + Tool Call 循环 (~530行) |
+| SessionManager | `data/remote/SessionManager.kt` | 会话生命周期管理 + 系统提示词构建（委托 PromptManager）+ 上下文维护 (~372行) |
+| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题（委托 PromptManager）+ Tool Call 循环 (~582行) |
 | ToolExecutor | `data/remote/ToolExecutor.kt` | 工具注册/分发/执行 + 修改前备份 + 操作记录 (315行) |
 | BackupManager | `data/remote/BackupManager.kt` | 备份存储 + FIFO 清理 (5GB上限) (86行) |
 | ToolRegistry | `data/remote/ToolRegistry.kt` | 13 个工具统一注册清单 (32行) |
@@ -74,6 +74,7 @@
 |------|------|------|
 | StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 + reasoning_content (~123行) |
 | TokenEstimator | `util/TokenEstimator.kt` | 字符数/4 近似 token 估算 (12行) |
+| PromptManager | `util/PromptManager.kt` | 提示词模板加载与变量替换 (~54行) |
 
 ## 设计架构
 
@@ -197,7 +198,7 @@ sendMessage(sessionId, content)
 
 | 方法 | 说明 |
 |------|------|
-| `performSendMessage(sessionId, content, attachedFiles, toolRound)` | 核心消息发送 + Tool Call 循环（递归） |
+| `performSendMessage(sessionId, content, attachedFiles, toolRound)` | 核心消息发送 + Tool Call 循环（递归）。对 `create_file`/`edit_file` 工具描述动态追加字符限制提示（`maxTokens/2.5`） |
 | `processStreamResponse(...)` | 流式响应消费 → 文本/ToolCall/错误分流 |
 | `handleToolCalls(...)` | 构建 ToolCall → 逐个执行 → 结果写回上下文 → 递归再请求 |
 | `persistAssistantMessage(...)` | 持久化 AI 回复到 ai_messages |
@@ -209,7 +210,7 @@ sendMessage(sessionId, content)
 |------|------|
 | `registerTool(tool)` / `registerTools(list)` | 注册工具到内部 Map |
 | `getToolDefinitions()` | 返回 OpenAI 格式的 tools 数组 |
-| `executeToolCall(toolCallId, functionName, arguments, projectId, sessionId)` | 执行单个工具调用 |
+| `executeToolCall(toolCallId, functionName, arguments, projectId, sessionId)` | 执行单个工具调用。`argumentsJson` 解析失败（JSONException）时，返回截断提示错误，引导用户增大 max_tokens |
 | `rollbackOperation(operationId, projectId)` | 回溯操作（检查 canRollback → 执行 rollback → 清理记录） |
 | `prepareBackup(...)` | 修改前备份文件到 ai_backups/ |
 | `recordOperation(...)` | 写入 AiOperationEntity 到 Room |
@@ -303,6 +304,34 @@ sendMessage(sessionId, content)
 **必需权限**:
 - `INTERNET` — HTTP API 调用必须声明，初始版本中缺失导致 `SecurityException`
 - `ACCESS_NETWORK_STATE` — 网络状态检查
+
+### 10. Tool Call JSON 截断检测
+
+`ToolExecutor.executeToolCall()` 中解析 `argumentsJson` 时，若因 `maxTokens` 过低导致 JSON 不完整（`JSONException`），返回明确错误提示，引导用户增大 `maxTokens`。
+
+截断原因：`create_file` 的 `content` 或 `edit_file` 的 `newContent` 参数直接嵌入 JSON，长文本可能超出 `maxTokens` 限制，API 端截断流式响应导致 JSON 不完整。
+
+### 11. 动态工具描述
+
+`create_file` 和 `edit_file` 的工具描述在 `ApiDispatcher.performSendMessage()` 中动态追加字符限制提示，根据当前 `modelConfig.maxTokens` 计算：`maxTokens / 2.5 ≈ 单次调用建议上限字符数`。
+
+工具自身 `ToolDefinition.description` 不含硬编码数字，动态部分由 ApiDispatcher 构建 API 请求时追加。
+
+### 12. maxTokens 默认值
+
+`AiModelConfigEntity`、`UserSettingsRepository`、`AiConfigFormData` 等全链路默认值从 `2000` 提升至 `50000`（9 处）。
+
+### 13. 提示词外部化
+
+所有 AI 系统提示词从硬编码字符串迁移至 `assets/prompts/*.md` 文件：
+
+| 模板文件 | 用途 | 变量 |
+|---------|------|------|
+| `default_assistant.md` | `createSession()` 默认提示词 | 无 |
+| `novel_writing_assistant.md` | `createSessionWithProjectInfo()` 项目提示词 | `{{title}}` `{{author}}` `{{genre}}` `{{storagePath}}` |
+| `title_generator.md` | `triggerAutoTitleIfNeeded()` 标题生成器 | 无 |
+
+`PromptManager` 在 `AIChatService` 创建时加载全部模板到内存，通过 `{{变量}}` 语法替换。修改提示词只需编辑 `.md` 文件。
 
 ## UI 层实现
 
@@ -417,8 +446,18 @@ ChatTab(projectId, onNavigateToAiConfig?)
 | DeepSeek thinking mode reasoning_content 未回传导致 API 400 错误 | 流式解析 `reasoning_content` → 持久化到 DB → 下次请求回传给 API | AiModels.kt, ChatModels.kt, StreamParser.kt, ApiDispatcher.kt, AiMessageEntity.kt, Migrations.kt, SessionManager.kt, AiConversationRepository.kt |
 | 流式 Tool Call 参数丢失导致 `view_file` 循环缺少 `relativePath` | arguments chunk 不再依赖 `id`，按 `index` 累积到对应 ToolCall，并保留首 chunk 中的初始 arguments | StreamParser.kt, ApiDispatcher.kt, StreamParserTest.kt |
 
+## 已修复问题 (2026-05-01)
+
+| 问题 | 修复方式 | 涉及文件 |
+|------|---------|---------|
+| Tool Call JSON 因 max_tokens 过低被截断 | `executeToolCall()` 中捕获 `JSONException`，返回截断提示引导用户增大 max_tokens | ToolExecutor.kt |
+| create_file/edit_file 描述含硬编码字符上限 | 工具描述改为动态追加 `maxTokens/2.5` 字符限制提示 | ApiDispatcher.kt, CreateFileTool.kt, EditFileTool.kt |
+| maxTokens 默认值 2000 不足 | 全链路默认值提升至 50000（9 处） | AiModelConfigEntity.kt, AiModelConfigRepository.kt, SettingsUseCase.kt, SettingsViewModel.kt, UserSettingsRepository.kt, AiModels.kt |
+| max_tokens 和 max_tool_rounds 拖曳条输入不便 | 新增 `SettingsIntEditItem` 组件（`OutlinedTextField` + `KeyboardType.Number`），替换两个 `SettingsSliderItem` | SettingsComponents.kt, WritingSettingsScreen.kt, AiConfigScreen.kt |
+| 系统提示词硬编码在 Kotlin 中，不便修改 | 3 个提示词抽成 `assets/prompts/*.md` 模板文件，新增 `PromptManager` 加载和变量替换 | assets/prompts/*.md, PromptManager.kt, SessionManager.kt, ApiDispatcher.kt, AIChatService.kt |
+
 ---
 
-**文档版本**: 1.5  
-**最后更新**: 2026-04-30  
-**状态**: 完成（阶段一～四全部实现，含 UI 层 + 流式渲染/API/解析修复 + DeepSeek reasoning_content 支持）
+**文档版本**: 1.7  
+**最后更新**: 2026-05-01  
+**状态**: 完成（含 Tool Call JSON 截断检测、动态工具描述、maxTokens 默认值提升、整数编辑框、提示词外部化）

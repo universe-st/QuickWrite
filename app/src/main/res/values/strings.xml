@@ -337,6 +337,7 @@
     <string name="error_set_default_config_failed">Failed to set default configuration</string>
     <string name="error_delete_ai_config_failed">Failed to delete AI configuration</string>
     <string name="error_update_language_failed">Failed to update language</string>
+    <string name="error_tool_json_truncated">Tool call arguments were truncated (incomplete JSON). This is usually caused by max_tokens being too low — increase it in Settings > Writing Settings and retry.</string>
     <string name="error_export_failed">Failed to export project</string>
 
     <!-- ===== Success Messages ===== -->

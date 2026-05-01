@@ -21,7 +21,7 @@ data class AiModelConfigEntity(
     @ColumnInfo(name = "temperature")
     val temperature: Float = 0.7f,
     @ColumnInfo(name = "max_tokens")
-    val maxTokens: Int = 2000,
+    val maxTokens: Int = 50000,
     @ColumnInfo(name = "top_p")
     val topP: Float = 1.0f,
     @ColumnInfo(name = "top_k")

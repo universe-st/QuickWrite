@@ -11,6 +11,7 @@ import com.universe_st.quickwriter.data.remote.dto.ToolCallFunctionDto
 import com.universe_st.quickwriter.data.remote.dto.ToolDefinitionDto
 import com.universe_st.quickwriter.data.repository.AiServiceRepository
 import com.universe_st.quickwriter.data.repository.UserSettingsRepository
+import com.universe_st.quickwriter.util.PromptManager
 import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.MessageRole
 import com.universe_st.quickwriter.domain.model.SessionState
@@ -37,7 +38,8 @@ class ApiDispatcher(
     private val aiModelConfigDao: AiModelConfigDao,
     private val sessionManager: SessionManager,
     private val toolExecutor: ToolExecutor,
-    private val userSettingsRepository: UserSettingsRepository
+    private val userSettingsRepository: UserSettingsRepository,
+    private val promptManager: PromptManager
 ) : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.IO) {
 
     private val activeJobs = ConcurrentHashMap<String, Job>()
@@ -130,7 +132,21 @@ class ApiDispatcher(
 
         sessionManager.setSessionState(sessionId, SessionState.Generating(""))
 
-        val tools = toolExecutor.getToolDefinitions()
+        val tools = toolExecutor.getToolDefinitions().map { tool ->
+            when (tool.function.name) {
+                "create_file", "edit_file" -> {
+                    val charLimit = (modelConfig.maxTokens / 2.5).toInt()
+                    tool.copy(
+                        function = tool.function.copy(
+                            description = tool.function.description +
+                                " IMPORTANT: Each call's content MUST not exceed ~$charLimit characters (max_tokens=${modelConfig.maxTokens}/2.5)." +
+                                " For larger content, split across multiple calls."
+                        )
+                    )
+                }
+                else -> tool
+            }
+        }
         val messagesForApi = buildMessagesForApi(apiContext)
         val request = ChatCompletionRequest(
             model = modelConfig.modelName,
@@ -518,7 +534,7 @@ class ApiDispatcher(
             val request = ChatCompletionRequest(
                 model = modelConfig.modelName,
                 messages = listOf(
-                    ChatMessageDto(role = "system", content = "You are a title generator. Output only the title text."),
+                    ChatMessageDto(role = "system", content = promptManager.getTitleGeneratorPrompt()),
                     titleRequest
                 ),
                 temperature = 0.3f,

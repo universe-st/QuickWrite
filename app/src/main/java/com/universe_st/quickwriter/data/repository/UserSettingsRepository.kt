@@ -145,7 +145,7 @@ class UserSettingsRepository(
     }
 
     suspend fun getDefaultMaxTokens(): Int {
-        return getSetting(DEFAULT_MAX_TOKENS_KEY, "2000").toIntOrNull() ?: 2000
+        return getSetting(DEFAULT_MAX_TOKENS_KEY, "50000").toIntOrNull() ?: 50000
     }
 
     suspend fun setDefaultMaxTokens(tokens: Int): Result<Unit> {

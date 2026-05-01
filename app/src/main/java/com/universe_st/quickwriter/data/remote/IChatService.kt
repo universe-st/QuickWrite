@@ -7,6 +7,15 @@ interface IChatService {
 
     fun createSession(projectId: String, systemPrompt: String?, modelConfigId: Int?): String
 
+    fun createSessionWithProjectInfo(
+        projectId: String,
+        projectTitle: String,
+        projectAuthor: String,
+        projectGenre: String,
+        storagePath: String,
+        modelConfigId: Int?
+    ): String
+
     fun deleteSession(sessionId: String)
 
     fun switchToSession(sessionId: String)

@@ -70,7 +70,11 @@ class ToolExecutor(
 
         return try {
             val arguments = if (argumentsJson.isNotBlank()) {
-                JSONObject(argumentsJson)
+                try {
+                    JSONObject(argumentsJson)
+                } catch (je: org.json.JSONException) {
+                    return """{"error": "Tool call arguments appear to be truncated (invalid JSON). This usually means max_tokens is too low — the AI output was cut off before the JSON completed. Please increase max_tokens in Settings > Writing Settings and retry. (Detail: ${je.message})"}"""
+                }
             } else {
                 JSONObject()
             }

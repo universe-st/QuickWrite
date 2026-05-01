@@ -41,8 +41,9 @@ data class UserSettingEntity(
 | `general` | `auto_save_immediately` | Boolean | `false` | 即时自动保存 |
 | `ai_writing` | `use_model_config` | Boolean | `true` | 使用模型配置参数 |
 | `ai_writing` | `default_temperature` | Float | `0.8` | 默认温度 |
-| `ai_writing` | `default_max_tokens` | Int | `2000` | 默认最大 Token |
+| `ai_writing` | `default_max_tokens` | Int | `50000` | 默认最大 Token |
 | `ai_writing` | `default_top_p` | Float | `1.0` | 默认 Top P |
+| `ai_writing` | `max_tool_call_rounds` | Int | `30` | 最大工具调用轮数 |
 | `workspace` | `current_project_id` | String? | `null` | 当前项目 ID |
 
 ### SettingsSubScreen（设置子页面导航）
@@ -63,6 +64,7 @@ sealed class SettingsSubScreen {
 SettingsClickItem(title, subtitle, trailingText, onClick)  // 可点击设置项
 SettingsSwitchItem(title, subtitle, checked, onCheckedChange)  // 开关设置项
 SettingsSliderItem(title, subtitle, value, onValueChange, enabled, ...)  // 滑块设置项
+SettingsIntEditItem(title, subtitle, value, onValueChange, enabled)  // 整数编辑框设置项
 SettingsSection(title, content)  // 分组标题
 SettingsDivider()  // 分隔线
 ```
@@ -171,10 +173,11 @@ UI 自动更新（如果是主题/字体/语言，可能触发 activity.recreate
 - `auto_save_immediately` 为 false 时，使用间隔定时器
 
 ### 写作参数设置
-- Temperature：0.1 ~ 2.0，步长 0.1
-- Max Tokens：100 ~ 8000，步长 100
-- Top P：0.0 ~ 1.0，步长 0.05
-- `use_model_config` 开关控制是否使用模型自己的参数（当开启时，滑块禁用）
+- Temperature：`SettingsSliderItem` — 0.1 ~ 2.0，步长 0.1
+- Max Tokens：`SettingsIntEditItem` — `OutlinedTextField` + `KeyboardType.Number`，仅允许正整数，默认 50000
+- Top P：`SettingsSliderItem` — 0.0 ~ 1.0，步长 0.05
+- Max Tool Call Rounds：`SettingsIntEditItem` — `OutlinedTextField` + `KeyboardType.Number`，仅允许正整数，默认 30
+- `use_model_config` 开关控制是否使用模型自己的参数（当开启时，Temperature/Max Tokens/Top P 输入控件禁用，显示模型配置的值）
 
 ### 设置持久化
 所有设置通过 Room `@Insert(onConflict = REPLACE)` 策略存储，确保键值唯一且可覆盖。
@@ -184,3 +187,9 @@ UI 自动更新（如果是主题/字体/语言，可能触发 activity.recreate
 1. `setFontSize()` 方法中 category 参数错误地使用了 `FONT_FAMILY_KEY` 常量（应为 `FONT_CATEGORY`），但功能上不影响读取
 2. 设置读取使用了 `runBlocking` 在 UI 线程上，这在 `attachBaseContext` 中可能导致 ANR 风险
 3. 缺少设置变更的事件通知机制（当前的 Flow 订阅不完全）
+
+---
+
+**文档版本**: 1.1  
+**最后更新**: 2026-05-01  
+**变更**: `default_max_tokens` 默认值 2000 → 50000；新增 `SettingsIntEditItem` 组件替换 Max Tokens 和 Max Tool Call Rounds 的拖曳条；新增 `max_tool_call_rounds` 设置键

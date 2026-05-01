@@ -109,7 +109,7 @@ class SettingsUseCase(
         baseUrl: String?,
         modelName: String,
         temperature: Float = 0.7f,
-        maxTokens: Int = 2000,
+        maxTokens: Int = 50000,
         topP: Float = 1.0f,
         topK: Int = 50,
         frequencyPenalty: Float = 0.0f,
