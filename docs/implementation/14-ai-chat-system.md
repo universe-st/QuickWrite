@@ -455,9 +455,10 @@ ChatTab(projectId, onNavigateToAiConfig?)
 | maxTokens 默认值 2000 不足 | 全链路默认值提升至 50000（9 处） | AiModelConfigEntity.kt, AiModelConfigRepository.kt, SettingsUseCase.kt, SettingsViewModel.kt, UserSettingsRepository.kt, AiModels.kt |
 | max_tokens 和 max_tool_rounds 拖曳条输入不便 | 新增 `SettingsIntEditItem` 组件（`OutlinedTextField` + `KeyboardType.Number`），替换两个 `SettingsSliderItem` | SettingsComponents.kt, WritingSettingsScreen.kt, AiConfigScreen.kt |
 | 系统提示词硬编码在 Kotlin 中，不便修改 | 3 个提示词抽成 `assets/prompts/*.md` 模板文件，新增 `PromptManager` 加载和变量替换 | assets/prompts/*.md, PromptManager.kt, SessionManager.kt, ApiDispatcher.kt, AIChatService.kt |
+| 消息截断导致 TOOL 消息与 ASSISTANT tool_calls 分离，API 返回 400 'tool' must be a response to 'tool_calls' | `buildMessagesForApi()` 新增 `ensureToolCallPairs()` 方法，截断后向后搜索补齐缺失的 ASSISTANT tool_calls 消息 | ApiDispatcher.kt |
 
 ---
 
-**文档版本**: 1.7  
+**文档版本**: 1.8  
 **最后更新**: 2026-05-01  
 **状态**: 完成（含 Tool Call JSON 截断检测、动态工具描述、maxTokens 默认值提升、整数编辑框、提示词外部化）

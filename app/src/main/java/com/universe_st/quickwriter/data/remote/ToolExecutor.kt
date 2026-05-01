@@ -146,7 +146,7 @@ class ToolExecutor(
         }
 
         when (functionName) {
-            "edit_file", "delete_file", "move_file", "copy_file" -> {
+            "edit_file", "delete_file", "move_file", "copy_file", "update_chapter_meta" -> {
                 val relativePath = arguments.optString("relativePath", arguments.optString("sourcePath", ""))
                 if (relativePath.isNotEmpty() && projectDir != null) {
                     val fullPath = File(projectDir, relativePath)
@@ -217,7 +217,7 @@ class ToolExecutor(
         projectId: String
     ): OperationRecord {
         return when (functionName) {
-            "edit_file" -> {
+            "edit_file", "update_chapter_meta" -> {
                 val relativePath = arguments.optString("relativePath", "")
                 val fullPath = File(projectDir, relativePath)
                 val before = if (fullPath.exists()) HashUtil.computeSha256(fullPath) else ""
@@ -273,7 +273,7 @@ class ToolExecutor(
     private fun isModificationTool(functionName: String): Boolean {
         return functionName in setOf(
             "edit_file", "delete_file", "create_file", "move_file", "copy_file",
-            "create_project", "delete_project", "update_project_info"
+            "create_project", "delete_project", "update_project_info", "update_chapter_meta"
         )
     }
 

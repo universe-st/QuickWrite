@@ -98,6 +98,25 @@ fun WritingScreen(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
+                    is WritingUiState.Initializing -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(
+                                    R.string.writing_initializing_chapters,
+                                    state.current,
+                                    state.total
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary
+                            )
+                        }
+                    }
                     is WritingUiState.Success -> {
                         when (state.selectedTab) {
                     0 -> EditorContent(

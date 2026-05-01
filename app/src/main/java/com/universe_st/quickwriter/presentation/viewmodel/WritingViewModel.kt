@@ -30,6 +30,7 @@ data class ChapterFileInfo(
 sealed class WritingUiState {
     object NoProject : WritingUiState()
     object Loading : WritingUiState()
+    data class Initializing(val current: Int, val total: Int) : WritingUiState()
     data class Success(
         val project: ProjectEntity,
         val chapters: List<ChapterFileInfo>,
@@ -146,6 +147,45 @@ class WritingViewModel(
     private suspend fun loadChapters(project: ProjectEntity, useSavedTab: Boolean = false) {
         val chapterFilesResult = projectManagementUseCase.getChapterFiles(project.id)
         val filePaths = chapterFilesResult.getOrDefault(emptyList())
+
+        val chaptersWithoutOrder = mutableListOf<Pair<String, String>>()
+        for (filePath in filePaths) {
+            val content = projectManagementUseCase.readFileContent(filePath).getOrDefault("")
+            val (meta, _) = ChapterFileHelper.parseChapterContent(content)
+            if (meta.order <= 0) {
+                chaptersWithoutOrder.add(filePath to content)
+            }
+        }
+
+        if (chaptersWithoutOrder.isNotEmpty()) {
+            val existingOrders = filePaths.mapNotNull { fp ->
+                if (chaptersWithoutOrder.any { it.first == fp }) null
+                else {
+                    val c = projectManagementUseCase.readFileContent(fp).getOrDefault("")
+                    ChapterFileHelper.parseChapterContent(c).first.order
+                }
+            }.filter { it > 0 }
+            var nextOrder = (existingOrders.maxOrNull() ?: 0) + 1
+
+            val total = chaptersWithoutOrder.size
+            chaptersWithoutOrder.forEachIndexed { index, (filePath, content) ->
+                _uiState.value = WritingUiState.Initializing(current = index + 1, total = total)
+
+                val (originalMeta, body) = ChapterFileHelper.parseChapterContent(content)
+                val fileName = filePath.substringAfterLast('/')
+                val title = if (originalMeta.title.isNotBlank()) originalMeta.title
+                else ChapterFileHelper.extractTitleFromBody(body)
+                    .ifBlank { fileName.removeSuffix(".md") }
+                val meta = ChapterMeta(
+                    title = title,
+                    order = nextOrder++,
+                    volume = originalMeta.volume,
+                    summary = originalMeta.summary
+                )
+                val newContent = ChapterFileHelper.buildChapterContent(meta, body)
+                projectManagementUseCase.writeFileContent(filePath, newContent)
+            }
+        }
 
         val chapterInfoList = filePaths.mapNotNull { filePath ->
             val fileName = filePath.substringAfterLast('/')

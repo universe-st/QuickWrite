@@ -157,6 +157,41 @@ ChapterMeta + body
 - 存储时：`title`, `volume`, `summary` 值用双引号包裹（`"value"`）
 - 解析时：使用 `removeSurrounding("\"")` 去除首尾引号
 
+## AI 工具集成
+
+以下工具已适配章节文件 YAML Front Matter 格式：
+
+### EditFileTool
+- **代码层阻止**编辑 Front Matter 区域（`---` 之间的行）
+- 编辑范围若覆盖到 Front Matter 行，返回错误并提示使用 `update_chapter_meta`
+- 错误信息包含 `frontMatterStartLine`、`frontMatterEndLine`、`bodyStartLine` 以便 AI 调整编辑范围
+
+### CreateFileTool
+- 创建 `正文/` 下的文件时，校验内容是否包含有效的 YAML Front Matter（`title` 和 `order` 为必填）
+- 校验失败时返回错误信息及格式帮助
+- 描述中指出 `正文/` 文件必须有 front matter，其他目录不限制
+
+### GetChapterMetaTool (`get_chapter_meta`)
+新增工具，用于读取章节文件的元数据：
+- **输入**: `relativePath`
+- **输出**: `title`、`order`、`volume`、`summary`、`frontMatterStartLine`、`frontMatterEndLine`、`bodyStartLine`、`totalLines`
+- 返回 Front Matter 边界行号，帮助 AI 确定编辑正文的安全起始行
+
+### UpdateChapterMetaTool (`update_chapter_meta`)
+新增工具，用于修改章节元数据：
+- **输入**: `relativePath` + 可选 `title`/`order`/`volume`/`summary`
+- 仅更新提供的字段，未提供的字段保持原值
+- 使用 `ChapterFileHelper.buildChapterContent()` 重建文件，保留正文不变
+- 已接入备份/回滚系统（`isModificationTool`、`prepareBackup`、`buildOperationRecord`）
+
+### 工具注册
+- `ToolRegistry.kt`: 新增 `GetChapterMetaTool` 和 `UpdateChapterMetaTool`
+- `ToolDisplayRegistry.kt`: 新增显示名称和加载文本（中/繁/英三语）
+- `strings.xml`: 新增 `tool_name_get_chapter_meta`、`tool_name_update_chapter_meta` 等字符串
+
+### 系统提示
+`assets/prompts/novel_writing_assistant.md` 包含完整的章节格式说明、约束规则和 `create_file` 示例。
+
 ## 已知问题/技术债务
 
 1. 章节文件以 `order` 字段排序，但文件重命名不自动同步

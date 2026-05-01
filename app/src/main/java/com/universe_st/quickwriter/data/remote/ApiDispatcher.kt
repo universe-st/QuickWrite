@@ -239,22 +239,51 @@ class ApiDispatcher(
     private fun buildMessagesForApi(context: com.universe_st.quickwriter.domain.model.SessionContext): List<ChatMessageDto> {
         val nonSystem = context.messages.filter { it.role != MessageRole.SYSTEM }
         val systemMsg = ChatMessageDto(role = "system", content = context.systemPrompt)
-        val truncated = truncateMessages(nonSystem, MAX_CONTEXT_TOKENS)
+        val truncated = truncateMessagesAtomic(nonSystem, MAX_CONTEXT_TOKENS)
+
+        val seenToolCallIds = mutableSetOf<String>()
+        for (msg in truncated) {
+            if (msg.role == MessageRole.ASSISTANT && msg.toolCalls != null) {
+                seenToolCallIds.addAll(msg.toolCalls.map { it.id })
+            }
+            if (msg.role == MessageRole.TOOL && msg.toolCallId != null && msg.toolCallId !in seenToolCallIds) {
+                Timber.e("buildMessagesForApi: orphaned TOOL message — toolCallId=%s has no preceding ASSISTANT with matching tool_calls", msg.toolCallId)
+            }
+        }
+
         val dtoList = mutableListOf(systemMsg)
         dtoList.addAll(truncated.map { it.toDto() })
         return dtoList
     }
 
-    private fun truncateMessages(messages: List<ChatMessage>, maxTokens: Int): List<ChatMessage> {
-        var totalTokens = 0
-        val result = mutableListOf<ChatMessage>()
-        for (msg in messages.reversed()) {
-            val msgTokens = msg.tokenCount.coerceAtLeast(msg.content.length / 4)
-            if (totalTokens + msgTokens > maxTokens && result.isNotEmpty()) break
-            totalTokens += msgTokens
-            result.add(0, msg)
+    private fun truncateMessagesAtomic(messages: List<ChatMessage>, maxTokens: Int): List<ChatMessage> {
+        val segments = mutableListOf<MutableList<ChatMessage>>()
+        var i = 0
+        while (i < messages.size) {
+            val segment = mutableListOf<ChatMessage>()
+            val msg = messages[i]
+            segment.add(msg)
+            if (msg.role == MessageRole.ASSISTANT && msg.toolCalls != null) {
+                i++
+                while (i < messages.size && messages[i].role == MessageRole.TOOL) {
+                    segment.add(messages[i])
+                    i++
+                }
+            } else {
+                i++
+            }
+            segments.add(segment)
         }
-        return result
+
+        var totalTokens = 0
+        val resultSegments = mutableListOf<MutableList<ChatMessage>>()
+        for (segment in segments.reversed()) {
+            val segmentTokens = segment.sumOf { it.tokenCount.coerceAtLeast(it.content.length / 4) }
+            if (totalTokens + segmentTokens > maxTokens && resultSegments.isNotEmpty()) break
+            totalTokens += segmentTokens
+            resultSegments.add(0, segment)
+        }
+        return resultSegments.flatten()
     }
 
     private suspend fun processStreamResponse(

@@ -106,6 +106,7 @@
     <string name="writing_no_project_hint">Please set a main project in project details first</string>
     <string name="writing_go_to_projects">Go to Projects</string>
     <string name="writing_no_chapters">No Chapters</string>
+    <string name="writing_initializing_chapters">Initializing chapter metadata… (%1$d/%2$d)</string>
     <string name="writing_create_first_chapter">Create First Chapter</string>
     <string name="writing_chapters_header">Chapters</string>
     <string name="writing_new_chapter">New Chapter</string>
@@ -404,6 +405,7 @@
     <string name="chat_send">Send</string>
     <string name="chat_stop">Stop</string>
     <string name="chat_typing">AI is thinking…</string>
+    <string name="chat_generating">AI generating…</string>
     <string name="chat_retry">Retry</string>
     <string name="chat_delete_session">Delete conversation</string>
     <string name="chat_delete_session_confirm">Delete this conversation?</string>
@@ -436,6 +438,8 @@
     <string name="tool_name_get_project_list">Get Project List</string>
     <string name="tool_name_get_project_info">Project Info</string>
     <string name="tool_name_get_folder_structure">View Directory</string>
+    <string name="tool_name_get_chapter_meta">Chapter Meta</string>
+    <string name="tool_name_update_chapter_meta">Update Chapter Meta</string>
     <string name="tool_loading_create_file">Creating file…</string>
     <string name="tool_loading_edit_file">Editing file…</string>
     <string name="tool_loading_delete_file">Deleting file…</string>
@@ -449,6 +453,8 @@
     <string name="tool_loading_get_project_list">Loading project list…</string>
     <string name="tool_loading_get_project_info">Loading project info…</string>
     <string name="tool_loading_get_folder_structure">Reading directory…</string>
+    <string name="tool_loading_get_chapter_meta">Reading chapter meta…</string>
+    <string name="tool_loading_update_chapter_meta">Updating chapter meta…</string>
     <string name="tool_stat_lines">%1$d lines</string>
     <string name="tool_stat_chars">%1$d chars</string>
     <string name="tool_stat_bytes">%1$s</string>

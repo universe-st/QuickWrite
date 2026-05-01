@@ -4,15 +4,23 @@ import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.domain.model.ChatTool
 import com.universe_st.quickwriter.domain.model.ToolContext
 import com.universe_st.quickwriter.domain.model.ToolDefinition
+import com.universe_st.quickwriter.util.ChapterFileHelper
 import com.universe_st.quickwriter.util.FileManager
 import org.json.JSONObject
 import java.io.File
 
 class EditFileTool : ChatTool {
 
+    companion object {
+        private const val CHAPTER_DIR = "正文"
+    }
+
     override val definition = ToolDefinition(
         name = "edit_file",
-        description = "Replace content at a specific line range in a project file. Supports precise line-level editing.",
+        description = "Replace content at a specific line range in a project file. Supports precise line-level editing. " +
+            "IMPORTANT: For chapter files under \"正文/\", editing the YAML front matter (lines between --- and ---) is BLOCKED. " +
+            "Use get_chapter_meta to read metadata and update_chapter_meta to modify it. " +
+            "You may only edit body content after the closing ---.",
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
@@ -58,10 +66,28 @@ class EditFileTool : ChatTool {
             return """{"error": "File not found: $relativePath"}"""
         }
 
-        val lines = filePath.readLines().toMutableList()
+        val rawContent = filePath.readText()
+        val lines = rawContent.lines().toMutableList()
         val totalLines = lines.size
         val actualStartLine = startLine.coerceIn(1, totalLines.coerceAtLeast(1))
         val actualEndLine = if (endLine == -1) totalLines else endLine.coerceIn(actualStartLine, totalLines)
+
+        if (relativePath.startsWith("$CHAPTER_DIR/")) {
+            val fmRange = findFrontMatterRange(lines)
+            if (fmRange != null) {
+                val (fmStart, fmEnd) = fmRange
+                if (actualStartLine <= fmEnd) {
+                    return JSONObject().apply {
+                        put("error", "Cannot edit YAML front matter (lines $fmStart-$fmEnd) with edit_file. " +
+                            "Use get_chapter_meta to read metadata and update_chapter_meta to modify title, order, volume, or summary.")
+                        put("frontMatterStartLine", fmStart)
+                        put("frontMatterEndLine", fmEnd)
+                        put("bodyStartLine", fmEnd + 2)
+                        put("suggestion", "Set startLine to $fmEnd+2 or higher to edit body content only.")
+                    }.toString(2)
+                }
+            }
+        }
 
         val newLines = newContent.lines()
 
@@ -80,5 +106,12 @@ class EditFileTool : ChatTool {
             put("lineCountAfter", lines.size)
         }
         return result.toString(2)
+    }
+
+    private fun findFrontMatterRange(lines: List<String>): Pair<Int, Int>? {
+        if (lines.isEmpty() || lines[0] != "---") return null
+        val endIndex = lines.subList(1, lines.size).indexOf("---")
+        if (endIndex == -1) return null
+        return Pair(1, endIndex + 2) // 1-indexed, inclusive
     }
 }

@@ -106,6 +106,7 @@
     <string name="writing_no_project_hint">请先在项目详情中设置主项目</string>
     <string name="writing_go_to_projects">前往项目列表</string>
     <string name="writing_no_chapters">暂无章节</string>
+    <string name="writing_initializing_chapters">正在初始化章节元数据… (%1$d/%2$d)</string>
     <string name="writing_create_first_chapter">创建第一章</string>
     <string name="writing_chapters_header">章节</string>
     <string name="writing_new_chapter">新建章节</string>
@@ -404,6 +405,7 @@
     <string name="chat_send">发送</string>
     <string name="chat_stop">停止</string>
     <string name="chat_typing">AI 思考中…</string>
+    <string name="chat_generating">AI 生成中…</string>
     <string name="chat_retry">重试</string>
     <string name="chat_delete_session">删除对话</string>
     <string name="chat_delete_session_confirm">确定删除此对话？</string>
@@ -436,6 +438,8 @@
     <string name="tool_name_get_project_list">获取项目列表</string>
     <string name="tool_name_get_project_info">项目详情</string>
     <string name="tool_name_get_folder_structure">查看目录结构</string>
+    <string name="tool_name_get_chapter_meta">查看章节元数据</string>
+    <string name="tool_name_update_chapter_meta">更新章节元数据</string>
     <string name="tool_loading_create_file">正在创建文件…</string>
     <string name="tool_loading_edit_file">正在编辑文件…</string>
     <string name="tool_loading_delete_file">正在删除文件…</string>
@@ -449,6 +453,8 @@
     <string name="tool_loading_get_project_list">正在获取项目列表…</string>
     <string name="tool_loading_get_project_info">正在获取项目信息…</string>
     <string name="tool_loading_get_folder_structure">正在读取目录结构…</string>
+    <string name="tool_loading_get_chapter_meta">正在读取章节元数据…</string>
+    <string name="tool_loading_update_chapter_meta">正在更新章节元数据…</string>
     <string name="tool_stat_lines">%1$d 行</string>
     <string name="tool_stat_chars">%1$d 字</string>
     <string name="tool_stat_bytes">%1$s</string>

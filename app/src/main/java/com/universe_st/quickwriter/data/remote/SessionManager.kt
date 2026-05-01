@@ -16,6 +16,7 @@ import com.universe_st.quickwriter.domain.model.SessionSummary
 import com.universe_st.quickwriter.domain.model.ToolCall
 import com.universe_st.quickwriter.domain.model.ToolCallFunction
 import com.universe_st.quickwriter.util.PromptManager
+import timber.log.Timber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -339,7 +340,7 @@ private fun AiSessionEntity.toSessionDetail() = SessionDetail(
 )
 
 private fun AiMessageEntity.toChatMessage(): ChatMessage {
-    val toolCalls: List<ToolCall>? = toolCallsJson?.let { json: String ->
+    val toolCalls: List<ToolCall>? = toolCallsJson?.takeIf { it.isNotBlank() }?.let { json: String ->
         try {
             val array = com.google.gson.JsonParser.parseString(json).asJsonArray
             array.map { element ->
@@ -354,6 +355,7 @@ private fun AiMessageEntity.toChatMessage(): ChatMessage {
                 )
             }
         } catch (e: Exception) {
+            Timber.w(e, "toChatMessage: failed to parse toolCallsJson for message id=%d", id)
             null
         }
     }
