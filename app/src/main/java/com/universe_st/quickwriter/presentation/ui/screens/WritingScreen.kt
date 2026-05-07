@@ -424,18 +424,16 @@ private fun EditorContent(
                             } else Modifier
                         )
                 ) {
-                    key(state.currentChapterIndex) {
-                        MarkorEditor(
-                            value = state.editorContent,
-                            onValueChange = onContentChange,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(4.dp),
-                            editorConfig = editorConfig,
-                            highlightingMode = HighlightingMode.MARKDOWN,
-                            enabled = true
-                        )
-                    }
+                    MarkorEditor(
+                        value = state.editorContent,
+                        onValueChange = onContentChange,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp),
+                        editorConfig = editorConfig,
+                        highlightingMode = HighlightingMode.MARKDOWN,
+                        enabled = true
+                    )
                 }
             }
         }

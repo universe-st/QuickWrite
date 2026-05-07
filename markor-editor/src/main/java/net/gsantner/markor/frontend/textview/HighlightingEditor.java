@@ -126,6 +126,11 @@ public class HighlightingEditor extends AppCompatEditText {
     }
 
     @Override
+    protected void onScrollChanged(int horiz, int vert, int oldHoriz, int oldVert) {
+        super.onScrollChanged(horiz, vert, oldHoriz, oldVert);
+    }
+
+    @Override
     public boolean onPreDraw() {
         try {
             return super.onPreDraw();
@@ -182,6 +187,15 @@ public class HighlightingEditor extends AppCompatEditText {
             _hl.clearDynamic().applyDynamic(hlRegion());
             _oldHlRect.set(_hlRect);
         }
+    }
+
+    @Override
+    public boolean bringPointIntoView(int offset) {
+        // Prevent auto-scrolling to cursor during syntax highlight updates.
+        // The EditText calls bringPointIntoView after span modifications trigger
+        // invalidate → redraw, causing scroll position to jump back to cursor.
+        // Returning false tells EditText "no scroll needed."
+        return false;
     }
 
     public void recomputeHighlighting() {

@@ -50,8 +50,18 @@ fun MarkorEditor(
         update = { view ->
             view.isEnabled = enabled
 
-            if (view.text?.toString() != value) {
-                view.setText(value)
+            if (!view.text.contentEquals(value)) {
+                val savedScrollY = view.scrollY
+                val savedSelStart = view.selectionStart
+                view.text?.replace(0, view.length(), value)
+                val newLen = view.length()
+                val targetSel = if (view.length() == value.length) {
+                    savedSelStart.coerceIn(0, newLen)
+                } else {
+                    0
+                }
+                view.setSelection(targetSel)
+                view.scrollY = savedScrollY
             }
 
             val currentType = view.highlighter?.javaClass?.kotlin
