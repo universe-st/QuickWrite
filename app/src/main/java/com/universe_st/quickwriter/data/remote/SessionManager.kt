@@ -178,7 +178,7 @@ class SessionManager(
             updatedAt = entity.updatedAt
         )
         _sessionContexts[sessionId] = context
-        _sessionStates[sessionId] = MutableStateFlow(SessionState.Idle)
+        _sessionStates.getOrPut(sessionId) { MutableStateFlow(SessionState.Idle) }
         return context
     }
 

@@ -533,18 +533,6 @@ private fun ChatContentArea(
             }
         }
 
-        AnimatedVisibility(visible = isGenerating) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                Text(
-                    text = stringResource(R.string.chat_generating),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
-                )
-            }
-        }
-
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -613,6 +601,10 @@ private fun ChatContentArea(
                     }
                 }
             }
+        }
+
+        AnimatedVisibility(visible = isGenerating) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
         ChatInputArea(

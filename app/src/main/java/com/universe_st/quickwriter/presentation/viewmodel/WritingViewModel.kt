@@ -144,7 +144,16 @@ class WritingViewModel(
         saveMessageJob?.cancel()
     }
 
-    private suspend fun loadChapters(project: ProjectEntity, useSavedTab: Boolean = false) {
+    private suspend fun loadChapters(
+        project: ProjectEntity,
+        useSavedTab: Boolean = false,
+        preserveIndex: Boolean = false
+    ) {
+        val currentFileName = if (preserveIndex) {
+            val st = _uiState.value as? WritingUiState.Success
+            st?.chapters?.getOrNull(st.currentChapterIndex)?.fileName
+        } else null
+
         val chapterFilesResult = projectManagementUseCase.getChapterFiles(project.id)
         val filePaths = chapterFilesResult.getOrDefault(emptyList())
 
@@ -209,10 +218,14 @@ class WritingViewModel(
         val savedTab = if (useSavedTab && project.id == lastProjectId) lastSelectedTab else 0
         lastProjectId = project.id
 
+        val targetIndex = if (preserveIndex && currentFileName != null) {
+            chapterInfoList.indexOfFirst { it.fileName == currentFileName }.let { if (it >= 0) it else 0 }
+        } else 0
+
         _uiState.value = WritingUiState.Success(
             project = project,
             chapters = chapterInfoList,
-            currentChapterIndex = if (chapterInfoList.isEmpty()) -1 else 0,
+            currentChapterIndex = if (chapterInfoList.isEmpty()) -1 else targetIndex,
             editorContent = "",
             currentChapterMeta = ChapterMeta(),
             wordCount = 0,
@@ -223,7 +236,7 @@ class WritingViewModel(
         )
 
         if (chapterInfoList.isNotEmpty()) {
-            selectChapterInternal(project, chapterInfoList, 0)
+            selectChapterInternal(project, chapterInfoList, targetIndex)
         }
 
         startAutoSaveIfNeeded()
@@ -267,8 +280,10 @@ class WritingViewModel(
     fun selectChapter(index: Int) {
         val state = _uiState.value as? WritingUiState.Success ?: return
         if (index == state.currentChapterIndex) return
-        saveCurrentChapter()
+        instantSaveJob?.cancel()
+        saveMessageJob?.cancel()
         viewModelScope.launch {
+            saveCurrentChapterSuspend(state)
             selectChapterInternal(state.project, state.chapters, index)
         }
     }
@@ -290,23 +305,29 @@ class WritingViewModel(
         saveCurrentChapterInternal(state)
     }
 
-    private fun saveCurrentChapterInternal(state: WritingUiState.Success) {
+    private suspend fun saveCurrentChapterSuspend(state: WritingUiState.Success): Boolean {
         val index = state.currentChapterIndex
-        if (index < 0) return
-
+        if (index < 0 || !state.isDirty) return false
         val chapter = state.chapters[index]
         val fullContent = ChapterFileHelper.buildChapterContent(
             state.currentChapterMeta, state.editorContent
         )
+        val result = projectManagementUseCase.writeFileContent(chapter.filePath, fullContent)
+        if (result.isSuccess) {
+            projectManagementUseCase.updateProjectStatistics(state.project.id)
+        }
+        return result.isSuccess
+    }
+
+    private fun saveCurrentChapterInternal(state: WritingUiState.Success) {
+        if (state.currentChapterIndex < 0 || !state.isDirty) return
         val savedEditorContent = state.editorContent
-        if (!state.isDirty) return
 
         viewModelScope.launch {
             _uiState.value = (_uiState.value as? WritingUiState.Success)?.copy(isSaving = true) ?: return@launch
-            val result = projectManagementUseCase.writeFileContent(chapter.filePath, fullContent)
+            val success = saveCurrentChapterSuspend(state)
             val current = _uiState.value as? WritingUiState.Success ?: return@launch
-            if (result.isSuccess) {
-                projectManagementUseCase.updateProjectStatistics(state.project.id)
+            if (success) {
                 val stillDirty = current.editorContent != savedEditorContent
                 _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
                 clearSaveMessageAfterDelay()
@@ -407,6 +428,13 @@ class WritingViewModel(
         _uiState.value = success.copy(selectedTab = tab)
         lastSelectedTab = tab
         lastProjectId = success.project.id
+
+        if (tab == 0 && success.selectedTab != 0) {
+            saveCurrentChapter()
+            viewModelScope.launch {
+                loadChapters(success.project, preserveIndex = true)
+            }
+        }
     }
 
     fun retry() {
