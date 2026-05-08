@@ -70,7 +70,6 @@ class FileManager(private val context: Context) {
             }
 
             createIntroFile(projectDir)
-            createAiInstructionFile(projectDir)
             createWritingRulesFile(projectDir)
 
             Result.success(Unit)
@@ -86,14 +85,6 @@ class FileManager(private val context: Context) {
         }
     }
 
-    private fun createAiInstructionFile(projectDir: File) {
-        val configDir = File(projectDir, "配置")
-        val aiInstructionFile = File(configDir, "AI指令.md")
-        if (!aiInstructionFile.exists()) {
-            aiInstructionFile.createNewFile()
-            aiInstructionFile.writeText("# AI写作指令\n\n", Charsets.UTF_8)
-        }
-    }
 
     fun createInfoJson(projectDir: File, title: String, author: String, genre: String, createdTime: Long) {
         val infoFile = File(projectDir, "info.json")
@@ -114,7 +105,6 @@ class FileManager(private val context: Context) {
         val writingRulesFile = File(configDir, "写作规范.md")
         if (!writingRulesFile.exists()) {
             writingRulesFile.createNewFile()
-            writingRulesFile.writeText("# 写作规范\n\n", Charsets.UTF_8)
         }
     }
 
@@ -355,17 +345,9 @@ class FileManager(private val context: Context) {
 
         File(projectDir, "简介.md").createNewFile()
 
-        val aiFile = File(projectDir, "配置${File.separator}AI指令.md")
-        aiFile.parentFile?.mkdirs()
-        if (aiFile.createNewFile()) {
-            aiFile.writeText("# AI写作指令\n\n", Charsets.UTF_8)
-        }
-
         val rulesFile = File(projectDir, "配置${File.separator}写作规范.md")
         rulesFile.parentFile?.mkdirs()
-        if (rulesFile.createNewFile()) {
-            rulesFile.writeText("# 写作规范\n\n", Charsets.UTF_8)
-        }
+        rulesFile.createNewFile()
     }
 
     data class InfoJsonData(

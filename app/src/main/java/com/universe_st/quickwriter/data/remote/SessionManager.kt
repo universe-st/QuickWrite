@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -102,7 +103,14 @@ class SessionManager(
         storagePath: String,
         modelConfigId: Int?
     ): String {
-        val systemPrompt = buildSystemPrompt(projectTitle, projectAuthor, projectGenre, storagePath)
+        val writingRules = try {
+            val rulesFile = File(storagePath, "配置${File.separator}写作规范.md")
+            if (rulesFile.exists()) rulesFile.readText(Charsets.UTF_8).trim() else ""
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to read writing rules for project %s", projectId)
+            ""
+        }
+        val systemPrompt = buildSystemPrompt(projectTitle, projectAuthor, projectGenre, storagePath, writingRules)
         val resolvedModelConfigId = modelConfigId ?: 0
 
         val sessionId = createSession(projectId, systemPrompt, resolvedModelConfigId)
@@ -318,8 +326,8 @@ class SessionManager(
         return _sessionStates[sessionId]?.value is SessionState.Generating
     }
 
-    fun buildSystemPrompt(title: String, author: String, genre: String, storagePath: String): String {
-        return promptManager.getNovelWritingAssistantPrompt(title, author, genre, storagePath)
+    fun buildSystemPrompt(title: String, author: String, genre: String, storagePath: String, writingRules: String = ""): String {
+        return promptManager.getNovelWritingAssistantPrompt(title, author, genre, storagePath, writingRules)
     }
 
     companion object {

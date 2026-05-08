@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,10 +85,12 @@ fun ToolExecutionCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 48.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.Start
     ) {
         Surface(
-            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.widthIn(max = 340.dp),
+            shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 12.dp),
             color = when {
                 isLoading -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
                 parsed != null && !parsed.success -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)

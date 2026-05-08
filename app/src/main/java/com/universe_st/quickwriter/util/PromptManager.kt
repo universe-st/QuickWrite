@@ -50,13 +50,15 @@ class PromptManager(context: Context) {
         title: String,
         author: String,
         genre: String,
-        storagePath: String
+        storagePath: String,
+        writingRules: String = ""
     ): String {
         return resolve("novel_writing_assistant", mapOf(
             "title" to title,
             "author" to author,
             "genre" to genre,
-            "storagePath" to storagePath
+            "storagePath" to storagePath,
+            "writingRulesContent" to writingRules
         ))
     }
 

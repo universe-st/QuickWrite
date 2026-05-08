@@ -314,7 +314,12 @@ fun ToolCallBubble(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    Column(modifier = modifier.padding(start = 48.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
         Text(
             text = stringResource(R.string.chat_tool_calls, toolCalls.size),
             style = MaterialTheme.typography.labelSmall,
@@ -400,8 +405,7 @@ fun ToolResultBubble(
         Box(
             modifier = Modifier
                 .widthIn(max = 340.dp)
-                .padding(start = 36.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(4.dp, 12.dp, 12.dp, 12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {

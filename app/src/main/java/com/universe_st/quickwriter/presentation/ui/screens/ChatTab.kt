@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -793,6 +794,7 @@ private fun ChatInputArea(
     onSend: () -> Unit,
     onStop: () -> Unit
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     Surface(
         tonalElevation = 3.dp,
         shadowElevation = 8.dp,
@@ -839,7 +841,10 @@ private fun ChatInputArea(
                 }
             } else {
                 FilledIconButton(
-                    onClick = onSend,
+                    onClick = {
+                        keyboardController?.hide()
+                        onSend()
+                    },
                     modifier = Modifier.size(48.dp),
                     enabled = enabled && inputText.isNotBlank()
                 ) {
