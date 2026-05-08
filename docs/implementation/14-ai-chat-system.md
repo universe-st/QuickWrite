@@ -290,9 +290,11 @@ sendMessage(sessionId, content)
 
 **流式渲染防闪烁** (ChatTab / ChatBubble):
 - 生成中的气泡已合并到 `displayMessages` 列表中（`id = Long.MAX_VALUE` 为稳定 key），不再是 LazyColumn 中独立的 `item {}`，避免消息更新时重建
-- `LaunchedEffect` 仅依赖 `messages.size` 触发滚动，不再随每个 token 变化自动滚动
+- `LaunchedEffect(displayItems.size, messages.size)` 在新 item 或 tool card 变化时滚动到底部
+- **流式内容增长滚动**：`LaunchedEffect(partialContent)` 直接监听流式内容变化触发 `animateScrollToItem(lastIndex)`，不使用 `snapshotFlow(layoutInfo)` 方案 —— 因后者在 snapshot apply 阶段（layout 测量之前）读取 `layoutInfo`，内容变高后 layout 更新但无新 snapshot 触发，导致 scroll 漏掉
 - 流结束时先设置 `SessionState.Idle` 再持久化 AI 回复（避免生成中气泡与持久化消息双显示）
-- Markdown 渲染使用 `com.github.jeziellago:compose-markdown:0.7.2`
+- 流式文本**直接渲染**（即时显示 API 返回的增量内容），配有 `PulsingCursor` 闪烁光标指示生成状态 —— 不再使用 TypewriterText 逐字动画，避免动画落后于 API 速度导致的"突然全部显示"问题
+- 生成完成后切换为 Markdown 渲染（`com.github.jeziellago:compose-markdown:0.7.2`）
 
 ### 9. 会话创建模型配置注入
 

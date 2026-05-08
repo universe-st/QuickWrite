@@ -179,9 +179,10 @@ fun AssistantMessageBubble(
                 when {
                     isGenerating && hasContent -> {
                         Row(verticalAlignment = Alignment.Bottom) {
-                            TypewriterText(
-                                fullText = content,
-                                isStreaming = true,
+                            Text(
+                                text = content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                             PulsingCursor()
@@ -201,42 +202,6 @@ fun AssistantMessageBubble(
         if (hasToolCalls && (hasContent || isGenerating)) {
             Spacer(modifier = Modifier.height(0.dp))
         }
-    }
-}
-
-@Composable
-private fun TypewriterText(
-    fullText: String,
-    isStreaming: Boolean,
-    modifier: Modifier = Modifier
-) {
-    var displayedLength by remember { mutableStateOf(0) }
-
-    val prevText = remember { mutableStateOf("") }
-    if (displayedLength > fullText.length || 
-        (fullText.isEmpty() && prevText.value.isNotEmpty())) {
-        displayedLength = 0
-    }
-    prevText.value = fullText
-
-    LaunchedEffect(fullText, isStreaming) {
-        if (isStreaming && fullText.isNotEmpty()) {
-            while (displayedLength < fullText.length) {
-                delay(25)
-                displayedLength++
-            }
-        }
-    }
-
-    val visibleText = fullText.take(displayedLength.coerceAtMost(fullText.length))
-
-    if (visibleText.isNotEmpty()) {
-        Text(
-            text = visibleText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = modifier
-        )
     }
 }
 

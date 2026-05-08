@@ -591,25 +591,14 @@ private fun ChatContentArea(
         }
     }
 
-    // Auto-scroll during streaming content growth (items get taller but count stays same)
-    LaunchedEffect(isGenerating) {
-        if (!isGenerating) return@LaunchedEffect
-        snapshotFlow {
-            val layoutInfo = listState.layoutInfo
-            val lastItem = layoutInfo.visibleItemsInfo.lastOrNull()
-            val lastItemId = lastItem?.key
-            val contentOverflows = lastItem?.let {
-                it.offset + it.size > layoutInfo.viewportEndOffset
-            } ?: false
-            Triple(layoutInfo.totalItemsCount, lastItemId, contentOverflows)
+    // Auto-scroll during streaming content growth — key on partialContent directly
+    // because snapshotFlow reads layoutInfo during snapshot apply (before layout is
+    // measured), so it never sees the updated item height until the next recomposition.
+    LaunchedEffect(partialContent) {
+        if (isGenerating && currentShouldAutoScroll && currentDisplayItems.isNotEmpty()) {
+            val lastIndex = currentDisplayItems.lastIndex
+            listState.animateScrollToItem(lastIndex)
         }
-            .distinctUntilChanged()
-            .collect {
-                if (currentShouldAutoScroll && !currentIsScrollingToBottom && currentDisplayItems.isNotEmpty()) {
-                    android.util.Log.d("ChatScroll", "[LaunchedEffect:streaming] -> scrolling to bottom")
-                    scrollToBottom()
-                }
-            }
     }
 
     Box(modifier = modifier) {
