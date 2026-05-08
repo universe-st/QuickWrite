@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -12,17 +13,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.pointer.pointerInput
@@ -30,6 +35,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.*
 import com.universe_st.quickwriter.presentation.viewmodel.AiChatViewModel
@@ -58,6 +65,7 @@ fun ChatTab(
     val sessionState by viewModel.sessionState.collectAsState()
     val currentSessionId = viewModel.currentSessionId
     val showSidebar = viewModel.showSidebar
+    var isScrollingToBottom by remember { mutableStateOf(false) }
     var deleteConfirmTarget by remember { mutableStateOf<String?>(null) }
     var deleteMessageIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -76,56 +84,77 @@ fun ChatTab(
         return
     }
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = showSidebar,
-            enter = slideInHorizontally(initialOffsetX = { -it }),
-            exit = slideOutHorizontally(targetOffsetX = { -it })
-        ) {
-            SessionSidebar(
-                sessions = sessions,
-                currentSessionId = currentSessionId,
-                onSelect = { viewModel.selectSession(it) },
-                onDelete = { deleteConfirmTarget = it },
-                onCreate = { viewModel.createSession(projectId) },
-                onClose = { viewModel.showSidebar = false },
-                modifier = Modifier
-                    .width(240.dp)
-                    .fillMaxHeight()
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            AnimatedVisibility(
+                visible = showSidebar,
+                enter = slideInHorizontally(initialOffsetX = { -it }),
+                exit = slideOutHorizontally(targetOffsetX = { -it })
+            ) {
+                SessionSidebar(
+                    sessions = sessions,
+                    currentSessionId = currentSessionId,
+                    onSelect = { viewModel.selectSession(it) },
+                    onDelete = { deleteConfirmTarget = it },
+                    onCreate = { viewModel.createSession(projectId) },
+                    onClose = { viewModel.showSidebar = false },
+                    modifier = Modifier
+                        .width(240.dp)
+                        .fillMaxHeight()
+                )
+            }
 
-        if (showSidebar) {
-            VerticalDivider()
-        }
+            if (showSidebar) {
+                VerticalDivider()
+            }
 
-        Box(modifier = Modifier.weight(1f)) {
-            ChatContentArea(
-                messages = messages,
-                sessionState = sessionState,
+            Box(modifier = Modifier.weight(1f)) {
+                ChatContentArea(
+                    messages = messages,
+                    sessionState = sessionState,
                 inputText = viewModel.inputText,
                 isGenerating = isGenerating,
                 partialContent = partialContent,
+                isScrollingToBottom = isScrollingToBottom,
+                onScrollToBottomStart = { isScrollingToBottom = true },
+                onScrollToBottomEnd = { isScrollingToBottom = false },
                 onInputChange = { viewModel.inputText = it },
                 onSend = { viewModel.sendMessage() },
                 onStop = { viewModel.stopGeneration() },
-                onRetry = { viewModel.retryLastMessage() },
-                onDeleteMessage = { deleteMessageIndex = it },
-                modifier = Modifier.fillMaxSize()
-            )
-
-            if (showSidebar) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(
-                            interactionSource = null,
-                            indication = null
-                        ) {
-                            viewModel.showSidebar = false
-                        }
+                    onRetry = { viewModel.retryLastMessage() },
+                    onDeleteMessage = { deleteMessageIndex = it },
+                    modifier = Modifier.fillMaxSize()
                 )
+
+                if (showSidebar) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                interactionSource = null,
+                                indication = null
+                            ) {
+                                viewModel.showSidebar = false
+                            }
+                    )
+                }
             }
+        }
+
+        if (isScrollingToBottom) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .zIndex(2f)
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+            )
         }
     }
 
@@ -474,6 +503,9 @@ private fun ChatContentArea(
     inputText: String,
     isGenerating: Boolean,
     partialContent: String?,
+    isScrollingToBottom: Boolean,
+    onScrollToBottomStart: () -> Unit,
+    onScrollToBottomEnd: () -> Unit,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -483,6 +515,7 @@ private fun ChatContentArea(
 ) {
     val listState = rememberLazyListState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val baseItems = remember(messages, isGenerating) {
         preprocessMessages(messages, isGenerating)
@@ -504,116 +537,250 @@ private fun ChatContentArea(
         }
     }
 
-    LaunchedEffect(messages.size, isGenerating) {
-        if (displayItems.isNotEmpty()) {
-            listState.animateScrollToItem(displayItems.size - 1)
+    var shouldAutoScroll by remember { mutableStateOf(true) }
+    val currentDisplayItems by rememberUpdatedState(displayItems)
+    val currentShouldAutoScroll by rememberUpdatedState(shouldAutoScroll)
+    val currentIsScrollingToBottom by rememberUpdatedState(isScrollingToBottom)
+
+    suspend fun scrollToBottom() {
+        val lastIndex = currentDisplayItems.lastIndex
+        if (lastIndex < 0) return
+
+        val layoutInfo = listState.layoutInfo
+        val lastItem = layoutInfo.visibleItemsInfo.lastOrNull { it.index == lastIndex }
+        val targetOffset = if (lastItem != null) {
+            lastItem.size - layoutInfo.viewportEndOffset
+        } else {
+            0
+        }
+        listState.animateScrollToItem(lastIndex, targetOffset)
+    }
+
+    val isAtBottom by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            if (layoutInfo.totalItemsCount == 0) return@derivedStateOf true
+            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull() ?: return@derivedStateOf true
+            if (lastVisible.index < layoutInfo.totalItemsCount - 1) return@derivedStateOf false
+            val lastItemBottom = lastVisible.offset + lastVisible.size
+            val result = lastItemBottom <= layoutInfo.viewportEndOffset + 4
+            android.util.Log.d("ChatScroll", "[isAtBottom] result=$result lastItemIdx=${lastVisible.index}/${layoutInfo.totalItemsCount} lastItemBottom=$lastItemBottom viewportEnd=${layoutInfo.viewportEndOffset} firstVisibleIdx=${layoutInfo.visibleItemsInfo.firstOrNull()?.index} firstVisibleOffset=${listState.firstVisibleItemScrollOffset}")
+            result
         }
     }
 
-    Column(modifier = modifier.fillMaxHeight()) {
-        if (sessionState is SessionState.Error) {
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = sessionState.message.asString(context),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.weight(1f)
-                    )
-                    TextButton(onClick = onRetry) {
-                        Text(stringResource(R.string.chat_retry))
-                    }
+    LaunchedEffect(listState) {
+        snapshotFlow { isAtBottom }
+            .collect { atBottom ->
+                android.util.Log.d("ChatScroll", "[snapshotFlow:isAtBottom] atBottom=$atBottom -> shouldAutoScroll=$shouldAutoScroll")
+                if (!currentIsScrollingToBottom) {
+                    shouldAutoScroll = atBottom
                 }
             }
-        }
+    }
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-        ) {
-            if (displayItems.isEmpty() && sessionState !is SessionState.Error) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+    // Auto-scroll when display items change (new items added, tool cards transition)
+    // Keys: displayItems.size catches new items; messages.size catches TOOL result
+    // messages arriving that update tool cards in-place (size unchanged but content changed)
+    LaunchedEffect(displayItems.size, messages.size) {
+        android.util.Log.d("ChatScroll", "[LaunchedEffect:items] size=${displayItems.size} msgs=${messages.size} shouldAutoScroll=$currentShouldAutoScroll")
+        if (currentShouldAutoScroll && !currentIsScrollingToBottom && currentDisplayItems.isNotEmpty()) {
+            android.util.Log.d("ChatScroll", "[LaunchedEffect:items] -> scrolling to bottom")
+            scrollToBottom()
+        }
+    }
+
+    // Auto-scroll during streaming content growth (items get taller but count stays same)
+    LaunchedEffect(isGenerating) {
+        if (!isGenerating) return@LaunchedEffect
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val lastItem = layoutInfo.visibleItemsInfo.lastOrNull()
+            val lastItemId = lastItem?.key
+            val contentOverflows = lastItem?.let {
+                it.offset + it.size > layoutInfo.viewportEndOffset
+            } ?: false
+            Triple(layoutInfo.totalItemsCount, lastItemId, contentOverflows)
+        }
+            .distinctUntilChanged()
+            .collect {
+                if (currentShouldAutoScroll && !currentIsScrollingToBottom && currentDisplayItems.isNotEmpty()) {
+                    android.util.Log.d("ChatScroll", "[LaunchedEffect:streaming] -> scrolling to bottom")
+                    scrollToBottom()
+                }
+            }
+    }
+
+    Box(modifier = modifier) {
+        Column(modifier = Modifier.fillMaxHeight()) {
+            if (sessionState is SessionState.Error) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.chat_empty_state_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            text = sessionState.message.asString(context),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.weight(1f)
                         )
+                        TextButton(onClick = onRetry) {
+                            Text(stringResource(R.string.chat_retry))
+                        }
                     }
                 }
             }
 
-            itemsIndexed(
-                items = displayItems,
-                key = { index, item ->
-                    when (item) {
-                        is DisplayItem.Message -> item.message.id
-                        is DisplayItem.ToolCard -> "tool_${item.toolName}_$index"
-                    }
-                }
-            ) { index, item ->
-                when (item) {
-                    is DisplayItem.Message -> {
-                        var showActions by remember { mutableStateOf(false) }
-                        val isGeneratingItem = item.message.id == Long.MAX_VALUE
-                        if (isGeneratingItem) {
-                            AssistantMessageBubble(
-                                content = item.message.content,
-                                isGenerating = true
-                            )
-                        } else {
+            Box(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 4.dp)
+                ) {
+                    if (displayItems.isEmpty() && sessionState !is SessionState.Error) {
+                        item {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { showActions = !showActions }
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                MessageBubble(
-                                    message = item.message,
-                                    showActions = showActions,
-                                    onRetry = if (item.message.role == MessageRole.USER) {
-                                        { onRetry() }
-                                    } else null,
-                                    onDelete = { onDeleteMessage(index) }
+                                Text(
+                                    text = stringResource(R.string.chat_empty_state_hint),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                                 )
                             }
                         }
                     }
-                    is DisplayItem.ToolCard -> {
-                        ToolExecutionCard(
-                            toolName = item.toolName,
-                            parsed = item.parsed,
-                            isLoading = item.isLoading
+
+                    itemsIndexed(
+                        items = displayItems,
+                        key = { index, item ->
+                            when (item) {
+                                is DisplayItem.Message -> item.message.id
+                                is DisplayItem.ToolCard -> "tool_${item.toolName}_$index"
+                            }
+                        }
+                    ) { index, item ->
+                        when (item) {
+                            is DisplayItem.Message -> {
+                                var showActions by remember { mutableStateOf(false) }
+                                val isGeneratingItem = item.message.id == Long.MAX_VALUE
+                                if (isGeneratingItem) {
+                                    AssistantMessageBubble(
+                                        content = item.message.content,
+                                        isGenerating = true
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { showActions = !showActions }
+                                    ) {
+                                        MessageBubble(
+                                            message = item.message,
+                                            showActions = showActions,
+                                            onRetry = if (item.message.role == MessageRole.USER) {
+                                                { onRetry() }
+                                            } else null,
+                                            onDelete = { onDeleteMessage(index) }
+                                        )
+                                    }
+                                }
+                            }
+                            is DisplayItem.ToolCard -> {
+                                ToolExecutionCard(
+                                    toolName = item.toolName,
+                                    parsed = item.parsed,
+                                    isLoading = item.isLoading
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (!isAtBottom && displayItems.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 16.dp, bottom = 8.dp)
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                                    .copy(alpha = 0.85f),
+                                CircleShape
+                            )
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                CircleShape
+                            )
+                            .then(
+                                if (isScrollingToBottom) {
+                                    Modifier
+                                } else {
+                                    Modifier.clickable {
+                                        scope.launch {
+                                            android.util.Log.d("ChatScroll", "[Button] CLICKED")
+                                            onScrollToBottomStart()
+                                            shouldAutoScroll = true
+                                            try {
+                                                scrollToBottom()
+                                            } finally {
+                                                onScrollToBottomEnd()
+                                            }
+                                        }
+                                    }
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.KeyboardArrowDown,
+                            contentDescription = stringResource(R.string.chat_scroll_to_bottom),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
+
+            AnimatedVisibility(visible = isGenerating) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            ChatInputArea(
+                inputText = inputText,
+                isGenerating = isGenerating,
+                enabled = !isScrollingToBottom,
+                onInputChange = onInputChange,
+                onSend = onSend,
+                onStop = onStop
+            )
         }
 
-        AnimatedVisibility(visible = isGenerating) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        if (isScrollingToBottom) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .zIndex(1f)
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+            )
         }
-
-        ChatInputArea(
-            inputText = inputText,
-            isGenerating = isGenerating,
-            onInputChange = onInputChange,
-            onSend = onSend,
-            onStop = onStop
-        )
     }
 }
 
@@ -621,6 +788,7 @@ private fun ChatContentArea(
 private fun ChatInputArea(
     inputText: String,
     isGenerating: Boolean,
+    enabled: Boolean,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit
@@ -645,6 +813,7 @@ private fun ChatInputArea(
                 },
                 maxLines = 4,
                 shape = RoundedCornerShape(20.dp),
+                enabled = enabled,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
@@ -657,6 +826,7 @@ private fun ChatInputArea(
                 FilledIconButton(
                     onClick = onStop,
                     modifier = Modifier.size(48.dp),
+                    enabled = enabled,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     )
@@ -671,7 +841,7 @@ private fun ChatInputArea(
                 FilledIconButton(
                     onClick = onSend,
                     modifier = Modifier.size(48.dp),
-                    enabled = inputText.isNotBlank()
+                    enabled = enabled && inputText.isNotBlank()
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.Send,

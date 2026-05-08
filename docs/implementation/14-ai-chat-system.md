@@ -457,8 +457,14 @@ ChatTab(projectId, onNavigateToAiConfig?)
 | 系统提示词硬编码在 Kotlin 中，不便修改 | 3 个提示词抽成 `assets/prompts/*.md` 模板文件，新增 `PromptManager` 加载和变量替换 | assets/prompts/*.md, PromptManager.kt, SessionManager.kt, ApiDispatcher.kt, AIChatService.kt |
 | 消息截断导致 TOOL 消息与 ASSISTANT tool_calls 分离，API 返回 400 'tool' must be a response to 'tool_calls' | `buildMessagesForApi()` 新增 `ensureToolCallPairs()` 方法，截断后向后搜索补齐缺失的 ASSISTANT tool_calls 消息 | ApiDispatcher.kt |
 
+## 已修复问题 (2026-05-08)
+
+| 问题 | 修复方式 | 涉及文件 |
+|------|---------|---------|
+| “滚动到底端”按钮滚动后又跳回顶部 | 按钮触发单次动画滚动到末尾，并在动画期间用全屏遮罩锁定其它交互 | ChatTab.kt |
+
 ---
 
 **文档版本**: 1.8  
-**最后更新**: 2026-05-01  
-**状态**: 完成（含 Tool Call JSON 截断检测、动态工具描述、maxTokens 默认值提升、整数编辑框、提示词外部化）
+**最后更新**: 2026-05-08  
+**状态**: 完成（含 Tool Call JSON 截断检测、动态工具描述、maxTokens 默认值提升、整数编辑框、提示词外部化、聊天滚动修复）

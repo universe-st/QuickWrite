@@ -423,6 +423,7 @@
     <string name="chat_no_config_title">No AI Model Configured</string>
     <string name="chat_no_config_message">You need to configure an AI model before you can use the chat feature. Please set up your API key and model in settings first.</string>
     <string name="chat_no_config_action">Configure AI Model</string>
+    <string name="chat_scroll_to_bottom">Scroll to bottom</string>
 
     <!-- ===== Tool Execution Cards ===== -->
     <string name="tool_name_create_file">Create File</string>

@@ -423,6 +423,7 @@
     <string name="chat_no_config_title">未設定 AI 模型</string>
     <string name="chat_no_config_message">使用對話功能前需要先設定 AI 模型。請前往設定頁面設定您的 API 金鑰和模型。</string>
     <string name="chat_no_config_action">設定 AI 模型</string>
+    <string name="chat_scroll_to_bottom">捲動到底部</string>
 
     <!-- ===== Tool Execution Cards ===== -->
     <string name="tool_name_create_file">建立檔案</string>
