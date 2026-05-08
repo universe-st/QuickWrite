@@ -44,7 +44,8 @@ class AIChatService : Service(), IChatService {
             projectRepository = AppServiceContainer.projectRepository,
             projectManagementUseCase = AppServiceContainer.projectManagementUseCase,
             aiOperationDao = AppServiceContainer.aiOperationDao,
-            backupManager = backupManager
+            backupManager = backupManager,
+            renameSession = { sessionId, title -> sessionManager.renameSession(sessionId, title) }
         )
         executor.registerTools(ToolRegistry.allTools)
         executor

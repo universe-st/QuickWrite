@@ -187,7 +187,7 @@ class ApiDispatcher(
                     return
                 }
 
-                processStreamResponse(sessionId, body, context.projectId, context.title, toolRound)
+                processStreamResponse(sessionId, body, context.projectId, toolRound)
             },
             onFailure = { error ->
                 sessionManager.setSessionState(sessionId, SessionState.Error(
@@ -290,7 +290,6 @@ class ApiDispatcher(
         sessionId: String,
         body: okhttp3.ResponseBody,
         projectId: String,
-        sessionTitle: String,
         toolRound: Int
     ) {
         val reader = BufferedReader(InputStreamReader(body.byteStream()))
@@ -358,12 +357,12 @@ class ApiDispatcher(
                 }
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
-            savePartialResponse(sessionId, fullContent, reasoningContent, usageTokens, projectId, sessionTitle, toolRound, toolCallAccumulators)
+            savePartialResponse(sessionId, fullContent, reasoningContent, usageTokens, projectId, toolRound, toolCallAccumulators)
             sessionManager.setSessionState(sessionId, SessionState.Idle)
             sessionManager.refreshSessionList(projectId)
             return
         } catch (e: Exception) {
-            savePartialResponse(sessionId, fullContent, reasoningContent, usageTokens, projectId, sessionTitle, toolRound, toolCallAccumulators)
+            savePartialResponse(sessionId, fullContent, reasoningContent, usageTokens, projectId, toolRound, toolCallAccumulators)
             sessionManager.setSessionState(sessionId, SessionState.Idle)
             sessionManager.refreshSessionList(projectId)
             return
@@ -375,14 +374,14 @@ class ApiDispatcher(
             val textContent = fullContent.toString()
             Timber.d("ApiDispatcher: BRANCH tool_calls — %d accumulators, textContent=\"%s\", calling handleToolCalls",
                 toolCallAccumulators.size, textContent.take(100))
-            handleToolCalls(sessionId, toolCallAccumulators, textContent, reasoningContent.toString(), projectId, sessionTitle, toolRound)
+            handleToolCalls(sessionId, toolCallAccumulators, textContent, reasoningContent.toString(), projectId, toolRound)
             return
         }
 
         if (fullContent.isNotEmpty()) {
             Timber.d("ApiDispatcher: BRANCH text_only — persisting %d chars, setting Idle", fullContent.length)
             sessionManager.setSessionState(sessionId, SessionState.Idle)
-            persistAssistantMessage(sessionId, fullContent.toString(), reasoningContent.toString(), usageTokens, sessionTitle, projectId)
+            persistAssistantMessage(sessionId, fullContent.toString(), reasoningContent.toString(), usageTokens, projectId)
         } else {
             Timber.e("ApiDispatcher: BRANCH empty_response_ERROR — fullContent is empty, toolCallAccumulators is empty, setting Error state")
             sessionManager.setSessionState(sessionId, SessionState.Error(
@@ -401,7 +400,6 @@ class ApiDispatcher(
         textContent: String,
         reasoningContent: String,
         projectId: String,
-        sessionTitle: String,
         toolRound: Int
     ) {
         val toolCalls = accumulators.values.map { acc ->
@@ -428,6 +426,8 @@ class ApiDispatcher(
             )
         })
 
+        val allSilent = toolCalls.all { it.function.name == "rename_session" }
+
         val displayContent = textContent.ifBlank { "" }
         val assistantMsg = ChatMessage(
             role = MessageRole.ASSISTANT,
@@ -435,6 +435,7 @@ class ApiDispatcher(
             toolCalls = toolCalls,
             reasoningContent = reasoningContent.ifEmpty { null },
             tokenCount = TokenEstimator.estimateTokenCount(displayContent),
+            silent = allSilent,
             timestamp = System.currentTimeMillis()
         )
 
@@ -447,6 +448,7 @@ class ApiDispatcher(
             tokenCount = assistantMsg.tokenCount,
             toolCallsJson = toolCallsJson,
             reasoningContent = reasoningContent.ifEmpty { null },
+            isSilent = allSilent,
             createdAt = assistantMsg.timestamp
         )
         aiMessageDao.insertMessage(assistantEntity)
@@ -473,6 +475,7 @@ class ApiDispatcher(
                 role = MessageRole.TOOL,
                 content = result,
                 toolCallId = toolCall.id,
+                silent = toolCall.function.name == "rename_session",
                 timestamp = System.currentTimeMillis()
             )
 
@@ -483,6 +486,7 @@ class ApiDispatcher(
                 role = "tool",
                 content = result,
                 toolCallId = toolCall.id,
+                isSilent = toolCall.function.name == "rename_session",
                 createdAt = toolMsg.timestamp
             )
             aiMessageDao.insertMessage(toolEntity)
@@ -502,12 +506,11 @@ class ApiDispatcher(
         reasoningContent: StringBuilder,
         usageTokens: Int?,
         projectId: String,
-        sessionTitle: String,
         toolRound: Int,
         accumulators: Map<Int, ToolCallAccumulator>
     ) {
         if (fullContent.isNotEmpty()) {
-            persistAssistantMessage(sessionId, fullContent.toString(), reasoningContent.toString(), usageTokens, sessionTitle, projectId)
+            persistAssistantMessage(sessionId, fullContent.toString(), reasoningContent.toString(), usageTokens, projectId)
         }
     }
 
@@ -516,7 +519,6 @@ class ApiDispatcher(
         content: String,
         reasoningContent: String,
         usageTokens: Int?,
-        sessionTitle: String,
         projectId: String
     ) {
         val messageOrder = aiMessageDao.getMessagesBySession(sessionId).size
@@ -542,52 +544,6 @@ class ApiDispatcher(
             timestamp = entity.createdAt
         )
         sessionManager.appendMessageToContext(sessionId, assistantMsg)
-
-        triggerAutoTitleIfNeeded(sessionId, sessionTitle, projectId)
-    }
-
-    private fun triggerAutoTitleIfNeeded(sessionId: String, currentTitle: String, projectId: String) {
-        if (currentTitle.isNotEmpty()) return
-
-        launch {
-            val userMsgCount = aiMessageDao.getUserMessageCount(sessionId)
-            if (userMsgCount != 1) return@launch
-
-            val firstUserMsg = aiMessageDao.getMessagesBySession(sessionId)
-                .firstOrNull { it.role == "user" && !it.isSilent }
-                ?: return@launch
-
-            val titleRequest = ChatMessageDto(
-                role = "user",
-                content = "Please generate a title (no more than 10 words) for the following conversation. Only output the title text, no quotes or explanations.\n\nConversation start:\n${firstUserMsg.content}"
-            )
-
-            val context = sessionManager.getSessionContext(sessionId) ?: return@launch
-            val modelConfig = aiModelConfigDao.getConfigById(context.modelConfigId) ?: return@launch
-
-            val request = ChatCompletionRequest(
-                model = modelConfig.modelName,
-                messages = listOf(
-                    ChatMessageDto(role = "system", content = promptManager.getTitleGeneratorPrompt()),
-                    titleRequest
-                ),
-                temperature = 0.3f,
-                maxTokens = 50,
-                stream = false
-            )
-
-            val result = aiServiceRepository.chatCompletion(configId = context.modelConfigId, request = request)
-
-            result.onSuccess { response ->
-                val title = response.choices.firstOrNull()?.message?.content
-                    ?.trim()?.replace("\"", "")?.take(50)
-                    ?: firstUserMsg.content.take(30)
-                sessionManager.renameSession(sessionId, title)
-            }.onFailure {
-                val fallbackTitle = firstUserMsg.content.take(30)
-                if (fallbackTitle.isNotEmpty()) sessionManager.renameSession(sessionId, fallbackTitle)
-            }
-        }
     }
 
     private data class ToolCallAccumulator(

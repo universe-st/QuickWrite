@@ -19,7 +19,9 @@ data class ToolDefinition(
 
 data class ToolContext(
     val projectId: String,
+    val sessionId: String = "",
     val fileManager: FileManager,
     val projectRepository: ProjectRepository,
-    val projectManagementUseCase: ProjectManagementUseCase
+    val projectManagementUseCase: ProjectManagementUseCase,
+    val renameSession: (suspend (String, String) -> Unit)? = null
 )

@@ -61,8 +61,4 @@ class PromptManager(context: Context) {
             "writingRulesContent" to writingRules
         ))
     }
-
-    fun getTitleGeneratorPrompt(): String {
-        return resolve("title_generator")
-    }
 }

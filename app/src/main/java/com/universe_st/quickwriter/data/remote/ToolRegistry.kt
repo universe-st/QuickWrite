@@ -11,6 +11,7 @@ import com.universe_st.quickwriter.data.remote.tools.GetFolderStructureTool
 import com.universe_st.quickwriter.data.remote.tools.GetProjectInfoTool
 import com.universe_st.quickwriter.data.remote.tools.GetProjectListTool
 import com.universe_st.quickwriter.data.remote.tools.MoveFileTool
+import com.universe_st.quickwriter.data.remote.tools.RenameSessionTool
 import com.universe_st.quickwriter.data.remote.tools.SearchInProjectTool
 import com.universe_st.quickwriter.data.remote.tools.UpdateChapterMetaTool
 import com.universe_st.quickwriter.data.remote.tools.UpdateProjectInfoTool
@@ -33,6 +34,7 @@ object ToolRegistry {
         CreateProjectTool(),
         DeleteProjectTool(),
         GetChapterMetaTool(),
-        UpdateChapterMetaTool()
+        UpdateChapterMetaTool(),
+        RenameSessionTool()
     )
 }

@@ -31,7 +31,8 @@ class ToolExecutor(
     private val projectRepository: ProjectRepository,
     private val projectManagementUseCase: ProjectManagementUseCase,
     private val aiOperationDao: AiOperationDao,
-    private val backupManager: BackupManager
+    private val backupManager: BackupManager,
+    private val renameSession: (suspend (String, String) -> Unit)? = null
 ) {
     private val tools: MutableMap<String, ChatTool> = mutableMapOf()
 
@@ -81,9 +82,11 @@ class ToolExecutor(
 
             val context = ToolContext(
                 projectId = projectId,
+                sessionId = sessionId,
                 fileManager = fileManager,
                 projectRepository = projectRepository,
-                projectManagementUseCase = projectManagementUseCase
+                projectManagementUseCase = projectManagementUseCase,
+                renameSession = renameSession
             )
 
             val isModificationTool = isModificationTool(functionName)
