@@ -368,6 +368,11 @@ class WritingViewModel(
         )
         val result = projectManagementUseCase.writeFileContent(chapter.filePath, fullContent)
         if (result.isSuccess) {
+            val newTimestamp = File(chapter.filePath).lastModified()
+            val currentState = _uiState.value as? WritingUiState.Success
+            if (currentState != null) {
+                _uiState.value = currentState.copy(fileLastModified = newTimestamp)
+            }
             projectManagementUseCase.updateProjectStatistics(state.project.id)
         }
         return result.isSuccess
@@ -404,7 +409,13 @@ class WritingViewModel(
             val current = _uiState.value as? WritingUiState.Success ?: return@launch
             if (result.isSuccess) {
                 val stillDirty = current.editorContent != savedEditorContent
-                _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
+                val newTimestamp = File(filePath).lastModified()
+                _uiState.value = current.copy(
+                    isSaving = false,
+                    isDirty = stillDirty,
+                    saveMessage = "已保存",
+                    fileLastModified = newTimestamp
+                )
                 clearSaveMessageAfterDelay()
             } else {
                 _uiState.value = current.copy(isSaving = false, saveMessage = "保存失败")
@@ -654,18 +665,6 @@ class WritingViewModel(
         _uiState.value = success.copy(selectedTab = tab)
         lastSelectedTab = tab
         lastProjectId = success.project.id
-
-        if (tab == 0 && success.selectedTab != 0) {
-            viewModelScope.launch {
-                val chapter = success.chapters.getOrNull(success.currentChapterIndex)
-                val file = chapter?.let { File(it.filePath) }
-                if (file != null && file.exists() && file.lastModified() > success.fileLastModified) {
-                } else {
-                    saveCurrentChapterSuspend(success)
-                }
-                loadChapters(success.project, preserveIndex = true)
-            }
-        }
     }
 
     fun retry() {
