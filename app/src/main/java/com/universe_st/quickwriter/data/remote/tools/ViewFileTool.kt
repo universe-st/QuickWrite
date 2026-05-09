@@ -1,5 +1,6 @@
 package com.universe_st.quickwriter.data.remote.tools
 
+import com.universe_st.quickwriter.data.remote.ViewTracker
 import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.domain.model.ChatTool
 import com.universe_st.quickwriter.domain.model.ToolContext
@@ -12,7 +13,8 @@ class ViewFileTool : ChatTool {
 
     override val definition = ToolDefinition(
         name = "view_file",
-        description = "Read the content of a specified file within a project, with optional line range to limit output size",
+        description = "Read the content of a specified file within a project, with optional line range to limit output size. " +
+            "This tool records the view and is required before calling edit_file — the viewed line range must cover the lines you intend to edit.",
         parameters = mapOf(
             "type" to "object",
             "properties" to mapOf(
@@ -94,6 +96,14 @@ class ViewFileTool : ChatTool {
                 put("message", "Content truncated: showing $MAX_LINES lines out of ${selectedLines.size} selected lines")
             }
         }
+
+        context.viewTracker?.recordView(
+            sessionId = context.sessionId,
+            filePath = relativePath,
+            startLine = actualStartLine,
+            endLine = effectiveEnd
+        )
+
         return result.toString(2)
     }
 }

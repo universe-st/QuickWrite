@@ -35,6 +35,7 @@ class ToolExecutor(
     private val renameSession: (suspend (String, String) -> Unit)? = null
 ) {
     private val tools: MutableMap<String, ChatTool> = mutableMapOf()
+    val viewTracker = ViewTracker()
 
     fun registerTool(tool: ChatTool) {
         tools[tool.definition.name] = tool
@@ -86,7 +87,8 @@ class ToolExecutor(
                 fileManager = fileManager,
                 projectRepository = projectRepository,
                 projectManagementUseCase = projectManagementUseCase,
-                renameSession = renameSession
+                renameSession = renameSession,
+                viewTracker = viewTracker
             )
 
             val isModificationTool = isModificationTool(functionName)
@@ -106,6 +108,10 @@ class ToolExecutor(
         } catch (e: Exception) {
             """{"error": "Tool execution failed: ${e.message}"}"""
         }
+    }
+
+    fun clearSessionViewTracker(sessionId: String) {
+        viewTracker.clearSession(sessionId)
     }
 
     suspend fun rollbackOperation(operationId: String, projectId: String): Result<Unit> {

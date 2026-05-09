@@ -98,6 +98,7 @@ class AIChatService : Service(), IChatService {
 
     override fun onDestroy() {
         sessionManager.clear()
+        toolExecutor.viewTracker.clearAll()
         super.onDestroy()
     }
 
@@ -125,6 +126,7 @@ class AIChatService : Service(), IChatService {
 
     override fun deleteSession(sessionId: String) {
         sessionManager.deleteSession(sessionId)
+        toolExecutor.clearSessionViewTracker(sessionId)
     }
 
     override fun switchToSession(sessionId: String) {

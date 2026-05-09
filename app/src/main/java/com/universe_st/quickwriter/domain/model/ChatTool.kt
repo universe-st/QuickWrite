@@ -1,5 +1,6 @@
 package com.universe_st.quickwriter.domain.model
 
+import com.universe_st.quickwriter.data.remote.ViewTracker
 import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
 import com.universe_st.quickwriter.util.FileManager
@@ -23,5 +24,6 @@ data class ToolContext(
     val fileManager: FileManager,
     val projectRepository: ProjectRepository,
     val projectManagementUseCase: ProjectManagementUseCase,
-    val renameSession: (suspend (String, String) -> Unit)? = null
+    val renameSession: (suspend (String, String) -> Unit)? = null,
+    val viewTracker: ViewTracker? = null
 )

@@ -1,5 +1,6 @@
 package com.universe_st.quickwriter.data.remote.tools
 
+import com.universe_st.quickwriter.data.remote.ViewTracker
 import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.domain.model.ChatTool
 import com.universe_st.quickwriter.domain.model.ToolContext
@@ -18,6 +19,8 @@ class EditFileTool : ChatTool {
     override val definition = ToolDefinition(
         name = "edit_file",
         description = "Replace content at a specific line range in a project file. Supports precise line-level editing. " +
+            "CRITICAL: You MUST call view_file on the same file first with a line range that covers the edit range. " +
+            "Editing a file not yet viewed will result in an error. After a successful edit, the view is cleared — you must view_file again before the next edit. " +
             "IMPORTANT: For chapter files under \"正文/\", editing the YAML front matter (lines between --- and ---) is BLOCKED. " +
             "Use get_chapter_meta to read metadata and update_chapter_meta to modify it. " +
             "You may only edit body content after the closing ---.",
@@ -72,6 +75,29 @@ class EditFileTool : ChatTool {
         val actualStartLine = startLine.coerceIn(1, totalLines.coerceAtLeast(1))
         val actualEndLine = if (endLine == -1) totalLines else endLine.coerceIn(actualStartLine, totalLines)
 
+        val tracker = context.viewTracker
+        if (tracker != null && context.sessionId.isNotEmpty()) {
+            val viewRecord = tracker.getViewRecord(context.sessionId, relativePath)
+            if (viewRecord == null) {
+                return JSONObject().apply {
+                    put("error", "File not viewed yet. You MUST call view_file(\"$relativePath\") first to read the file content before calling edit_file. Editing a file without viewing it first is forbidden.")
+                    put("requiredAction", "view_file")
+                    put("requiredPath", relativePath)
+                }.toString(2)
+            }
+            if (actualStartLine < viewRecord.startLine || actualEndLine > viewRecord.endLine) {
+                return JSONObject().apply {
+                    put("error", "View range does not cover edit range. You viewed lines ${viewRecord.startLine}-${viewRecord.endLine} but tried to edit lines $actualStartLine-$actualEndLine. Call view_file(\"$relativePath\", startLine=$actualStartLine, endLine=$actualEndLine) first to view the lines you intend to edit, then call edit_file again.")
+                    put("viewedStartLine", viewRecord.startLine)
+                    put("viewedEndLine", viewRecord.endLine)
+                    put("editStartLine", actualStartLine)
+                    put("editEndLine", actualEndLine)
+                    put("requiredAction", "view_file")
+                    put("requiredPath", relativePath)
+                }.toString(2)
+            }
+        }
+
         if (relativePath.startsWith("$CHAPTER_DIR/")) {
             val fmRange = findFrontMatterRange(lines)
             if (fmRange != null) {
@@ -98,6 +124,8 @@ class EditFileTool : ChatTool {
         lines.addAll(actualStartLine - 1, newLines)
 
         filePath.writeText(lines.joinToString("\n"))
+
+        context.viewTracker?.clearFileView(context.sessionId, relativePath)
 
         val result = JSONObject().apply {
             put("filePath", relativePath)
