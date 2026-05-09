@@ -144,8 +144,7 @@ com.universe_st.quickwriter/
 
 ```
 /{项目ID}/
-├── info.json                # 项目元数据（书名、作者、类型、创建时间等）
-├── 简介.md                  # 项目基本信息
+├── info.json                # 项目元数据（书名、作者、类型、简介、创建时间等）
 ├── 正文/                    # 小说正文章节
 ├── 设定/
 │   ├── 人物/
@@ -167,6 +166,7 @@ com.universe_st.quickwriter/
   "title": "书名",
   "author": "作者",
   "genre": "类型",
+  "description": "小说简介/核心设定（对应数据库 ProjectEntity.description）",
   "createdTime": "2026-04-28T12:00:00.000Z",
   "version": "1.0"
 }
