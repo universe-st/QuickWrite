@@ -317,7 +317,7 @@
     <string name="about_label_target_sdk">Target Platform</string>
     <string name="about_value_target_sdk">Android 14 (API 34)</string>
     <string name="about_description">QuickWrite is an AI writing assistant designed specifically for novelists, helping writers systematically manage the creative process and improve writing efficiency and quality.</string>
-    <string name="about_copyright">Licensed under Mulan Permissive Software License v2 (Mulan PSL v2)</string>
+    <string name="about_copyright">Licensed under Mulan Public License v2 (Mulan PubL v2)</string>
 
     <!-- ===== Genre Names ===== -->
     <string name="genre_fantasy_xuanhuan">Xuanhuan (Eastern Fantasy)</string>

@@ -317,7 +317,7 @@
     <string name="about_label_target_sdk">目標平台</string>
     <string name="about_value_target_sdk">Android 14 (API 34)</string>
     <string name="about_description">QuickWrite是一款專為小說創作者設計的AI寫作助手，旨在幫助作家系統化管理創作過程，提升寫作效率和品質。</string>
-    <string name="about_copyright">基於木蘭公共許可證第2版 (Mulan PSL v2) 許可</string>
+    <string name="about_copyright">基於木蘭公共許可證第2版 (Mulan PubL v2) 許可</string>
 
     <!-- ===== 小說類型 ===== -->
     <string name="genre_fantasy_xuanhuan">玄幻</string>
