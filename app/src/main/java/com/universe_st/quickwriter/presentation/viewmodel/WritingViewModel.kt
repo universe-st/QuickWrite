@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import java.io.File
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
 import com.universe_st.quickwriter.util.UiText
@@ -11,6 +12,7 @@ import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
 import com.universe_st.quickwriter.util.AppUtils
 import com.universe_st.quickwriter.util.ChapterFileHelper
 import com.universe_st.quickwriter.util.ChapterMeta
+import com.universe_st.quickwriter.util.FileTreeItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +29,26 @@ data class ChapterFileInfo(
     val filePath: String
 )
 
+enum class FileBrowserMode {
+    CHAPTERS, SETTINGS, TIMELINE, LOGS, CONFIG;
+
+    fun displayNameResId(): Int = when (this) {
+        CHAPTERS -> R.string.writing_browse_chapters
+        SETTINGS -> R.string.writing_browse_settings
+        TIMELINE -> R.string.writing_browse_timeline
+        LOGS -> R.string.writing_browse_logs
+        CONFIG -> R.string.writing_browse_config
+    }
+
+    fun dirName(): String = when (this) {
+        CHAPTERS -> "正文"
+        SETTINGS -> "设定"
+        TIMELINE -> "时间线"
+        LOGS -> "记录"
+        CONFIG -> "配置"
+    }
+}
+
 sealed class WritingUiState {
     object NoProject : WritingUiState()
     object Loading : WritingUiState()
@@ -42,7 +64,11 @@ sealed class WritingUiState {
         val isSaving: Boolean,
         val isDirty: Boolean,
         val autoSaveImmediately: Boolean = false,
-        val saveMessage: String? = null
+        val saveMessage: String? = null,
+        val fileBrowserMode: FileBrowserMode = FileBrowserMode.CHAPTERS,
+        val fileTree: List<FileTreeItem> = emptyList(),
+        val expandedFolders: Set<String> = emptySet(),
+        val currentFilePath: String? = null
     ) : WritingUiState()
     data class Error(val message: UiText) : WritingUiState()
 }
@@ -290,7 +316,7 @@ class WritingViewModel(
 
     fun updateEditorContent(newContent: String) {
         val state = _uiState.value as? WritingUiState.Success ?: return
-        if (state.currentChapterIndex < 0) return
+        if (state.currentChapterIndex < 0 && state.currentFilePath == null) return
         _uiState.value = state.copy(
             editorContent = newContent,
             wordCount = countWords(newContent),
@@ -376,6 +402,142 @@ class WritingViewModel(
             projectManagementUseCase.deleteChapterFile(state.project.id, chapter.fileName)
             loadChapters(state.project)
         }
+    }
+
+    fun switchBrowseMode(mode: FileBrowserMode) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        if (state.fileBrowserMode == mode) return
+        viewModelScope.launch {
+            if (mode == FileBrowserMode.CHAPTERS) {
+                loadChapters(state.project)
+            } else {
+                val dirPath = File(state.project.storagePath, mode.dirName()).absolutePath
+                val tree = projectManagementUseCase.getFileTree(dirPath)
+                _uiState.value = state.copy(
+                    fileBrowserMode = mode,
+                    fileTree = tree,
+                    currentFilePath = null,
+                    editorContent = ""
+                )
+            }
+        }
+    }
+
+    fun toggleFolderExpanded(relativePath: String) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        val expanded = state.expandedFolders.toMutableSet()
+        if (expanded.contains(relativePath)) expanded.remove(relativePath)
+        else expanded.add(relativePath)
+        _uiState.value = state.copy(expandedFolders = expanded)
+    }
+
+    fun selectNonChapterFile(file: FileTreeItem) {
+        if (file.isDirectory) {
+            toggleFolderExpanded(file.relativePath)
+            return
+        }
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        viewModelScope.launch {
+            val content = projectManagementUseCase.readFileContent(file.absolutePath)
+                .getOrDefault("")
+            _uiState.value = state.copy(
+                currentFilePath = file.absolutePath,
+                editorContent = content,
+                wordCount = countWords(content),
+                isDirty = false,
+                saveMessage = null
+            )
+        }
+    }
+
+    fun saveCurrentFile() {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        val filePath = state.currentFilePath ?: return
+        viewModelScope.launch {
+            _uiState.value = state.copy(isSaving = true)
+            val result = projectManagementUseCase.writeFileContent(filePath, state.editorContent)
+            val current = _uiState.value as? WritingUiState.Success ?: return@launch
+            if (result.isSuccess) {
+                val stillDirty = current.editorContent != state.editorContent
+                _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
+                clearSaveMessageAfterDelay()
+            } else {
+                _uiState.value = current.copy(isSaving = false, saveMessage = "保存失败")
+                clearSaveMessageAfterDelay()
+            }
+        }
+    }
+
+    fun deleteFileOrFolder(item: FileTreeItem) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        viewModelScope.launch {
+            projectManagementUseCase.deleteFileOrDir(item.absolutePath)
+            refreshCurrentFileTree(state)
+        }
+    }
+
+    fun deleteChapterWithConfirm(index: Int) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        if (index < 0 || index >= state.chapters.size) return
+        val chapter = state.chapters[index]
+        viewModelScope.launch {
+            projectManagementUseCase.deleteChapterFile(state.project.id, chapter.fileName)
+            loadChapters(state.project)
+        }
+    }
+
+    fun renameFile(oldPath: String, newName: String, isChapter: Boolean, chapterIndex: Int = -1) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        viewModelScope.launch {
+            val result = projectManagementUseCase.renameFileOrDir(oldPath, newName)
+            if (result.isSuccess) {
+                if (isChapter) {
+                    loadChapters(state.project)
+                } else {
+                    refreshCurrentFileTree(state)
+                }
+            }
+        }
+    }
+
+    fun createNewFileInCurrentDir(fileName: String) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        val dirPath = File(state.project.storagePath, state.fileBrowserMode.dirName()).absolutePath
+        val filePath = File(dirPath, fileName).absolutePath
+        viewModelScope.launch {
+            projectManagementUseCase.createFileInProject(filePath)
+            refreshCurrentFileTree(state)
+        }
+    }
+
+    fun createNewFolderInCurrentDir(folderName: String) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        val dirPath = File(state.project.storagePath, state.fileBrowserMode.dirName()).absolutePath
+        val folderPath = File(dirPath, folderName).absolutePath
+        viewModelScope.launch {
+            projectManagementUseCase.createDirectoryInProject(folderPath)
+            refreshCurrentFileTree(state)
+        }
+    }
+
+    fun editChapterMeta(chapterIndex: Int, meta: ChapterMeta) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        if (chapterIndex < 0 || chapterIndex >= state.chapters.size) return
+        val chapter = state.chapters[chapterIndex]
+        viewModelScope.launch {
+            val content = projectManagementUseCase.readFileContent(chapter.filePath)
+                .getOrDefault("")
+            val (_, body) = ChapterFileHelper.parseChapterContent(content)
+            val newContent = ChapterFileHelper.buildChapterContent(meta, body)
+            projectManagementUseCase.writeFileContent(chapter.filePath, newContent)
+            loadChapters(state.project)
+        }
+    }
+
+    private suspend fun refreshCurrentFileTree(state: WritingUiState.Success) {
+        val dirPath = File(state.project.storagePath, state.fileBrowserMode.dirName()).absolutePath
+        val tree = projectManagementUseCase.getFileTree(dirPath)
+        _uiState.value = state.copy(fileTree = tree)
     }
 
     fun moveChapter(fromIndex: Int, toIndex: Int) {
