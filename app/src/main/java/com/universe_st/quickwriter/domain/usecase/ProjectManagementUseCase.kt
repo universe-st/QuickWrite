@@ -73,7 +73,7 @@ class ProjectManagementUseCase(
             }
             val project = result.getOrThrow()
             val projectDir = File(project.storagePath)
-            fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.createdTime)
+            fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.description ?: "", project.createdTime)
         }
 
         return result
@@ -285,7 +285,7 @@ class ProjectManagementUseCase(
 
             val infoFile = File(targetDir, "info.json")
             if (!infoFile.exists()) {
-                fileManager.createInfoJson(targetDir, project.title, project.author, project.genre, project.createdTime)
+                fileManager.createInfoJson(targetDir, project.title, project.author, project.genre, project.description ?: "", project.createdTime)
             }
 
             Timber.tag("ImportProject").i("Import successful: id=%s title=%s", projectId, title)
@@ -316,7 +316,7 @@ class ProjectManagementUseCase(
         val projectDir = File(project.storagePath)
         val infoFile = File(projectDir, "info.json")
         if (!infoFile.exists()) {
-            fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.createdTime)
+            fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.description ?: "", project.createdTime)
         }
 
         return fileManager.zipProjectToFile(project.storagePath, outputFile)
