@@ -32,7 +32,8 @@ fun MarkorEditor(
                 isFocusable = true
                 isFocusableInTouchMode = true
                 HighlightingEditor.setDefaultConfig(editorConfig)
-                setHighlighter(createHighlighter(highlightingMode))
+                setTextColor(editorConfig.getEditorForegroundColor())
+                setHighlighter(createHighlighter(editorConfig, highlightingMode))
                 setHighlightingEnabled(true)
 
                 addTextChangedListener(object : TextWatcher {
@@ -49,6 +50,7 @@ fun MarkorEditor(
         },
         update = { view ->
             view.isEnabled = enabled
+            view.setTextColor(editorConfig.getEditorForegroundColor())
 
             if (!view.text.contentEquals(value)) {
                 val savedScrollY = view.scrollY
@@ -70,7 +72,7 @@ fun MarkorEditor(
                 HighlightingMode.MARKDOWN -> MarkdownSyntaxHighlighter::class
             }
             if (currentType != targetType) {
-                view.setHighlighter(createHighlighter(highlightingMode))
+                view.setHighlighter(createHighlighter(editorConfig, highlightingMode))
                 view.initHighlighter()
                 view.setHighlightingEnabled(true)
                 view.postInvalidate()
@@ -79,9 +81,9 @@ fun MarkorEditor(
     )
 }
 
-private fun createHighlighter(mode: HighlightingMode) = when (mode) {
-    HighlightingMode.PLAINTEXT -> PlaintextSyntaxHighlighter()
-    HighlightingMode.MARKDOWN -> MarkdownSyntaxHighlighter()
+private fun createHighlighter(config: EditorConfig, mode: HighlightingMode) = when (mode) {
+    HighlightingMode.PLAINTEXT -> PlaintextSyntaxHighlighter(config)
+    HighlightingMode.MARKDOWN -> MarkdownSyntaxHighlighter(config)
 }
 
 private class DefaultEditorConfig : EditorConfig

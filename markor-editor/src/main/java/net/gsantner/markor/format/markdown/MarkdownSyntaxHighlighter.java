@@ -10,6 +10,7 @@ package net.gsantner.markor.format.markdown;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 
+import com.universe_st.markor_editor.EditorConfig;
 import net.gsantner.markor.frontend.textview.SyntaxHighlighterBase;
 
 import java.util.regex.Pattern;
@@ -39,6 +40,10 @@ public class MarkdownSyntaxHighlighter extends SyntaxHighlighterBase {
 
     public MarkdownSyntaxHighlighter() {
         super();
+    }
+
+    public MarkdownSyntaxHighlighter(final EditorConfig config) {
+        super(config);
     }
 
     private boolean _highlightLineEnding;

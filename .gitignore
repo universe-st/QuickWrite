@@ -54,3 +54,4 @@ gradle/wrapper/gradle-wrapper.jar
 /.idea/misc.xml
 /.idea/jarRepositories.xml
 /.idea/vcs.xml
+build-log.txt

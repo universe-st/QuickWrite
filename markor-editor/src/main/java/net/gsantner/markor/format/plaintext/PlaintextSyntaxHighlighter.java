@@ -7,12 +7,17 @@ package net.gsantner.markor.format.plaintext;
  *
 #########################################################*/
 
+import com.universe_st.markor_editor.EditorConfig;
 import net.gsantner.markor.frontend.textview.SyntaxHighlighterBase;
 
 public class PlaintextSyntaxHighlighter extends SyntaxHighlighterBase {
 
     public PlaintextSyntaxHighlighter() {
         super();
+    }
+
+    public PlaintextSyntaxHighlighter(final EditorConfig config) {
+        super(config);
     }
 
     @Override
