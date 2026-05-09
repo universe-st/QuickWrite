@@ -711,6 +711,7 @@ private fun FileListPanel(
                         canMoveUp = index > 0,
                         canMoveDown = index < state.chapters.size - 1,
                         onClick = { onSelectChapter(index) },
+                        onLongPress = { showChapterContextMenu = index },
                         onMoveUp = { onMoveUp(index) },
                         onMoveDown = { onMoveDown(index) },
                         onDelete = { onFileDeleteRequest(chapter.fileName, chapter.filePath, true, index) }
@@ -915,6 +916,7 @@ private fun FileTreeItemNode(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ChapterListItem(
     chapter: ChapterFileInfo,
@@ -924,7 +926,8 @@ private fun ChapterListItem(
     onClick: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLongPress: () -> Unit = {}
 ) {
     val bgColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -936,7 +939,10 @@ private fun ChapterListItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            )
             .padding(vertical = 4.dp, horizontal = 2.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -1111,7 +1117,7 @@ private fun RenameFileDialog(
     onDismiss: () -> Unit
 ) {
     var newName by remember { mutableStateOf(oldName.removeSuffix(".md")) }
-    var error by remember { mutableStateOf<String?>(null) }
+    val error = getFileNameError(newName, oldName)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1120,10 +1126,7 @@ private fun RenameFileDialog(
             Column {
                 OutlinedTextField(
                     value = newName,
-                    onValueChange = {
-                        newName = it
-                        error = validateFileName(it, oldName)
-                    },
+                    onValueChange = { newName = it },
                     label = { Text(stringResource(R.string.writing_field_file_name)) },
                     singleLine = true,
                     isError = error != null,
@@ -1131,7 +1134,7 @@ private fun RenameFileDialog(
                 )
                 if (error != null) {
                     Text(
-                        text = error!!,
+                        text = error,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(top = 4.dp)
@@ -1263,10 +1266,11 @@ private fun NewFolderDialog(
     )
 }
 
-private fun validateFileName(name: String, oldName: String?): String? {
-    if (name.isBlank()) return "Name cannot be empty"
+@Composable
+private fun getFileNameError(name: String, oldName: String?): String? {
+    if (name.isBlank()) return stringResource(R.string.error_invalid_file_name)
     val invalidChars = setOf('/', '\\', ':', '*', '?', '"', '<', '>', '|')
-    if (name.any { it in invalidChars }) return "Invalid characters: / \\ : * ? \" < > |"
+    if (name.any { it in invalidChars }) return stringResource(R.string.error_invalid_file_name)
     if (oldName != null && name == oldName) return null
     return null
 }
