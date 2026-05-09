@@ -2,6 +2,10 @@ package com.universe_st.quickwriter.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 
+data class ThinkingConfig(
+    val type: String
+)
+
 data class ChatCompletionRequest(
     val model: String,
     val messages: List<ChatMessageDto>,
@@ -11,7 +15,10 @@ data class ChatCompletionRequest(
     val stream: Boolean = true,
     val tools: List<ToolDefinitionDto>? = null,
     @SerializedName("tool_choice")
-    val toolChoice: String? = "auto"
+    val toolChoice: String? = "auto",
+    val thinking: ThinkingConfig? = null,
+    @SerializedName("reasoning_effort")
+    val reasoningEffort: String? = null
 )
 
 data class ChatMessageDto(

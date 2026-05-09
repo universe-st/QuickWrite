@@ -134,6 +134,11 @@ class SessionManager(
         return sessionId
     }
 
+    fun createSessionWithoutProject(modelConfigId: Int?): String {
+        val systemPrompt = promptManager.getNoProjectAssistantPrompt()
+        return createSession(NO_PROJECT_ID, systemPrompt, modelConfigId)
+    }
+
     fun deleteSession(sessionId: String) {
         _sessionCache.remove(sessionId)
         _sessionStates.remove(sessionId)
@@ -332,6 +337,7 @@ class SessionManager(
     }
 
     companion object {
+        const val NO_PROJECT_ID = "no_project"
         private const val IDLE_RECYCLE_DELAY_MS = 5 * 60 * 1000L
     }
 }

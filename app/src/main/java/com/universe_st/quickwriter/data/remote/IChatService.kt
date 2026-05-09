@@ -17,6 +17,8 @@ interface IChatService {
         modelConfigId: Int?
     ): String
 
+    fun createSessionWithoutProject(modelConfigId: Int?): String
+
     fun deleteSession(sessionId: String)
 
     fun switchToSession(sessionId: String)

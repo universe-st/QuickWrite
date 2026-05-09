@@ -281,6 +281,12 @@
     <string name="ai_config_param_frequency_penalty_desc">Reduces repetition of already appeared words.</string>
     <string name="ai_config_param_presence_penalty">Presence Penalty</string>
     <string name="ai_config_param_presence_penalty_desc">Encourages generating new topics and content.</string>
+    <string name="ai_config_param_thinking">Thinking Mode</string>
+    <string name="ai_config_param_thinking_desc">Enable DeepSeek thinking mode for chain-of-thought reasoning before answering.</string>
+    <string name="ai_config_param_reasoning_effort">Reasoning Effort</string>
+    <string name="ai_config_param_reasoning_effort_desc">Controls the reasoning intensity in thinking mode. Higher values may improve accuracy at the cost of longer response times.</string>
+    <string name="ai_config_reasoning_effort_high">High</string>
+    <string name="ai_config_reasoning_effort_max">Max</string>
     <string name="ai_config_default_switch">Set as Default Configuration</string>
     <string name="ai_config_delete">Delete</string>
     <string name="ai_config_confirm_delete_title">Confirm Deletion</string>
@@ -305,13 +311,13 @@
     <string name="about_label_build_date">Build Date</string>
     <string name="about_value_build_date">2026-04</string>
     <string name="about_label_developer">Developer</string>
-    <string name="about_value_developer">Universe Software</string>
+    <string name="about_value_developer">寰宇星城</string>
     <string name="about_label_min_sdk">Minimum Requirement</string>
     <string name="about_value_min_sdk">Android 7.0 (API 24)</string>
     <string name="about_label_target_sdk">Target Platform</string>
     <string name="about_value_target_sdk">Android 14 (API 34)</string>
     <string name="about_description">QuickWrite is an AI writing assistant designed specifically for novelists, helping writers systematically manage the creative process and improve writing efficiency and quality.</string>
-    <string name="about_copyright">© 2026 Universe Software. All rights reserved.</string>
+    <string name="about_copyright">Licensed under Mulan Permissive Software License v2 (Mulan PSL v2)</string>
 
     <!-- ===== Genre Names ===== -->
     <string name="genre_fantasy_xuanhuan">Xuanhuan (Eastern Fantasy)</string>
@@ -441,13 +447,20 @@
     <string name="chat_delete_message_confirm">Delete this message?</string>
     <string name="chat_copy">Copy</string>
     <string name="chat_copied">Copied</string>
+    <string name="chat_thinking_label">Thinking</string>
+    <string name="chat_thinking_progress">Thinking...</string>
     <string name="chat_tool_calls">Tool calls (%1$d)</string>
     <string name="chat_tool_call_title">%1$s</string>
     <string name="chat_error_service">AI service unavailable</string>
+    <string name="chat_no_project_banner">No main project set. Go to project list to create or select a project to unlock full AI writing capabilities</string>
+    <string name="chat_no_project_title">QuickWrite AI Assistant</string>
+    <string name="chat_no_project_hint">I\'ll help you learn about QuickWrite and guide you to create a project or start writing</string>
     <string name="chat_empty_state">Start a conversation with AI</string>
     <string name="chat_empty_state_hint">Ask anything about your novel</string>
     <string name="chat_model_info">Model: %1$s</string>
     <string name="chat_sidebar_toggle">Toggle sidebar</string>
+    <string name="common_expand">Expand</string>
+    <string name="common_collapse">Collapse</string>
     <string name="chat_tool_call_details">Tool Call Details</string>
     <string name="chat_no_config_title">No AI Model Configured</string>
     <string name="chat_no_config_message">You need to configure an AI model before you can use the chat feature. Please set up your API key and model in settings first.</string>

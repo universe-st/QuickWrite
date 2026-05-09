@@ -9,7 +9,7 @@
 ### UI 层 (新增)
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听、模型配置检查 (~230行) |
+| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听、模型配置检查、会话加载状态追踪 (~250行) |
 | ChatTab | `presentation/ui/screens/ChatTab.kt` | 对话 Tab 主界面 — 会话列表、消息列表、输入区域 (~590行) |
 | ChatBubble | `presentation/ui/components/ChatBubble.kt` | 消息气泡组件 — 用户/AI/ToolCall/系统消息、复制/重试/删除 (~375行) |
 
@@ -344,7 +344,7 @@ sendMessage(sessionId, content)
 | 方法 | 说明 |
 |------|------|
 | `bindToService()` | init 块中绑定 AIChatService，启动 Foreground Service |
-| `loadSessions(projectId)` | 从 Room Flow 加载项目会话列表，自动选中首个会话 |
+| `loadSessions(projectId)` | 从 Room Flow 加载项目会话列表，自动选中首个会话。加载完成后设置 `sessionsLoaded = true` |
 | `selectSession(sessionId)` | 切换会话 → 观察消息 Flow + 会话状态 Flow |
 | `createSession(projectId, systemPrompt?, modelConfigId?)` | 通过 Service 创建新会话 |
 | `sendMessage()` | 发送输入框文本到当前会话（先检查模型配置状态，无配置时不清空输入） |
@@ -354,6 +354,12 @@ sendMessage(sessionId, content)
 | `deleteSession(sessionId)` | 删除整个会话 |
 
 **依赖**: `AiConversationRepository` + `AiModelConfigRepository`（用于检查 `hasAnyConfig()` 状态）
+
+### 会话加载状态追踪
+
+- `sessionsLoaded` (mutableStateOf) — 标识会话列表是否已从 Room Flow 首次加载完成
+- 在 `startObservingSessions()` 的 `collect` 回调中设置为 `true`
+- ChatTab 根据此标志区分"会话尚未加载"（显示空白）和"确实没有会话"（显示 ChatEmptyState）
 
 ### 模型配置前置检查
 
@@ -372,6 +378,7 @@ sendMessage(sessionId, content)
 ```
 ChatTab(projectId, onNavigateToAiConfig?)
 ├── [无模型配置] → NoModelConfigState（含"配置 AI 模型"按钮 → 导航到 Settings > AI Config）
+├── [会话未加载] → 空白视图（sessionsLoaded = false）
 ├── [无会话] → ChatEmptyState（"新建对话"按钮）
 ├── Row
 │   ├── SessionSidebar (AnimatedVisibility, 240dp宽, 支持左滑关闭)
@@ -471,6 +478,6 @@ ChatTab(projectId, onNavigateToAiConfig?)
 
 ---
 
-**文档版本**: 1.8  
-**最后更新**: 2026-05-08  
-**状态**: 完成（含 Tool Call JSON 截断检测、动态工具描述、maxTokens 默认值提升、整数编辑框、提示词外部化、聊天滚动修复）
+**文档版本**: 1.9  
+**最后更新**: 2026-05-09  
+**状态**: 完成（含 Tool Call JSON 截断检测、动态工具描述、maxTokens 默认值提升、整数编辑框、提示词外部化、聊天滚动修复、会话加载状态追踪）

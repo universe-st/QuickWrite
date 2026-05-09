@@ -63,4 +63,8 @@ class PromptManager(context: Context) {
             "writingRulesContent" to writingRules
         ))
     }
+
+    fun getNoProjectAssistantPrompt(): String {
+        return resolve("no_project_assistant").ifEmpty { getDefaultAssistantPrompt() }
+    }
 }

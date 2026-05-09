@@ -39,6 +39,7 @@ import com.universe_st.quickwriter.presentation.viewmodel.AiChatViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.ChapterFileInfo
 import com.universe_st.quickwriter.presentation.viewmodel.WritingUiState
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModel
+import com.universe_st.quickwriter.data.remote.SessionManager
 import com.universe_st.quickwriter.ui.theme.TextSecondary
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -89,7 +90,7 @@ fun WritingScreen(
     var showNewFileDialog by remember { mutableStateOf(false) }
     var showNewFolderDialog by remember { mutableStateOf(false) }
 
-    val isChatTab = uiState is WritingUiState.Success && (uiState as WritingUiState.Success).selectedTab == 1
+    val isChatTab = uiState is WritingUiState.NoProject || (uiState is WritingUiState.Success && (uiState as WritingUiState.Success).selectedTab == 1)
 
     Scaffold(
         topBar = {
@@ -133,7 +134,13 @@ fun WritingScreen(
             ) {
                         when (val state = uiState) {
                     is WritingUiState.NoProject -> {
-                        NoProjectContent(onNavigateToProjectList)
+                        ChatTab(
+                            viewModel = aiChatViewModel,
+                            projectId = SessionManager.NO_PROJECT_ID,
+                            onNavigateToAiConfig = onNavigateToAiConfig,
+                            isNoProjectMode = true,
+                            onNavigateToProjectList = onNavigateToProjectList
+                        )
                     }
                     is WritingUiState.Loading -> {
                         CircularProgressIndicator(
@@ -388,7 +395,7 @@ private fun WritingTopBar(
                     )
                 }
             } else {
-                if (hasChapters) {
+                if (uiState is WritingUiState.Success) {
                     IconButton(onClick = onToggleChapterList) {
                         Icon(
                             if (showChapterList) Icons.Default.Close else Icons.Default.Menu,

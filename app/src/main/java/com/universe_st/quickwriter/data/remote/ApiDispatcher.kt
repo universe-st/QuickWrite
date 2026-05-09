@@ -6,6 +6,7 @@ import com.universe_st.quickwriter.data.local.dao.AiModelConfigDao
 import com.universe_st.quickwriter.data.local.entity.AiMessageEntity
 import com.universe_st.quickwriter.data.remote.dto.ChatCompletionRequest
 import com.universe_st.quickwriter.data.remote.dto.ChatMessageDto
+import com.universe_st.quickwriter.data.remote.dto.ThinkingConfig
 import com.universe_st.quickwriter.data.remote.dto.ToolCallDto
 import com.universe_st.quickwriter.data.remote.dto.ToolCallFunctionDto
 import com.universe_st.quickwriter.data.remote.dto.ToolDefinitionDto
@@ -149,6 +150,7 @@ class ApiDispatcher(
             }
         }
         val messagesForApi = buildMessagesForApi(apiContext)
+        val isDeepseek = modelConfig.provider == "deepseek"
         val request = ChatCompletionRequest(
             model = modelConfig.modelName,
             messages = messagesForApi,
@@ -156,7 +158,9 @@ class ApiDispatcher(
             maxTokens = modelConfig.maxTokens,
             stream = true,
             tools = tools.ifEmpty { null },
-            toolChoice = if (tools.isNotEmpty()) "auto" else null
+            toolChoice = if (tools.isNotEmpty()) "auto" else null,
+            thinking = if (isDeepseek && modelConfig.thinkingEnabled) ThinkingConfig("enabled") else null,
+            reasoningEffort = if (isDeepseek && modelConfig.thinkingEnabled) modelConfig.reasoningEffort else null
         )
 
         val result = aiServiceRepository.chatCompletionStream(
@@ -314,11 +318,14 @@ class ApiDispatcher(
                     when (chunk) {
                         is StreamChunk.ReasoningContent -> {
                             reasoningContent.append(chunk.text)
+                            if (isActive) {
+                                sessionManager.setSessionState(sessionId, SessionState.Generating(fullContent.toString(), reasoningContent.toString()))
+                            }
                         }
                         is StreamChunk.Content -> {
                             fullContent.append(chunk.text)
                             if (isActive) {
-                                sessionManager.setSessionState(sessionId, SessionState.Generating(fullContent.toString()))
+                                sessionManager.setSessionState(sessionId, SessionState.Generating(fullContent.toString(), reasoningContent.toString()))
                             }
                         }
                         is StreamChunk.ToolCallBegin -> {

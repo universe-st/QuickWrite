@@ -281,6 +281,12 @@
     <string name="ai_config_param_frequency_penalty_desc">降低已出现词汇的重复概率</string>
     <string name="ai_config_param_presence_penalty">存在惩罚</string>
     <string name="ai_config_param_presence_penalty_desc">鼓励生成新话题和内容</string>
+    <string name="ai_config_param_thinking">思考模式</string>
+    <string name="ai_config_param_thinking_desc">启用DeepSeek思考模式，在回答前进行思维链推理。</string>
+    <string name="ai_config_param_reasoning_effort">推理强度</string>
+    <string name="ai_config_param_reasoning_effort_desc">控制思考模式下的推理强度。更高的值可能提升准确性，但会增加响应时间。</string>
+    <string name="ai_config_reasoning_effort_high">高</string>
+    <string name="ai_config_reasoning_effort_max">最大</string>
     <string name="ai_config_default_switch">设为默认配置</string>
     <string name="ai_config_delete">删除</string>
     <string name="ai_config_confirm_delete_title">确认删除</string>
@@ -305,13 +311,13 @@
     <string name="about_label_build_date">构建日期</string>
     <string name="about_value_build_date">2026-04</string>
     <string name="about_label_developer">开发者</string>
-    <string name="about_value_developer">Universe Software</string>
+    <string name="about_value_developer">寰宇星城</string>
     <string name="about_label_min_sdk">最低要求</string>
     <string name="about_value_min_sdk">Android 7.0 (API 24)</string>
     <string name="about_label_target_sdk">目标平台</string>
     <string name="about_value_target_sdk">Android 14 (API 34)</string>
     <string name="about_description">QuickWrite是一款专为小说创作者设计的AI写作助手，旨在帮助作家系统化管理创作过程，提升写作效率和质量。</string>
-    <string name="about_copyright">© 2026 Universe Software. 保留所有权利。</string>
+    <string name="about_copyright">基于木兰公共许可证第2版 (Mulan PSL v2) 许可</string>
 
     <!-- ===== 小说类型 ===== -->
     <string name="genre_fantasy_xuanhuan">玄幻</string>
@@ -441,13 +447,20 @@
     <string name="chat_delete_message_confirm">确定删除此消息？</string>
     <string name="chat_copy">复制</string>
     <string name="chat_copied">已复制</string>
+    <string name="chat_thinking_label">思考</string>
+    <string name="chat_thinking_progress">正在思考...</string>
     <string name="chat_tool_calls">工具调用（%1$d）</string>
     <string name="chat_tool_call_title">%1$s</string>
     <string name="chat_error_service">AI 服务不可用</string>
+    <string name="chat_no_project_banner">尚未设置主项目，前往项目列表创建或选择项目以解锁完整 AI 写作能力</string>
+    <string name="chat_no_project_title">QuickWrite AI 助手</string>
+    <string name="chat_no_project_hint">我将帮助您了解 QuickWrite 功能，并引导您创建项目或开始写作</string>
     <string name="chat_empty_state">开始和 AI 助手对话</string>
     <string name="chat_empty_state_hint">询问任何关于小说的内容</string>
     <string name="chat_model_info">模型：%1$s</string>
     <string name="chat_sidebar_toggle">切换侧栏</string>
+    <string name="common_expand">展开</string>
+    <string name="common_collapse">收起</string>
     <string name="chat_tool_call_details">工具调用详情</string>
     <string name="chat_no_config_title">未配置 AI 模型</string>
     <string name="chat_no_config_message">使用对话功能前需要先配置 AI 模型。请前往设置页面配置您的 API 密钥和模型。</string>

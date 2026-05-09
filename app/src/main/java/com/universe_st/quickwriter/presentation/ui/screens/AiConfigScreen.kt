@@ -351,18 +351,93 @@ fun AiConfigEditScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
-            SettingsSection(title = stringResource(R.string.ai_config_section_params)) {
-                SettingsSliderItem(
-                    title = stringResource(R.string.ai_config_param_temperature),
-                    subtitle = stringResource(R.string.ai_config_param_temperature_desc),
-                    value = formData.temperature,
-                    onValueChange = { viewModel.updateAiTemperature(it) },
-                    valueRange = 0.1f..2.0f,
-                    steps = 18,
-                    valueText = String.format("%.1f", formData.temperature)
-                )
+            if (formData.provider == AiModelConfigRepository.PROVIDER_DEEPSEEK) {
+                val isThinking = formData.thinkingEnabled
 
-                SettingsDivider()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.ai_config_param_thinking),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.ai_config_param_thinking_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isThinking,
+                        onCheckedChange = { viewModel.updateAiThinkingEnabled(it) }
+                    )
+                }
+
+                if (isThinking) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    var reasoningMenuExpanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = reasoningMenuExpanded,
+                        onExpandedChange = { reasoningMenuExpanded = !reasoningMenuExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = stringResource(
+                                when (formData.reasoningEffort) {
+                                    "max" -> R.string.ai_config_reasoning_effort_max
+                                    else -> R.string.ai_config_reasoning_effort_high
+                                }
+                            ),
+                            onValueChange = { },
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.ai_config_param_reasoning_effort)) },
+                            supportingText = { Text(stringResource(R.string.ai_config_param_reasoning_effort_desc)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = reasoningMenuExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = reasoningMenuExpanded,
+                            onDismissRequest = { reasoningMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ai_config_reasoning_effort_high)) },
+                                onClick = {
+                                    viewModel.updateAiReasoningEffort("high")
+                                    reasoningMenuExpanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.ai_config_reasoning_effort_max)) },
+                                onClick = {
+                                    viewModel.updateAiReasoningEffort("max")
+                                    reasoningMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.ai_config_section_params)) {
+                if (!(formData.provider == AiModelConfigRepository.PROVIDER_DEEPSEEK && formData.thinkingEnabled)) {
+                    SettingsSliderItem(
+                        title = stringResource(R.string.ai_config_param_temperature),
+                        subtitle = stringResource(R.string.ai_config_param_temperature_desc),
+                        value = formData.temperature,
+                        onValueChange = { viewModel.updateAiTemperature(it) },
+                        valueRange = 0.1f..2.0f,
+                        steps = 18,
+                        valueText = String.format("%.1f", formData.temperature)
+                    )
+
+                    SettingsDivider()
+                }
 
                 SettingsIntEditItem(
                     title = stringResource(R.string.ai_config_param_max_tokens),
@@ -371,17 +446,19 @@ fun AiConfigEditScreen(
                     onValueChange = { viewModel.updateAiMaxTokens(it) }
                 )
 
-                SettingsDivider()
+                if (!(formData.provider == AiModelConfigRepository.PROVIDER_DEEPSEEK && formData.thinkingEnabled)) {
+                    SettingsDivider()
 
-                SettingsSliderItem(
-                    title = stringResource(R.string.ai_config_param_top_p),
-                    subtitle = stringResource(R.string.ai_config_param_top_p_desc),
-                    value = formData.topP,
-                    onValueChange = { viewModel.updateAiTopP(it) },
-                    valueRange = 0f..1f,
-                    steps = 9,
-                    valueText = String.format("%.2f", formData.topP)
-                )
+                    SettingsSliderItem(
+                        title = stringResource(R.string.ai_config_param_top_p),
+                        subtitle = stringResource(R.string.ai_config_param_top_p_desc),
+                        value = formData.topP,
+                        onValueChange = { viewModel.updateAiTopP(it) },
+                        valueRange = 0f..1f,
+                        steps = 9,
+                        valueText = String.format("%.2f", formData.topP)
+                    )
+                }
 
                 SettingsDivider()
 
@@ -395,29 +472,31 @@ fun AiConfigEditScreen(
                     valueText = formData.topK.toString()
                 )
 
-                SettingsDivider()
+                if (!(formData.provider == AiModelConfigRepository.PROVIDER_DEEPSEEK && formData.thinkingEnabled)) {
+                    SettingsDivider()
 
-                SettingsSliderItem(
-                    title = stringResource(R.string.ai_config_param_frequency_penalty),
-                    subtitle = stringResource(R.string.ai_config_param_frequency_penalty_desc),
-                    value = formData.frequencyPenalty,
-                    onValueChange = { viewModel.updateAiFrequencyPenalty(it) },
-                    valueRange = -2f..2f,
-                    steps = 39,
-                    valueText = String.format("%.1f", formData.frequencyPenalty)
-                )
+                    SettingsSliderItem(
+                        title = stringResource(R.string.ai_config_param_frequency_penalty),
+                        subtitle = stringResource(R.string.ai_config_param_frequency_penalty_desc),
+                        value = formData.frequencyPenalty,
+                        onValueChange = { viewModel.updateAiFrequencyPenalty(it) },
+                        valueRange = -2f..2f,
+                        steps = 39,
+                        valueText = String.format("%.1f", formData.frequencyPenalty)
+                    )
 
-                SettingsDivider()
+                    SettingsDivider()
 
-                SettingsSliderItem(
-                    title = stringResource(R.string.ai_config_param_presence_penalty),
-                    subtitle = stringResource(R.string.ai_config_param_presence_penalty_desc),
-                    value = formData.presencePenalty,
-                    onValueChange = { viewModel.updateAiPresencePenalty(it) },
-                    valueRange = -2f..2f,
-                    steps = 39,
-                    valueText = String.format("%.1f", formData.presencePenalty)
-                )
+                    SettingsSliderItem(
+                        title = stringResource(R.string.ai_config_param_presence_penalty),
+                        subtitle = stringResource(R.string.ai_config_param_presence_penalty_desc),
+                        value = formData.presencePenalty,
+                        onValueChange = { viewModel.updateAiPresencePenalty(it) },
+                        valueRange = -2f..2f,
+                        steps = 39,
+                        valueText = String.format("%.1f", formData.presencePenalty)
+                    )
+                }
             }
 
             Row(
@@ -500,6 +579,8 @@ fun AiConfigEditScreen(
                         topK = formData.topK,
                         frequencyPenalty = formData.frequencyPenalty,
                         presencePenalty = formData.presencePenalty,
+                        thinkingEnabled = formData.thinkingEnabled,
+                        reasoningEffort = formData.reasoningEffort,
                         isDefault = formData.isDefault
                     )
                     coroutineScope.launch {

@@ -119,6 +119,10 @@ class AIChatService : Service(), IChatService {
         )
     }
 
+    override fun createSessionWithoutProject(modelConfigId: Int?): String {
+        return sessionManager.createSessionWithoutProject(modelConfigId)
+    }
+
     override fun deleteSession(sessionId: String) {
         sessionManager.deleteSession(sessionId)
     }

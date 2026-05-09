@@ -114,12 +114,15 @@ class SettingsUseCase(
         topK: Int = 50,
         frequencyPenalty: Float = 0.0f,
         presencePenalty: Float = 0.0f,
+        thinkingEnabled: Boolean = true,
+        reasoningEffort: String = "high",
         isDefault: Boolean = false
     ): Result<AiModelConfigEntity> {
         return aiModelConfigRepository.createConfig(
             configName, provider, apiKey, baseUrl,
             modelName, temperature, maxTokens, topP, topK,
-            frequencyPenalty, presencePenalty, isDefault
+            frequencyPenalty, presencePenalty,
+            thinkingEnabled, reasoningEffort, isDefault
         )
     }
 
@@ -136,12 +139,15 @@ class SettingsUseCase(
         topK: Int,
         frequencyPenalty: Float,
         presencePenalty: Float,
+        thinkingEnabled: Boolean,
+        reasoningEffort: String,
         isDefault: Boolean
     ): Result<Unit> {
         return aiModelConfigRepository.updateConfig(
             id, configName, provider, apiKey, baseUrl,
             modelName, temperature, maxTokens, topP, topK,
-            frequencyPenalty, presencePenalty, isDefault
+            frequencyPenalty, presencePenalty,
+            thinkingEnabled, reasoningEffort, isDefault
         )
     }
 

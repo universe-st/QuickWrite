@@ -30,6 +30,10 @@ data class AiModelConfigEntity(
     val frequencyPenalty: Float = 0.0f,
     @ColumnInfo(name = "presence_penalty")
     val presencePenalty: Float = 0.0f,
+    @ColumnInfo(name = "thinking_enabled")
+    val thinkingEnabled: Boolean = true,
+    @ColumnInfo(name = "reasoning_effort")
+    val reasoningEffort: String = "high",
     @ColumnInfo(name = "is_default")
     val isDefault: Boolean = false
 )

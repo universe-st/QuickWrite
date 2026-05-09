@@ -93,4 +93,52 @@ object Migrations {
             )
         }
     }
+
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("PRAGMA foreign_keys = OFF")
+
+            db.execSQL(
+                """
+                CREATE TABLE ai_sessions_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    project_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    model_config_id INTEGER NOT NULL,
+                    system_prompt TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+
+            db.execSQL(
+                "INSERT INTO ai_sessions_new SELECT id, session_id, project_id, title, model_config_id, system_prompt, created_at, updated_at FROM ai_sessions"
+            )
+
+            db.execSQL("DROP TABLE ai_sessions")
+            db.execSQL("ALTER TABLE ai_sessions_new RENAME TO ai_sessions")
+
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_id ON ai_sessions (session_id)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_sessions_project ON ai_sessions (project_id, updated_at)"
+            )
+
+            db.execSQL("PRAGMA foreign_keys = ON")
+        }
+    }
+
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE ai_model_configs ADD COLUMN thinking_enabled INTEGER NOT NULL DEFAULT 1"
+            )
+            db.execSQL(
+                "ALTER TABLE ai_model_configs ADD COLUMN reasoning_effort TEXT NOT NULL DEFAULT 'high'"
+            )
+        }
+    }
 }

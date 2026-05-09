@@ -22,7 +22,7 @@ class AiModelConfigRepository(
         const val MODEL_GPT_35_TURBO = "gpt-3.5-turbo"
         const val MODEL_GPT_4 = "gpt-4"
         const val MODEL_CLAUDE_3 = "claude-3-opus"
-        const val MODEL_DEEPSEEK_CHAT = "deepseek-chat"
+        const val MODEL_DEEPSEEK_CHAT = "deepseek-v4-flash"
         const val MODEL_GLM4_FLASH = "glm-4-flash"
         const val MODEL_MOONSHOT_V1_8K = "moonshot-v1-8k"
         const val MODEL_DEEPSEEK_V3 = "deepseek-ai/DeepSeek-V3"
@@ -56,6 +56,8 @@ class AiModelConfigRepository(
         topK: Int = 50,
         frequencyPenalty: Float = 0.0f,
         presencePenalty: Float = 0.0f,
+        thinkingEnabled: Boolean = true,
+        reasoningEffort: String = "high",
         isDefault: Boolean = false
     ): Result<AiModelConfigEntity> {
         return try {
@@ -76,6 +78,8 @@ class AiModelConfigRepository(
                 topK = topK,
                 frequencyPenalty = frequencyPenalty,
                 presencePenalty = presencePenalty,
+                thinkingEnabled = thinkingEnabled,
+                reasoningEffort = reasoningEffort,
                 isDefault = isDefault
             )
 
@@ -104,6 +108,8 @@ class AiModelConfigRepository(
         topK: Int,
         frequencyPenalty: Float,
         presencePenalty: Float,
+        thinkingEnabled: Boolean,
+        reasoningEffort: String,
         isDefault: Boolean
     ): Result<Unit> {
         return try {
@@ -125,6 +131,8 @@ class AiModelConfigRepository(
                 topK = topK,
                 frequencyPenalty = frequencyPenalty,
                 presencePenalty = presencePenalty,
+                thinkingEnabled = thinkingEnabled,
+                reasoningEffort = reasoningEffort,
                 isDefault = isDefault
             )
 

@@ -16,6 +16,7 @@ import com.universe_st.quickwriter.data.local.entity.AiSessionEntity
 import com.universe_st.quickwriter.data.remote.AIChatService
 import com.universe_st.quickwriter.data.remote.IChatService
 import com.universe_st.quickwriter.data.remote.SessionDetail
+import com.universe_st.quickwriter.data.remote.SessionManager
 import com.universe_st.quickwriter.data.repository.AiConversationRepository
 import com.universe_st.quickwriter.data.repository.AiModelConfigRepository
 import com.universe_st.quickwriter.data.repository.ProjectRepository
@@ -73,6 +74,9 @@ class AiChatViewModel(
     var showSidebar by mutableStateOf(false)
     var hasModelConfig by mutableStateOf(false)
         private set
+    var sessionsLoaded by mutableStateOf(false)
+        private set
+    var isNoProjectMode by mutableStateOf(false)
 
     private var sessionListJob: Job? = null
     private var messagesJob: Job? = null
@@ -104,6 +108,10 @@ class AiChatViewModel(
         }
     }
 
+    fun loadSessionsNoProject() {
+        loadSessions(SessionManager.NO_PROJECT_ID)
+    }
+
     private fun startObservingSessions(projectId: String) {
         sessionListJob?.cancel()
         sessionListJob = viewModelScope.launch {
@@ -112,6 +120,7 @@ class AiChatViewModel(
                     createSessionSummary(entity)
                 }.sortedByDescending { it.updatedAt }
                 _sessions.value = summaries
+                sessionsLoaded = true
 
                 if (currentSessionId == null && summaries.isNotEmpty()) {
                     selectSession(summaries.first().sessionId)
@@ -184,6 +193,19 @@ class AiChatViewModel(
                 }
             }
         } catch (e: Exception) { Timber.e(e, "AiChatViewModel.deleteSession failed") }
+    }
+
+    fun createSessionNoProject() {
+        val service = chatService ?: return
+        viewModelScope.launch {
+            val config = aiModelConfigRepository.getDefaultConfig()
+                ?: aiModelConfigRepository.getAllConfigs().first().firstOrNull()
+                ?: return@launch
+            try {
+                val sessionId = service.createSessionWithoutProject(config.id)
+                selectSession(sessionId)
+            } catch (e: Exception) { Timber.e(e, "AiChatViewModel.createSessionNoProject failed") }
+        }
     }
 
     fun selectSession(sessionId: String) {

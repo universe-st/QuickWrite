@@ -78,13 +78,18 @@ fun ChatTab(
 
     val isGenerating = sessionState is SessionState.Generating
     val partialContent = (sessionState as? SessionState.Generating)?.partialContent
+    val streamingReasoning = (sessionState as? SessionState.Generating)?.reasoningContent
 
     if (!viewModel.hasModelConfig) {
         NoModelConfigState(onNavigateToAiConfig = onNavigateToAiConfig)
         return
     }
 
-    if (sessions.isEmpty() && viewModel.isServiceBound) {
+    if (!viewModel.sessionsLoaded) {
+        return
+    }
+
+    if (sessions.isEmpty()) {
         ChatEmptyState(
             onCreateSession = {
                 if (isNoProjectMode) viewModel.createSessionNoProject()
@@ -136,6 +141,7 @@ fun ChatTab(
                     inputText = viewModel.inputText,
                     isGenerating = isGenerating,
                     partialContent = partialContent,
+                    streamingReasoning = streamingReasoning,
                     onInputChange = { viewModel.inputText = it },
                     onSend = { viewModel.sendMessage() },
                     onStop = { viewModel.stopGeneration() },
@@ -251,7 +257,7 @@ private fun preprocessMessages(
 
         if (msg.role == MessageRole.ASSISTANT && msg.toolCalls != null && msg.toolCalls.isNotEmpty()) {
             val strippedMsg = msg.copy(toolCalls = null, id = msg.id)
-            if (strippedMsg.content.isNotBlank()) {
+            if (strippedMsg.content.isNotBlank() || !strippedMsg.reasoningContent.isNullOrEmpty()) {
                 items.add(DisplayItem.Message(strippedMsg))
             }
             for (tc in msg.toolCalls) {
@@ -558,6 +564,7 @@ private fun ChatContentArea(
     inputText: String,
     isGenerating: Boolean,
     partialContent: String?,
+    streamingReasoning: String?,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -666,11 +673,11 @@ private fun ChatContentArea(
 
                     if (streamingContent != null) {
                         item(key = "generating") {
-                            GeneratingBubble(content = streamingContent)
+                            GeneratingBubble(content = streamingContent, reasoningContent = streamingReasoning)
                         }
                     } else if (isGenerating && displayItems.isEmpty()) {
                         item(key = "loading") {
-                            GeneratingBubble(content = "")
+                            GeneratingBubble(content = "", reasoningContent = streamingReasoning)
                         }
                     }
 

@@ -40,7 +40,7 @@ data class ToolCallFunction(
 
 sealed class SessionState {
     object Idle : SessionState()
-    data class Generating(val partialContent: String) : SessionState()
+    data class Generating(val partialContent: String, val reasoningContent: String = "") : SessionState()
     data class Error(val message: UiText) : SessionState()
 }
 

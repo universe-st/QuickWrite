@@ -38,16 +38,18 @@ data class AppSettingsData(
 data class AiConfigFormData(
     val id: Int = 0,
     val configName: String = "",
-    val provider: String = "openai",
+    val provider: String = "deepseek",
     val apiKey: String = "",
     val baseUrl: String = "",
-    val modelName: String = "gpt-3.5-turbo",
+    val modelName: String = "deepseek-v4-flash",
     val temperature: Float = 0.7f,
     val maxTokens: Int = 50000,
     val topP: Float = 1.0f,
     val topK: Int = 50,
     val frequencyPenalty: Float = 0.0f,
     val presencePenalty: Float = 0.0f,
+    val thinkingEnabled: Boolean = true,
+    val reasoningEffort: String = "high",
     val isDefault: Boolean = false,
     val configNameError: UiText? = null,
     val apiKeyError: UiText? = null
@@ -305,6 +307,8 @@ class SettingsViewModel(
             topK = config.topK,
             frequencyPenalty = config.frequencyPenalty,
             presencePenalty = config.presencePenalty,
+            thinkingEnabled = config.thinkingEnabled,
+            reasoningEffort = config.reasoningEffort,
             isDefault = config.isDefault
         )
     }
@@ -372,6 +376,14 @@ class SettingsViewModel(
         _currentAiConfig.value = _currentAiConfig.value.copy(presencePenalty = penalty)
     }
 
+    fun updateAiThinkingEnabled(enabled: Boolean) {
+        _currentAiConfig.value = _currentAiConfig.value.copy(thinkingEnabled = enabled)
+    }
+
+    fun updateAiReasoningEffort(effort: String) {
+        _currentAiConfig.value = _currentAiConfig.value.copy(reasoningEffort = effort)
+    }
+
     fun updateAiIsDefault(isDefault: Boolean) {
         _currentAiConfig.value = _currentAiConfig.value.copy(isDefault = isDefault)
     }
@@ -405,6 +417,8 @@ class SettingsViewModel(
                         topK = formData.topK,
                         frequencyPenalty = formData.frequencyPenalty,
                         presencePenalty = formData.presencePenalty,
+                        thinkingEnabled = formData.thinkingEnabled,
+                        reasoningEffort = formData.reasoningEffort,
                         isDefault = formData.isDefault
                     )
                     _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_ai_config_updated))
@@ -421,6 +435,8 @@ class SettingsViewModel(
                         topK = formData.topK,
                         frequencyPenalty = formData.frequencyPenalty,
                         presencePenalty = formData.presencePenalty,
+                        thinkingEnabled = formData.thinkingEnabled,
+                        reasoningEffort = formData.reasoningEffort,
                         isDefault = formData.isDefault
                     )
                     _uiState.value = SettingsUiState.Success(UiText.StringResource(R.string.success_ai_config_created))

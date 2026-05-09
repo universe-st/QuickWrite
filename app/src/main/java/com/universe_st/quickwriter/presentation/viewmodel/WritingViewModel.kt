@@ -135,7 +135,7 @@ class WritingViewModel(
                 delay(autoSaveInterval * 60 * 1000L)
                 val state = _uiState.value as? WritingUiState.Success ?: continue
                 if (state.isDirty) {
-                    saveCurrentChapterInternal(state)
+                    autoSaveIfNeeded(state)
                 }
             }
         }
@@ -152,7 +152,7 @@ class WritingViewModel(
             delay(1500)
             val state = _uiState.value as? WritingUiState.Success ?: return@launch
             if (state.isDirty) {
-                saveCurrentChapterInternal(state)
+                autoSaveIfNeeded(state)
             }
         }
     }
@@ -345,8 +345,36 @@ class WritingViewModel(
         return result.isSuccess
     }
 
+    private fun autoSaveIfNeeded(state: WritingUiState.Success) {
+        if (!state.isDirty) return
+        if (state.fileBrowserMode == FileBrowserMode.CHAPTERS) {
+            saveCurrentChapterInternal(state)
+        } else {
+            saveCurrentFileInternal(state)
+        }
+    }
+
+    private fun saveCurrentFileInternal(state: WritingUiState.Success) {
+        val filePath = state.currentFilePath ?: return
+        val savedEditorContent = state.editorContent
+        viewModelScope.launch {
+            _uiState.value = (_uiState.value as? WritingUiState.Success)?.copy(isSaving = true) ?: return@launch
+            val result = projectManagementUseCase.writeFileContent(filePath, savedEditorContent)
+            val current = _uiState.value as? WritingUiState.Success ?: return@launch
+            if (result.isSuccess) {
+                val stillDirty = current.editorContent != savedEditorContent
+                _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
+                clearSaveMessageAfterDelay()
+            } else {
+                _uiState.value = current.copy(isSaving = false, saveMessage = "保存失败")
+                clearSaveMessageAfterDelay()
+            }
+        }
+    }
+
     private fun saveCurrentChapterInternal(state: WritingUiState.Success) {
         if (state.currentChapterIndex < 0 || !state.isDirty) return
+        if (state.fileBrowserMode != FileBrowserMode.CHAPTERS) return
         val savedEditorContent = state.editorContent
 
         viewModelScope.launch {
@@ -452,20 +480,7 @@ class WritingViewModel(
 
     fun saveCurrentFile() {
         val state = _uiState.value as? WritingUiState.Success ?: return
-        val filePath = state.currentFilePath ?: return
-        viewModelScope.launch {
-            _uiState.value = state.copy(isSaving = true)
-            val result = projectManagementUseCase.writeFileContent(filePath, state.editorContent)
-            val current = _uiState.value as? WritingUiState.Success ?: return@launch
-            if (result.isSuccess) {
-                val stillDirty = current.editorContent != state.editorContent
-                _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
-                clearSaveMessageAfterDelay()
-            } else {
-                _uiState.value = current.copy(isSaving = false, saveMessage = "保存失败")
-                clearSaveMessageAfterDelay()
-            }
-        }
+        saveCurrentFileInternal(state)
     }
 
     fun deleteFileOrFolder(item: FileTreeItem) {
