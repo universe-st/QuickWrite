@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -48,15 +49,23 @@ import com.universe_st.quickwriter.domain.model.StatItem
 import com.universe_st.quickwriter.domain.model.ToolResultParsed
 import com.universe_st.quickwriter.util.ToolResultParser
 import com.universe_st.quickwriter.util.UiText
+import com.universe_st.quickwriter.data.remote.SessionManager
 
 @Composable
 fun ChatTab(
     viewModel: AiChatViewModel,
     projectId: String,
-    onNavigateToAiConfig: () -> Unit = {}
+    onNavigateToAiConfig: () -> Unit = {},
+    isNoProjectMode: Boolean = false,
+    onNavigateToProjectList: () -> Unit = {}
 ) {
-    LaunchedEffect(projectId) {
-        viewModel.loadSessions(projectId)
+    LaunchedEffect(projectId, isNoProjectMode) {
+        if (isNoProjectMode) {
+            viewModel.isNoProjectMode = true
+            viewModel.loadSessionsNoProject()
+        } else {
+            viewModel.loadSessions(projectId)
+        }
     }
 
     val sessions by viewModel.sessions.collectAsState()
@@ -77,12 +86,22 @@ fun ChatTab(
 
     if (sessions.isEmpty() && viewModel.isServiceBound) {
         ChatEmptyState(
-            onCreateSession = { viewModel.createSession(projectId) }
+            onCreateSession = {
+                if (isNoProjectMode) viewModel.createSessionNoProject()
+                else viewModel.createSession(projectId)
+            },
+            isNoProjectMode = isNoProjectMode,
+            onNavigateToProjectList = onNavigateToProjectList
         )
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (isNoProjectMode) {
+            NoProjectGuidanceBanner(onNavigateToProjectList)
+        }
+
+        Box(modifier = Modifier.weight(1f)) {
         Row(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
                 visible = showSidebar,
@@ -94,7 +113,10 @@ fun ChatTab(
                     currentSessionId = currentSessionId,
                     onSelect = { viewModel.selectSession(it) },
                     onDelete = { deleteConfirmTarget = it },
-                    onCreate = { viewModel.createSession(projectId) },
+                    onCreate = {
+                        if (isNoProjectMode) viewModel.createSessionNoProject()
+                        else viewModel.createSession(projectId)
+                    },
                     onClose = { viewModel.showSidebar = false },
                     modifier = Modifier
                         .width(240.dp)
@@ -136,7 +158,7 @@ fun ChatTab(
                 }
             }
         }
-
+        }
     }
 
     if (deleteConfirmTarget != null) {
@@ -253,6 +275,35 @@ private fun preprocessMessages(
 }
 
 @Composable
+private fun NoProjectGuidanceBanner(onNavigateToProjectList: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.chat_no_project_banner),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onNavigateToProjectList) {
+                Text(
+                    text = stringResource(R.string.writing_go_to_projects),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun NoModelConfigState(
     onNavigateToAiConfig: () -> Unit
 ) {
@@ -292,13 +343,35 @@ private fun NoModelConfigState(
 
 @Composable
 private fun ChatEmptyState(
-    onCreateSession: () -> Unit
+    onCreateSession: () -> Unit,
+    isNoProjectMode: Boolean = false,
+    onNavigateToProjectList: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (isNoProjectMode) {
+                Text(
+                    text = stringResource(R.string.chat_no_project_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.chat_no_project_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(onClick = onNavigateToProjectList) {
+                    Text(stringResource(R.string.writing_go_to_projects))
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 40.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+            }
             Text(
                 text = stringResource(R.string.chat_empty_state),
                 style = MaterialTheme.typography.headlineSmall,
@@ -507,11 +580,36 @@ private fun ChatContentArea(
         if (pc.startsWith("Executing tool:")) null else pc
     } else null
 
+    var userHasScrolledUp by remember { mutableStateOf(false) }
+
     val showScrollToBottomFAB by remember {
         derivedStateOf { listState.firstVisibleItemIndex > 0 }
     }
 
+    // Detect when user manually scrolls away from bottom
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex }
+            .collect { firstVisible ->
+                userHasScrolledUp = firstVisible > 0
+            }
+    }
+
+    // Auto-scroll when new base items appear (new messages from user or AI)
+    LaunchedEffect(baseItems.size) {
+        if (!userHasScrolledUp && baseItems.isNotEmpty()) {
+            listState.animateScrollToItem(0)
+        }
+    }
+
+    // Auto-scroll during streaming content growth (char by char)
+    LaunchedEffect(partialContent) {
+        if (!userHasScrolledUp && isGenerating) {
+            listState.scrollToItem(0)
+        }
+    }
+
     LaunchedEffect(currentSessionId) {
+        userHasScrolledUp = false
         if (displayItems.isNotEmpty() || streamingContent != null) {
             listState.scrollToItem(0)
         }
@@ -570,7 +668,7 @@ private fun ChatContentArea(
                         item(key = "generating") {
                             GeneratingBubble(content = streamingContent)
                         }
-                    } else if (isGenerating && streamingContent == null && displayItems.isEmpty()) {
+                    } else if (isGenerating && displayItems.isEmpty()) {
                         item(key = "loading") {
                             GeneratingBubble(content = "")
                         }
@@ -634,6 +732,7 @@ private fun ChatContentArea(
                             )
                             .clickable {
                                 scope.launch {
+                                    userHasScrolledUp = false
                                     listState.animateScrollToItem(0)
                                 }
                             },
