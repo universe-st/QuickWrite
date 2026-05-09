@@ -24,6 +24,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -167,34 +168,41 @@ fun WritingScreen(
                         }
                     }
                     is WritingUiState.Success -> {
-                        when (state.selectedTab) {
-                    0 -> EditorContent(
-                        state = state,
-                        showChapterList = showChapterList,
-                        onToggleChapterList = { showChapterList = !showChapterList },
-                        onSelectChapter = { viewModel.selectChapter(it) },
-                        onMoveUp = { viewModel.moveChapter(it, it - 1) },
-                        onMoveDown = { viewModel.moveChapter(it, it + 1) },
-                        onCreateChapter = { showNewChapterDialog = true },
-                        onContentChange = { viewModel.updateEditorContent(it) },
-                        onBrowseModeChange = { viewModel.switchBrowseMode(it) },
-                        onSelectNonChapterFile = { viewModel.selectNonChapterFile(it) },
-                        onToggleFolder = { viewModel.toggleFolderExpanded(it) },
-                        onFileDeleteRequest = { name, path, isChapter, chapterIndex ->
-                            deleteConfirmData = DeleteConfirmData(name, path, isChapter, chapterIndex)
-                        },
-                        onFileRenameRequest = { oldPath, oldName, isChapter, chapterIndex ->
-                            renameDialogData = RenameDialogData(oldPath, oldName, isChapter, chapterIndex)
-                        },
-                        onCreateNewFile = { showNewFileDialog = true },
-                        onCreateNewFolder = { showNewFolderDialog = true },
-                        onEditChapterMeta = { editMetaChapterIndex = it }
-                    )
-                            1 -> ChatTab(
-                        viewModel = aiChatViewModel,
-                        projectId = state.project.id,
-                        onNavigateToAiConfig = onNavigateToAiConfig
-                    )
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            EditorContent(
+                                state = state,
+                                showChapterList = showChapterList,
+                                onToggleChapterList = { showChapterList = !showChapterList },
+                                onSelectChapter = { viewModel.selectChapter(it) },
+                                onMoveUp = { viewModel.moveChapter(it, it - 1) },
+                                onMoveDown = { viewModel.moveChapter(it, it + 1) },
+                                onCreateChapter = { showNewChapterDialog = true },
+                                onContentChange = { viewModel.updateEditorContent(it) },
+                                onBrowseModeChange = { viewModel.switchBrowseMode(it) },
+                                onSelectNonChapterFile = { viewModel.selectNonChapterFile(it) },
+                                onToggleFolder = { viewModel.toggleFolderExpanded(it) },
+                                onFileDeleteRequest = { name, path, isChapter, chapterIndex ->
+                                    deleteConfirmData = DeleteConfirmData(name, path, isChapter, chapterIndex)
+                                },
+                                onFileRenameRequest = { oldPath, oldName, isChapter, chapterIndex ->
+                                    renameDialogData = RenameDialogData(oldPath, oldName, isChapter, chapterIndex)
+                                },
+                                onCreateNewFile = { showNewFileDialog = true },
+                                onCreateNewFolder = { showNewFolderDialog = true },
+                                onEditChapterMeta = { editMetaChapterIndex = it },
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .alpha(if (state.selectedTab == 0) 1f else 0f),
+                                editorEnabled = state.selectedTab == 0
+                            )
+
+                            if (state.selectedTab == 1) {
+                                ChatTab(
+                                    viewModel = aiChatViewModel,
+                                    projectId = state.project.id,
+                                    onNavigateToAiConfig = onNavigateToAiConfig
+                                )
+                            }
                         }
                     }
                     is WritingUiState.Error -> {
@@ -474,7 +482,9 @@ private fun EditorContent(
     onFileRenameRequest: (String, String, Boolean, Int) -> Unit,
     onCreateNewFile: () -> Unit,
     onCreateNewFolder: () -> Unit,
-    onEditChapterMeta: (Int) -> Unit
+    onEditChapterMeta: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    editorEnabled: Boolean = true
 ) {
     val isDark = MaterialTheme.colorScheme.background == Color(0xFF121212)
     val editorConfig = remember(isDark) { AppEditorConfig(isDark = isDark) }
@@ -502,7 +512,7 @@ private fun EditorContent(
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
                 visible = showChapterList,
@@ -576,7 +586,7 @@ private fun EditorContent(
                                 .padding(4.dp),
                             editorConfig = editorConfig,
                             highlightingMode = HighlightingMode.MARKDOWN,
-                            enabled = true
+                            enabled = editorEnabled
                         )
                     } else {
                         Box(
