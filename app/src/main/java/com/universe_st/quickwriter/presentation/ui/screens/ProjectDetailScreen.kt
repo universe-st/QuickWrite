@@ -560,7 +560,7 @@ fun ProjectDetailContent(
                 modifier = Modifier.weight(1f),
                 colors = if (isCurrentProject) {
                     ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
+                        containerColor = MaterialTheme.colorScheme.error
                     )
                 } else {
                     ButtonDefaults.buttonColors(
@@ -573,7 +573,7 @@ fun ProjectDetailContent(
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(if (isCurrentProject) "主项目" else "设为主项目")
+                Text(if (isCurrentProject) "取消主项目" else "设为主项目")
             }
         }
 
