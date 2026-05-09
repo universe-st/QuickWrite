@@ -69,7 +69,6 @@ class FileManager(private val context: Context) {
                 }
             }
 
-            createIntroFile(projectDir)
             createWritingRulesFile(projectDir)
 
             Result.success(Unit)
@@ -78,15 +77,7 @@ class FileManager(private val context: Context) {
         }
     }
 
-    private fun createIntroFile(projectDir: File) {
-        val introFile = File(projectDir, "简介.md")
-        if (!introFile.exists()) {
-            introFile.createNewFile()
-        }
-    }
-
-
-    fun createInfoJson(projectDir: File, title: String, author: String, genre: String, createdTime: Long) {
+    fun createInfoJson(projectDir: File, title: String, author: String, genre: String, description: String, createdTime: Long) {
         val infoFile = File(projectDir, "info.json")
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
         dateFormat.timeZone = TimeZone.getTimeZone("UTC")
@@ -94,6 +85,7 @@ class FileManager(private val context: Context) {
             put("title", title)
             put("author", author)
             put("genre", genre)
+            put("description", description)
             put("createdTime", dateFormat.format(Date(createdTime)))
             put("version", "1.0")
         }
@@ -343,8 +335,6 @@ class FileManager(private val context: Context) {
         )
         dirs.forEach { it.mkdirs() }
 
-        File(projectDir, "简介.md").createNewFile()
-
         val rulesFile = File(projectDir, "配置${File.separator}写作规范.md")
         rulesFile.parentFile?.mkdirs()
         rulesFile.createNewFile()
@@ -354,6 +344,7 @@ class FileManager(private val context: Context) {
         val title: String,
         val author: String,
         val genre: String,
+        val description: String,
         val createdTime: Long
     )
 
@@ -365,11 +356,12 @@ class FileManager(private val context: Context) {
             val title = json.getString("title")
             val author = json.getString("author")
             val genre = json.getString("genre")
+            val description = json.optString("description", "")
             val createdTimeStr = json.getString("createdTime")
             val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
             dateFormat.timeZone = TimeZone.getTimeZone("UTC")
             val createdTime = dateFormat.parse(createdTimeStr)?.time ?: System.currentTimeMillis()
-            InfoJsonData(title, author, genre, createdTime)
+            InfoJsonData(title, author, genre, description, createdTime)
         } catch (e: Exception) {
             Timber.tag("ImportProject").w(e, "Failed to parse info.json")
             null
