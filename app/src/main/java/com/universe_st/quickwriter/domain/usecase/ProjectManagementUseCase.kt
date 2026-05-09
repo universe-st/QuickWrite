@@ -110,7 +110,21 @@ class ProjectManagementUseCase(
             description = description?.trim(),
             coverImagePath = coverImagePath,
             currentProject = currentProject
-        )
+        ).also { result ->
+            if (result.isSuccess && currentProject.storagePath.isNotBlank()) {
+                val updated = result.getOrNull()
+                if (updated != null) {
+                    fileManager.createInfoJson(
+                        File(currentProject.storagePath),
+                        updated.title,
+                        updated.author,
+                        updated.genre,
+                        updated.description ?: "",
+                        updated.createdTime
+                    )
+                }
+            }
+        }
     }
 
     suspend fun deleteProject(id: String): Result<Unit> {
@@ -299,7 +313,7 @@ class ProjectManagementUseCase(
                 title = title,
                 author = infoData.author.ifBlank { "" },
                 genre = if (FileManager.NOVEL_GENRES.contains(infoData.genre)) infoData.genre else "其他",
-                description = null,
+                description = infoData.description.ifBlank { null },
                 coverImagePath = coverImagePath,
                 storagePath = storagePath,
                 createdTime = infoData.createdTime,
