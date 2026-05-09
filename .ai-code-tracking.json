@@ -121,12 +121,23 @@
       "aiTool": "AI Assistant",
       "detectionMethod": "REALTIME_SPEED_ANALYSIS",
       "lineCount": 128
+    },
+    {
+      "filePath": "C:/codes/QuickWrite/app/src/main/java/com/universe_st/quickwriter/presentation/viewmodel/WritingViewModel.kt",
+      "timestamp": 1778335409455,
+      "startOffset": 14597,
+      "endOffset": 14742,
+      "codeContent": "val successState \u003d (_uiState.value as? WritingUiState.Success)\n                    ?: return@launch\n                _uiState.value \u003d successState",
+      "aiProbability": 90,
+      "aiTool": "AI Assistant",
+      "detectionMethod": "REALTIME_SPEED_ANALYSIS",
+      "lineCount": 3
     }
   ],
   "toolStats": {
     "AI Assistant": {
-      "usageCount": 11,
-      "totalLines": 250
+      "usageCount": 12,
+      "totalLines": 253
     }
   }
 }

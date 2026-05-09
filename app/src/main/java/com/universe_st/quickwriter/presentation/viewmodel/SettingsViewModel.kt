@@ -40,7 +40,7 @@ data class AiConfigFormData(
     val configName: String = "",
     val provider: String = "deepseek",
     val apiKey: String = "",
-    val baseUrl: String = "",
+    val baseUrl: String = "https://api.deepseek.com",
     val modelName: String = "deepseek-v4-flash",
     val temperature: Float = 0.7f,
     val maxTokens: Int = 50000,

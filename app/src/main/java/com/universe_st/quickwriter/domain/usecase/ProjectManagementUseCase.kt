@@ -57,6 +57,9 @@ class ProjectManagementUseCase(
         val projectId = AppUtils.generateProjectId()
         val storagePath = fileManager.getProjectDirectory(projectId).absolutePath
 
+        // 计算初始项目字数（项目刚创建时通常为0）
+        val initialWordCount = 0
+            
         val result = projectRepository.createProject(
             title = title.trim(),
             author = author.trim(),
@@ -75,6 +78,9 @@ class ProjectManagementUseCase(
             val project = result.getOrThrow()
             val projectDir = File(project.storagePath)
             fileManager.createInfoJson(projectDir, project.title, project.author, project.genre, project.description ?: "", project.createdTime)
+            
+            // 更新字数（初始为0，后续通过文件操作更新）
+            projectRepository.updateWordCount(project.id, initialWordCount)
         }
 
         return result
@@ -161,7 +167,22 @@ class ProjectManagementUseCase(
             ?: return Result.failure(IllegalArgumentException("项目不存在"))
 
         val modifiedTimeResult = projectRepository.updateModifiedTime(projectId, project)
+        recalculateProjectWordCount(projectId)
         return modifiedTimeResult
+    }
+
+    suspend fun recalculateProjectWordCount(projectId: String): Result<Int> {
+        val project = projectRepository.getProjectById(projectId)
+            ?: return Result.failure(IllegalArgumentException("项目不存在"))
+
+        val chaptersDir = File(project.storagePath, "正文")
+        val totalWords = if (chaptersDir.exists() && chaptersDir.isDirectory) {
+            fileManager.countWordsInDirectory(chaptersDir.absolutePath, listOf(".md"))
+        } else 0
+
+        projectRepository.updateWordCount(projectId, totalWords)
+        Timber.tag("WordCount").i("Recalculated word count for project %s: %d words", projectId, totalWords)
+        return Result.success(totalWords)
     }
 
     fun getSortedProjects(sortOption: SortOption, currentProjectId: String? = null): Flow<List<ProjectEntity>> {
@@ -308,6 +329,10 @@ class ProjectManagementUseCase(
                 CoverImageProcessor.getCoverFilePath(storagePath)
             } else null
 
+            // 计算章节字数
+            val chapterWords = fileManager.countWordsInDirectory(storagePath, listOf(".md"))
+            val chapterCount = countChapterFiles(storagePath)
+            
             val project = ProjectEntity(
                 id = projectId,
                 title = title,
@@ -319,8 +344,8 @@ class ProjectManagementUseCase(
                 createdTime = infoData.createdTime,
                 modifiedTime = AppUtils.getCurrentTimestamp(),
                 status = "active",
-                wordCount = 0,
-                chapterCount = countChapterFiles(storagePath)
+                wordCount = chapterWords,
+                chapterCount = chapterCount
             )
 
             projectRepository.insertProjectDirect(project)

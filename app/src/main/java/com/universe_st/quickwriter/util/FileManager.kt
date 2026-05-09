@@ -24,12 +24,28 @@ class FileManager(private val context: Context) {
 
     companion object {
         private const val PROJECTS_DIR = "projects"
-        
+
         val NOVEL_GENRES = listOf(
             "玄幻", "奇幻", "历史", "都市", "科幻",
             "武侠", "仙侠", "军事", "悬疑", "恐怖",
             "游戏", "竞技", "同人", "轻小说", "其他"
         )
+
+        fun countWords(text: String): Int {
+            if (text.isBlank()) return 0
+            val chinese = text.count { c ->
+                c in '\u4E00'..'\u9FFF' ||
+                    c in '\u3000'..'\u303F' ||
+                    c in '\uFF00'..'\uFFEF'
+            }
+            val english = text.split(Regex("[\\s\\n]+"))
+                .count { word ->
+                    word.any { c ->
+                        c in 'a'..'z' || c in 'A'..'Z'
+                    }
+                }
+            return chinese + english
+        }
     }
 
     fun getProjectsRootDirectory(): File {
@@ -234,6 +250,41 @@ class FileManager(private val context: Context) {
             file.length()
         } else {
             0L
+        }
+    }
+
+    suspend fun countWordsInFile(filePath: String): Int = withContext(Dispatchers.IO) {
+        try {
+            val file = File(filePath)
+            if (!file.exists() || !file.isFile) return@withContext 0
+
+            var content = file.readText(Charsets.UTF_8)
+            if (file.name.endsWith(".md", ignoreCase = true) && content.startsWith("---")) {
+                val secondDelim = content.indexOf("\n---", 3)
+                if (secondDelim > 0) {
+                    content = content.substring(secondDelim + 4).trimStart()
+                }
+            }
+            return@withContext countWords(content)
+        } catch (e: Exception) {
+            Timber.tag("WordCount").e(e, "Failed to count words in file: %s", filePath)
+            0
+        }
+    }
+
+    suspend fun countWordsInDirectory(directoryPath: String, extensions: List<String> = listOf(".md")): Int = withContext(Dispatchers.IO) {
+        try {
+            val dir = File(directoryPath)
+            if (!dir.exists() || !dir.isDirectory) return@withContext 0
+            
+            return@withContext dir.listFiles()?.filter { file ->
+                extensions.any { ext -> file.name.endsWith(ext, ignoreCase = true) }
+            }?.sumOf { file ->
+                countWordsInFile(file.absolutePath)
+            } ?: 0
+        } catch (e: Exception) {
+            Timber.tag("WordCount").e(e, "Failed to count words in directory: %s", directoryPath)
+            0
         }
     }
 

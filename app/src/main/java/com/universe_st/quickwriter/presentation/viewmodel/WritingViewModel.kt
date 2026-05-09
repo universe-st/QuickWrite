@@ -68,7 +68,8 @@ sealed class WritingUiState {
         val fileBrowserMode: FileBrowserMode = FileBrowserMode.CHAPTERS,
         val fileTree: List<FileTreeItem> = emptyList(),
         val expandedFolders: Set<String> = emptySet(),
-        val currentFilePath: String? = null
+        val currentFilePath: String? = null,
+        val fileLastModified: Long = 0
     ) : WritingUiState()
     data class Error(val message: UiText) : WritingUiState()
 }
@@ -265,6 +266,7 @@ class WritingViewModel(
             selectChapterInternal(project, chapterInfoList, targetIndex)
         }
 
+        projectManagementUseCase.recalculateProjectWordCount(project.id)
         startAutoSaveIfNeeded()
     }
 
@@ -288,6 +290,8 @@ class WritingViewModel(
         )
 
         val currentTab = (_uiState.value as? WritingUiState.Success)?.selectedTab ?: 0
+        val file = File(chapter.filePath)
+        val fileLastModified = if (file.exists()) file.lastModified() else 0L
 
         _uiState.value = WritingUiState.Success(
             project = project,
@@ -299,7 +303,8 @@ class WritingViewModel(
             selectedTab = currentTab,
             isSaving = false,
             isDirty = false,
-            autoSaveImmediately = autoSaveImmediately
+            autoSaveImmediately = autoSaveImmediately,
+            fileLastModified = fileLastModified
         )
     }
 
@@ -335,6 +340,29 @@ class WritingViewModel(
         val index = state.currentChapterIndex
         if (index < 0 || !state.isDirty) return false
         val chapter = state.chapters[index]
+
+        val file = File(chapter.filePath)
+        if (file.exists() && file.lastModified() > state.fileLastModified) {
+            val content = projectManagementUseCase.readFileContent(chapter.filePath).getOrDefault("")
+            val (meta, body) = ChapterFileHelper.parseChapterContent(content)
+            val updatedChapters = state.chapters.toMutableList()
+            updatedChapters[index] = chapter.copy(
+                title = meta.title.ifBlank { chapter.title },
+                order = meta.order,
+                volume = meta.volume,
+                summary = meta.summary
+            )
+            _uiState.value = state.copy(
+                chapters = updatedChapters,
+                editorContent = body,
+                currentChapterMeta = meta,
+                wordCount = countWords(body),
+                isDirty = false,
+                fileLastModified = file.lastModified()
+            )
+            return false
+        }
+
         val fullContent = ChapterFileHelper.buildChapterContent(
             state.currentChapterMeta, state.editorContent
         )
@@ -358,6 +386,19 @@ class WritingViewModel(
         val filePath = state.currentFilePath ?: return
         val savedEditorContent = state.editorContent
         viewModelScope.launch {
+            val file = File(filePath)
+            if (file.exists() && file.lastModified() > state.fileLastModified) {
+                val content = projectManagementUseCase.readFileContent(filePath).getOrDefault("")
+                val successState = (_uiState.value as? WritingUiState.Success)
+                    ?: return@launch
+                _uiState.value = successState.copy(
+                    editorContent = content,
+                    wordCount = countWords(content),
+                    isDirty = false,
+                    fileLastModified = file.lastModified()
+                )
+                return@launch
+            }
             _uiState.value = (_uiState.value as? WritingUiState.Success)?.copy(isSaving = true) ?: return@launch
             val result = projectManagementUseCase.writeFileContent(filePath, savedEditorContent)
             val current = _uiState.value as? WritingUiState.Success ?: return@launch
@@ -385,9 +426,11 @@ class WritingViewModel(
                 val stillDirty = current.editorContent != savedEditorContent
                 _uiState.value = current.copy(isSaving = false, isDirty = stillDirty, saveMessage = "已保存")
                 clearSaveMessageAfterDelay()
-            } else {
+            } else if (current.isDirty) {
                 _uiState.value = current.copy(isSaving = false, saveMessage = "保存失败")
                 clearSaveMessageAfterDelay()
+            } else {
+                _uiState.value = current.copy(isSaving = false)
             }
         }
     }
@@ -417,6 +460,7 @@ class WritingViewModel(
                 val body = "# $sanitizedTitle\n\n"
                 val fullContent = ChapterFileHelper.buildChapterContent(meta, body)
                 projectManagementUseCase.writeFileContent(filePath, fullContent)
+                projectManagementUseCase.recalculateProjectWordCount(state.project.id)
                 loadChapters(state.project)
             }
         }
@@ -428,6 +472,7 @@ class WritingViewModel(
         val chapter = state.chapters[index]
         viewModelScope.launch {
             projectManagementUseCase.deleteChapterFile(state.project.id, chapter.fileName)
+            projectManagementUseCase.recalculateProjectWordCount(state.project.id)
             loadChapters(state.project)
         }
     }
@@ -468,12 +513,15 @@ class WritingViewModel(
         viewModelScope.launch {
             val content = projectManagementUseCase.readFileContent(file.absolutePath)
                 .getOrDefault("")
+            val diskFile = File(file.absolutePath)
+            val lastMod = if (diskFile.exists()) diskFile.lastModified() else 0L
             _uiState.value = state.copy(
                 currentFilePath = file.absolutePath,
                 editorContent = content,
                 wordCount = countWords(content),
                 isDirty = false,
-                saveMessage = null
+                saveMessage = null,
+                fileLastModified = lastMod
             )
         }
     }
@@ -497,6 +545,7 @@ class WritingViewModel(
         val chapter = state.chapters[index]
         viewModelScope.launch {
             projectManagementUseCase.deleteChapterFile(state.project.id, chapter.fileName)
+            projectManagementUseCase.recalculateProjectWordCount(state.project.id)
             loadChapters(state.project)
         }
     }
@@ -607,8 +656,13 @@ class WritingViewModel(
         lastProjectId = success.project.id
 
         if (tab == 0 && success.selectedTab != 0) {
-            saveCurrentChapter()
             viewModelScope.launch {
+                val chapter = success.chapters.getOrNull(success.currentChapterIndex)
+                val file = chapter?.let { File(it.filePath) }
+                if (file != null && file.exists() && file.lastModified() > success.fileLastModified) {
+                } else {
+                    saveCurrentChapterSuspend(success)
+                }
                 loadChapters(success.project, preserveIndex = true)
             }
         }

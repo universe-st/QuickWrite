@@ -39,7 +39,7 @@ interface ProjectDao {
     @Query("DELETE FROM projects WHERE id = :id")
     suspend fun deleteProjectById(id: String)
 
-    @Query("UPDATE projects SET word_count = word_count + :wordCount WHERE id = :projectId")
+    @Query("UPDATE projects SET word_count = :wordCount WHERE id = :projectId")
     suspend fun updateWordCount(projectId: String, wordCount: Int)
 
     @Query("UPDATE projects SET chapter_count = chapter_count + 1 WHERE id = :projectId")

@@ -21,12 +21,23 @@ class AiServiceRepository(
         }
     }
 
+    private fun getDefaultBaseUrl(provider: String): String {
+        return when (provider) {
+            AiModelConfigRepository.PROVIDER_DEEPSEEK -> "https://api.deepseek.com"
+            AiModelConfigRepository.PROVIDER_ZHIPU -> "https://open.bigmodel.cn"
+            AiModelConfigRepository.PROVIDER_KIMI -> "https://api.moonshot.cn"
+            AiModelConfigRepository.PROVIDER_ANTHROPIC -> "https://api.anthropic.com"
+            AiModelConfigRepository.PROVIDER_SILICONFLOW -> "https://api.siliconflow.cn"
+            else -> "https://api.openai.com"
+        }
+    }
+
     suspend fun chatCompletion(configId: Int, request: ChatCompletionRequest): Result<ChatCompletionResponse> {
         return try {
             val config = aiModelConfigDao.getConfigById(configId)
                 ?: return Result.failure(IllegalStateException("AI model config not found: $configId"))
 
-            val service = getOrCreateService(config.baseUrl ?: "https://api.openai.com")
+            val service = getOrCreateService(config.baseUrl ?: getDefaultBaseUrl(config.provider))
             val authHeader = "Bearer ${config.apiKey}"
             val endpoint = getChatCompletionsPath(config.provider)
 
@@ -42,7 +53,7 @@ class AiServiceRepository(
             val config = aiModelConfigDao.getConfigById(configId)
                 ?: return Result.failure(IllegalStateException("AI model config not found: $configId"))
 
-            val service = getOrCreateService(config.baseUrl ?: "https://api.openai.com")
+            val service = getOrCreateService(config.baseUrl ?: getDefaultBaseUrl(config.provider))
             val authHeader = "Bearer ${config.apiKey}"
             val endpoint = getChatCompletionsPath(config.provider)
 

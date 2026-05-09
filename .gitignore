@@ -25,6 +25,9 @@ build/
 .gradle/
 local.properties
 .idea/
+jks/
+signing.properties
+release/
 *.log
 *.swp
 *.swo
