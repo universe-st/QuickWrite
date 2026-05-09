@@ -125,8 +125,8 @@ class FileManager(private val context: Context) {
         }
     }
 
-    fun createFile(filePath: String): Result<String> {
-        return try {
+    suspend fun createFile(filePath: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val file = File(filePath)
             file.parentFile?.mkdirs()
             if (file.createNewFile()) {
@@ -139,8 +139,8 @@ class FileManager(private val context: Context) {
         }
     }
 
-    fun createDirectory(dirPath: String): Result<String> {
-        return try {
+    suspend fun createDirectory(dirPath: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val dir = File(dirPath)
             if (dir.mkdirs()) {
                 Result.success(dir.absolutePath)
@@ -154,8 +154,8 @@ class FileManager(private val context: Context) {
         }
     }
 
-    fun deleteFileOrDirectory(path: String): Result<Unit> {
-        return try {
+    suspend fun deleteFileOrDirectory(path: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             val file = File(path)
             if (!file.exists()) {
                 Result.failure(IOException("Path not found: $path"))
@@ -407,15 +407,20 @@ class FileManager(private val context: Context) {
         }
     }
 
-    fun getFileTree(directory: File): List<FileTreeItem> {
-        if (!directory.exists() || !directory.isDirectory) return emptyList()
+    suspend fun getFileTree(directory: File): List<FileTreeItem> = withContext(Dispatchers.IO) {
+        if (!directory.exists() || !directory.isDirectory) return@withContext emptyList()
         val rootPath = directory.absolutePath
 
         fun buildTree(dir: File, rootLen: Int): List<FileTreeItem> {
             val items = mutableListOf<FileTreeItem>()
-            val files = dir.listFiles() ?: return items
+            val files = try {
+                dir.listFiles()
+            } catch (e: SecurityException) {
+                null
+            } ?: return items
 
-            val (dirs, regularFiles) = files.partition { it.isDirectory }
+            val (rawDirs, regularFiles) = files.partition { it.isDirectory }
+            val dirs = rawDirs.filter { !it.name.startsWith(".") }
 
             for (d in dirs.sortedByDescending { it.lastModified() }) {
                 val absPath = d.absolutePath
@@ -447,7 +452,7 @@ class FileManager(private val context: Context) {
             return items
         }
 
-        return buildTree(directory, rootPath.length)
+        return@withContext buildTree(directory, rootPath.length)
     }
 }
 

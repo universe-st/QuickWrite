@@ -198,7 +198,7 @@ class ProjectManagementUseCase(
         return fileManager.deleteFileOrDirectory(filePath)
     }
 
-    fun getFileTree(directoryPath: String): List<FileTreeItem> {
+    suspend fun getFileTree(directoryPath: String): List<FileTreeItem> {
         return fileManager.getFileTree(File(directoryPath))
     }
 
@@ -217,16 +217,11 @@ class ProjectManagementUseCase(
     suspend fun renameFileOrDir(oldPath: String, newName: String): Result<String> {
         val oldFile = File(oldPath)
         val newFile = File(oldFile.parentFile, newName)
-        return try {
-            if (!oldFile.exists()) throw IOException("File not found: $oldPath")
-            if (newFile.exists()) throw IOException("Target name already exists: $newName")
-            if (oldFile.renameTo(newFile)) {
-                Result.success(newFile.absolutePath)
-            } else {
-                Result.failure(IOException("Rename failed"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+        val result = fileManager.renameFileOrDirectory(oldPath, newFile.absolutePath)
+        return if (result.isSuccess) {
+            Result.success(newFile.absolutePath)
+        } else {
+            Result.failure(result.exceptionOrNull() ?: IOException("Rename failed"))
         }
     }
 
