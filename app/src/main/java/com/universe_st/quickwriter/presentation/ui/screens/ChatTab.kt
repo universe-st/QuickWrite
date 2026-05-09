@@ -27,7 +27,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.pointer.pointerInput
@@ -36,7 +35,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.launch
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.*
@@ -66,7 +64,6 @@ fun ChatTab(
     val sessionState by viewModel.sessionState.collectAsState()
     val currentSessionId = viewModel.currentSessionId
     val showSidebar = viewModel.showSidebar
-    var isScrollingToBottom by remember { mutableStateOf(false) }
     var deleteConfirmTarget by remember { mutableStateOf<String?>(null) }
     var deleteMessageIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -114,15 +111,12 @@ fun ChatTab(
                     currentSessionId = currentSessionId,
                     messages = messages,
                     sessionState = sessionState,
-                inputText = viewModel.inputText,
-                isGenerating = isGenerating,
-                partialContent = partialContent,
-                isScrollingToBottom = isScrollingToBottom,
-                onScrollToBottomStart = { isScrollingToBottom = true },
-                onScrollToBottomEnd = { isScrollingToBottom = false },
-                onInputChange = { viewModel.inputText = it },
-                onSend = { viewModel.sendMessage() },
-                onStop = { viewModel.stopGeneration() },
+                    inputText = viewModel.inputText,
+                    isGenerating = isGenerating,
+                    partialContent = partialContent,
+                    onInputChange = { viewModel.inputText = it },
+                    onSend = { viewModel.sendMessage() },
+                    onStop = { viewModel.stopGeneration() },
                     onRetry = { viewModel.retryLastMessage() },
                     onDeleteMessage = { deleteMessageIndex = it },
                     modifier = Modifier.fillMaxSize()
@@ -143,21 +137,6 @@ fun ChatTab(
             }
         }
 
-        if (isScrollingToBottom) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .zIndex(2f)
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                event.changes.forEach { it.consume() }
-                            }
-                        }
-                    }
-            )
-        }
     }
 
     if (deleteConfirmTarget != null) {
@@ -506,9 +485,6 @@ private fun ChatContentArea(
     inputText: String,
     isGenerating: Boolean,
     partialContent: String?,
-    isScrollingToBottom: Boolean,
-    onScrollToBottomStart: () -> Unit,
-    onScrollToBottomEnd: () -> Unit,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -524,110 +500,20 @@ private fun ChatContentArea(
         preprocessMessages(messages, isGenerating)
     }
 
-    val displayItems = buildList {
-        addAll(baseItems)
-        if (isGenerating) {
-            add(
-                DisplayItem.Message(
-                    ChatMessage(
-                        id = Long.MAX_VALUE,
-                        role = MessageRole.ASSISTANT,
-                        content = partialContent ?: "",
-                        timestamp = System.currentTimeMillis()
-                    )
-                )
-            )
-        }
-    }
+    val displayItems = remember(baseItems) { baseItems.asReversed() }
 
-    var followBottom by remember { mutableStateOf(true) }
-    var isProgrammaticScroll by remember { mutableStateOf(false) }
-    val currentDisplayItems by rememberUpdatedState(displayItems)
-    val currentFollowBottom by rememberUpdatedState(followBottom)
-    val currentIsProgrammaticScroll by rememberUpdatedState(isProgrammaticScroll)
-    val currentIsScrollingToBottom by rememberUpdatedState(isScrollingToBottom)
+    val streamingContent = if (isGenerating) {
+        val pc = partialContent ?: ""
+        if (pc.startsWith("Executing tool:")) null else pc
+    } else null
+
+    val showScrollToBottomFAB by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 }
+    }
 
     LaunchedEffect(currentSessionId) {
-        followBottom = true
-    }
-
-    suspend fun scrollToBottom(animate: Boolean = true) {
-        val lastIndex = currentDisplayItems.lastIndex
-        if (lastIndex < 0) return
-
-        isProgrammaticScroll = true
-        try {
-            withFrameNanos { }
-            val layoutInfo = listState.layoutInfo
-            val lastItem = layoutInfo.visibleItemsInfo.lastOrNull { it.index == lastIndex }
-            if (lastItem == null) {
-                if (animate) {
-                    listState.animateScrollToItem(lastIndex)
-                } else {
-                    listState.scrollToItem(lastIndex)
-                }
-                return
-            }
-
-            // Animate so the bottom of the last item stays anchored to the viewport bottom.
-            // Positive offsets move the item upward, so shorter items get a positive offset
-            // and taller items naturally receive a negative offset.
-            val scrollOffset = layoutInfo.viewportEndOffset - lastItem.size
-            if (animate) {
-                listState.animateScrollToItem(lastIndex, scrollOffset)
-            } else {
-                listState.scrollToItem(lastIndex, scrollOffset)
-            }
-        } finally {
-            isProgrammaticScroll = false
-        }
-    }
-
-    val isAtBottom by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            if (layoutInfo.totalItemsCount == 0) return@derivedStateOf true
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull() ?: return@derivedStateOf true
-            if (lastVisible.index < layoutInfo.totalItemsCount - 1) return@derivedStateOf false
-            val lastItemBottom = lastVisible.offset + lastVisible.size
-            val result = lastItemBottom <= layoutInfo.viewportEndOffset + 4
-            android.util.Log.d("ChatScroll", "[isAtBottom] result=$result lastItemIdx=${lastVisible.index}/${layoutInfo.totalItemsCount} lastItemBottom=$lastItemBottom viewportEnd=${layoutInfo.viewportEndOffset} firstVisibleIdx=${layoutInfo.visibleItemsInfo.firstOrNull()?.index} firstVisibleOffset=${listState.firstVisibleItemScrollOffset}")
-            result
-        }
-    }
-
-    LaunchedEffect(listState) {
-        snapshotFlow { isAtBottom to listState.isScrollInProgress }
-            .collect { (atBottom, isScrollInProgress) ->
-                android.util.Log.d(
-                    "ChatScroll",
-                    "[snapshotFlow:isAtBottom] atBottom=$atBottom scrolling=$isScrollInProgress followBottom=$followBottom"
-                )
-                if (atBottom) {
-                    followBottom = true
-                } else if (isScrollInProgress && !currentIsProgrammaticScroll) {
-                    followBottom = false
-                }
-            }
-    }
-
-    // Auto-scroll when display items change (new items added, tool cards transition)
-    // Keys: displayItems.size catches new items; messages.size catches TOOL result
-    // messages arriving that update tool cards in-place (size unchanged but content changed)
-    LaunchedEffect(currentSessionId, displayItems.size, messages.size) {
-        android.util.Log.d("ChatScroll", "[LaunchedEffect:items] session=$currentSessionId size=${displayItems.size} msgs=${messages.size} followBottom=$currentFollowBottom")
-        if (currentFollowBottom && !currentIsScrollingToBottom && currentDisplayItems.isNotEmpty()) {
-            android.util.Log.d("ChatScroll", "[LaunchedEffect:items] -> scrolling to bottom")
-            scrollToBottom()
-        }
-    }
-
-    // Auto-scroll during streaming content growth — key on partialContent directly.
-    // withFrameNanos waits for the next frame so layout has measured the new content height;
-    // reading layoutInfo in the composition phase gives stale (pre-layout) values.
-    LaunchedEffect(partialContent) {
-        if (isGenerating && currentFollowBottom && currentDisplayItems.isNotEmpty()) {
-            scrollToBottom(animate = false)
+        if (displayItems.isNotEmpty() || streamingContent != null) {
+            listState.scrollToItem(0)
         }
     }
 
@@ -658,12 +544,13 @@ private fun ChatContentArea(
             Box(modifier = Modifier.weight(1f)) {
                 LazyColumn(
                     state = listState,
+                    reverseLayout = true,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(vertical = 4.dp)
                 ) {
-                    if (displayItems.isEmpty() && sessionState !is SessionState.Error) {
-                        item {
+                    if (displayItems.isEmpty() && streamingContent == null && sessionState !is SessionState.Error) {
+                        item(key = "empty_hint") {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -679,6 +566,16 @@ private fun ChatContentArea(
                         }
                     }
 
+                    if (streamingContent != null) {
+                        item(key = "generating") {
+                            GeneratingBubble(content = streamingContent)
+                        }
+                    } else if (isGenerating && streamingContent == null && displayItems.isEmpty()) {
+                        item(key = "loading") {
+                            GeneratingBubble(content = "")
+                        }
+                    }
+
                     itemsIndexed(
                         items = displayItems,
                         key = { index, item ->
@@ -687,31 +584,24 @@ private fun ChatContentArea(
                                 is DisplayItem.ToolCard -> "tool_${item.toolName}_$index"
                             }
                         }
-                    ) { index, item ->
+                    ) { reversedIndex, item ->
+                        val baseIndex = baseItems.size - 1 - reversedIndex
                         when (item) {
                             is DisplayItem.Message -> {
                                 var showActions by remember { mutableStateOf(false) }
-                                val isGeneratingItem = item.message.id == Long.MAX_VALUE
-                                if (isGeneratingItem) {
-                                    AssistantMessageBubble(
-                                        content = item.message.content,
-                                        isGenerating = true
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showActions = !showActions }
+                                ) {
+                                    MessageBubble(
+                                        message = item.message,
+                                        showActions = showActions,
+                                        onRetry = if (item.message.role == MessageRole.USER) {
+                                            { onRetry() }
+                                        } else null,
+                                        onDelete = { onDeleteMessage(baseIndex) }
                                     )
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { showActions = !showActions }
-                                    ) {
-                                        MessageBubble(
-                                            message = item.message,
-                                            showActions = showActions,
-                                            onRetry = if (item.message.role == MessageRole.USER) {
-                                                { onRetry() }
-                                            } else null,
-                                            onDelete = { onDeleteMessage(index) }
-                                        )
-                                    }
                                 }
                             }
                             is DisplayItem.ToolCard -> {
@@ -725,7 +615,7 @@ private fun ChatContentArea(
                     }
                 }
 
-                if (!isAtBottom && displayItems.isNotEmpty()) {
+                if (showScrollToBottomFAB && displayItems.isNotEmpty()) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -742,24 +632,11 @@ private fun ChatContentArea(
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                                 CircleShape
                             )
-                            .then(
-                                if (isScrollingToBottom) {
-                                    Modifier
-                                } else {
-                                    Modifier.clickable {
-                                        scope.launch {
-                                            android.util.Log.d("ChatScroll", "[Button] CLICKED")
-                                            onScrollToBottomStart()
-                                            followBottom = true
-                                            try {
-                                                scrollToBottom()
-                                            } finally {
-                                                onScrollToBottomEnd()
-                                            }
-                                        }
-                                    }
+                            .clickable {
+                                scope.launch {
+                                    listState.animateScrollToItem(0)
                                 }
-                            ),
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -772,33 +649,13 @@ private fun ChatContentArea(
                 }
             }
 
-            AnimatedVisibility(visible = isGenerating) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-
             ChatInputArea(
                 inputText = inputText,
                 isGenerating = isGenerating,
-                enabled = !isScrollingToBottom,
+                enabled = true,
                 onInputChange = onInputChange,
                 onSend = onSend,
                 onStop = onStop
-            )
-        }
-
-        if (isScrollingToBottom) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .zIndex(1f)
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                event.changes.forEach { it.consume() }
-                            }
-                        }
-                    }
             )
         }
     }
