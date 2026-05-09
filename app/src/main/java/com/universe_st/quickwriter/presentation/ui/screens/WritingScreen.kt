@@ -40,7 +40,37 @@ import com.universe_st.quickwriter.presentation.viewmodel.ChapterFileInfo
 import com.universe_st.quickwriter.presentation.viewmodel.WritingUiState
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModel
 import com.universe_st.quickwriter.ui.theme.TextSecondary
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
+import com.universe_st.quickwriter.presentation.viewmodel.FileBrowserMode
 import com.universe_st.quickwriter.util.AppEditorConfig
+import com.universe_st.quickwriter.util.ChapterMeta
+import com.universe_st.quickwriter.util.FileTreeItem
+
+private data class DeleteConfirmData(
+    val name: String,
+    val path: String,
+    val isChapter: Boolean,
+    val chapterIndex: Int
+)
+
+private data class RenameDialogData(
+    val oldPath: String,
+    val oldName: String,
+    val isChapter: Boolean,
+    val chapterIndex: Int
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +83,11 @@ fun WritingScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showNewChapterDialog by remember { mutableStateOf(false) }
     var showChapterList by remember { mutableStateOf(false) }
+    var deleteConfirmData by remember { mutableStateOf<DeleteConfirmData?>(null) }
+    var renameDialogData by remember { mutableStateOf<RenameDialogData?>(null) }
+    var editMetaChapterIndex by remember { mutableStateOf<Int?>(null) }
+    var showNewFileDialog by remember { mutableStateOf(false) }
+    var showNewFolderDialog by remember { mutableStateOf(false) }
 
     val isChatTab = uiState is WritingUiState.Success && (uiState as WritingUiState.Success).selectedTab == 1
 
@@ -61,7 +96,14 @@ fun WritingScreen(
             WritingTopBar(
                 uiState = uiState,
                 onBack = onNavigateToProjectList,
-                onSave = { viewModel.saveCurrentChapter() },
+                onSave = {
+                    val s = viewModel.uiState.value as? WritingUiState.Success ?: return@WritingTopBar
+                    if (s.fileBrowserMode == FileBrowserMode.CHAPTERS) {
+                        viewModel.saveCurrentChapter()
+                    } else {
+                        viewModel.saveCurrentFile()
+                    }
+                },
                 showChapterList = showChapterList,
                 onToggleChapterList = { showChapterList = !showChapterList },
                 isChatTab = isChatTab,
@@ -124,12 +166,23 @@ fun WritingScreen(
                         showChapterList = showChapterList,
                         onToggleChapterList = { showChapterList = !showChapterList },
                         onSelectChapter = { viewModel.selectChapter(it) },
-                                onMoveUp = { viewModel.moveChapter(it, it - 1) },
-                                onMoveDown = { viewModel.moveChapter(it, it + 1) },
-                                onCreateChapter = { showNewChapterDialog = true },
-                                onDeleteChapter = { viewModel.deleteChapter(it) },
-                                onContentChange = { viewModel.updateEditorContent(it) }
-                            )
+                        onMoveUp = { viewModel.moveChapter(it, it - 1) },
+                        onMoveDown = { viewModel.moveChapter(it, it + 1) },
+                        onCreateChapter = { showNewChapterDialog = true },
+                        onContentChange = { viewModel.updateEditorContent(it) },
+                        onBrowseModeChange = { viewModel.switchBrowseMode(it) },
+                        onSelectNonChapterFile = { viewModel.selectNonChapterFile(it) },
+                        onToggleFolder = { viewModel.toggleFolderExpanded(it) },
+                        onFileDeleteRequest = { name, path, isChapter, chapterIndex ->
+                            deleteConfirmData = DeleteConfirmData(name, path, isChapter, chapterIndex)
+                        },
+                        onFileRenameRequest = { oldPath, oldName, isChapter, chapterIndex ->
+                            renameDialogData = RenameDialogData(oldPath, oldName, isChapter, chapterIndex)
+                        },
+                        onCreateNewFile = { showNewFileDialog = true },
+                        onCreateNewFolder = { showNewFolderDialog = true },
+                        onEditChapterMeta = { editMetaChapterIndex = it }
+                    )
                             1 -> ChatTab(
                         viewModel = aiChatViewModel,
                         projectId = state.project.id,
@@ -190,6 +243,76 @@ fun WritingScreen(
                     Text(stringResource(R.string.common_cancel))
                 }
             }
+        )
+    }
+
+    deleteConfirmData?.let { data ->
+        FileDeleteConfirmDialog(
+            name = data.name,
+            onConfirm = {
+                if (data.isChapter) {
+                    viewModel.deleteChapterWithConfirm(data.chapterIndex)
+                } else {
+                    viewModel.deleteFileOrFolder(FileTreeItem(
+                        name = data.name,
+                        relativePath = "",
+                        absolutePath = data.path,
+                        isDirectory = false,
+                        lastModified = 0
+                    ))
+                }
+                deleteConfirmData = null
+            },
+            onDismiss = { deleteConfirmData = null }
+        )
+    }
+
+    renameDialogData?.let { data ->
+        RenameFileDialog(
+            oldName = data.oldName,
+            onConfirm = { newName ->
+                viewModel.renameFile(data.oldPath, newName, data.isChapter, data.chapterIndex)
+                renameDialogData = null
+            },
+            onDismiss = { renameDialogData = null }
+        )
+    }
+
+    editMetaChapterIndex?.let { idx ->
+        val currentState = (viewModel.uiState.value as? WritingUiState.Success) ?: return@let
+        val chapter = currentState.chapters.getOrNull(idx) ?: return@let
+        EditChapterMetaDialog(
+            currentMeta = ChapterMeta(
+                title = chapter.title,
+                order = chapter.order,
+                volume = chapter.volume,
+                summary = chapter.summary
+            ),
+            onConfirm = { meta ->
+                viewModel.editChapterMeta(idx, meta)
+                editMetaChapterIndex = null
+            },
+            onDismiss = { editMetaChapterIndex = null }
+        )
+    }
+
+    if (showNewFileDialog) {
+        NewFileDialog(
+            onConfirm = { name ->
+                viewModel.createNewFileInCurrentDir(name)
+                showNewFileDialog = false
+            },
+            onDismiss = { showNewFileDialog = false }
+        )
+    }
+
+    if (showNewFolderDialog) {
+        NewFolderDialog(
+            onConfirm = { name ->
+                viewModel.createNewFolderInCurrentDir(name)
+                showNewFolderDialog = false
+            },
+            onDismiss = { showNewFolderDialog = false }
         )
     }
 }
@@ -336,15 +459,21 @@ private fun EditorContent(
     onMoveUp: (Int) -> Unit,
     onMoveDown: (Int) -> Unit,
     onCreateChapter: () -> Unit,
-    onDeleteChapter: (Int) -> Unit,
-    onContentChange: (String) -> Unit
+    onContentChange: (String) -> Unit,
+    onBrowseModeChange: (FileBrowserMode) -> Unit,
+    onSelectNonChapterFile: (FileTreeItem) -> Unit,
+    onToggleFolder: (String) -> Unit,
+    onFileDeleteRequest: (String, String, Boolean, Int) -> Unit,
+    onFileRenameRequest: (String, String, Boolean, Int) -> Unit,
+    onCreateNewFile: () -> Unit,
+    onCreateNewFolder: () -> Unit,
+    onEditChapterMeta: (Int) -> Unit
 ) {
     val isDark = MaterialTheme.colorScheme.background == Color(0xFF121212)
-    val editorConfig = remember(isDark) {
-        AppEditorConfig(isDark = isDark)
-    }
+    val editorConfig = remember(isDark) { AppEditorConfig(isDark = isDark) }
+    val isChapterMode = state.fileBrowserMode == FileBrowserMode.CHAPTERS
 
-    if (state.chapters.isEmpty()) {
+    if (!showChapterList && isChapterMode && state.chapters.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -391,14 +520,20 @@ private fun EditorContent(
                         )
                     }
                 ) {
-                    ChapterListPanel(
-                        chapters = state.chapters,
-                        currentIndex = state.currentChapterIndex,
+                    FileListPanel(
+                        state = state,
                         onSelectChapter = onSelectChapter,
                         onMoveUp = onMoveUp,
                         onMoveDown = onMoveDown,
                         onCreateChapter = onCreateChapter,
-                        onDeleteChapter = onDeleteChapter,
+                        onBrowseModeChange = onBrowseModeChange,
+                        onSelectNonChapterFile = onSelectNonChapterFile,
+                        onToggleFolder = onToggleFolder,
+                        onFileDeleteRequest = onFileDeleteRequest,
+                        onFileRenameRequest = onFileRenameRequest,
+                        onCreateNewFile = onCreateNewFile,
+                        onCreateNewFolder = onCreateNewFolder,
+                        onEditChapterMeta = onEditChapterMeta,
                         modifier = Modifier
                             .width(220.dp)
                             .fillMaxHeight()
@@ -406,11 +541,12 @@ private fun EditorContent(
                 }
             }
 
-            if (showChapterList) {
-                VerticalDivider()
-            }
+            if (showChapterList) { VerticalDivider() }
 
-            if (state.currentChapterIndex >= 0) {
+            val showEditor = if (isChapterMode) state.currentChapterIndex >= 0
+                             else state.currentFilePath != null
+
+            if (showEditor || !showChapterList) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -424,79 +560,246 @@ private fun EditorContent(
                             } else Modifier
                         )
                 ) {
-                    MarkorEditor(
-                        value = state.editorContent,
-                        onValueChange = onContentChange,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(4.dp),
-                        editorConfig = editorConfig,
-                        highlightingMode = HighlightingMode.MARKDOWN,
-                        enabled = true
-                    )
+                    if (showEditor) {
+                        MarkorEditor(
+                            value = state.editorContent,
+                            onValueChange = onContentChange,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp),
+                            editorConfig = editorConfig,
+                            highlightingMode = HighlightingMode.MARKDOWN,
+                            enabled = true
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                stringResource(R.string.writing_no_files),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TextSecondary
+                            )
+                        }
+                    }
                 }
             }
         }
-
-
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ChapterListPanel(
-    chapters: List<ChapterFileInfo>,
-    currentIndex: Int,
+private fun FileListPanel(
+    state: WritingUiState.Success,
     onSelectChapter: (Int) -> Unit,
     onMoveUp: (Int) -> Unit,
     onMoveDown: (Int) -> Unit,
     onCreateChapter: () -> Unit,
-    onDeleteChapter: (Int) -> Unit,
+    onBrowseModeChange: (FileBrowserMode) -> Unit,
+    onSelectNonChapterFile: (FileTreeItem) -> Unit,
+    onToggleFolder: (String) -> Unit,
+    onFileDeleteRequest: (String, String, Boolean, Int) -> Unit,
+    onFileRenameRequest: (String, String, Boolean, Int) -> Unit,
+    onCreateNewFile: () -> Unit,
+    onCreateNewFolder: () -> Unit,
+    onEditChapterMeta: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isChapterMode = state.fileBrowserMode == FileBrowserMode.CHAPTERS
+    var showModeDropdown by remember { mutableStateOf(false) }
+    var showAddMenu by remember { mutableStateOf(false) }
+    var showChapterContextMenu by remember { mutableStateOf<Int?>(null) }
+    var showFileContextMenu by remember { mutableStateOf<FileTreeItem?>(null) }
+
     Column(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
     ) {
+        // Header row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                stringResource(R.string.writing_chapters_header),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
-            )
-            FilledTonalIconButton(
-                onClick = onCreateChapter,
-                modifier = Modifier.size(28.dp)
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = stringResource(R.string.writing_new_chapter),
-                    modifier = Modifier.size(16.dp)
-                )
+            Box {
+                TextButton(
+                    onClick = { showModeDropdown = true },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(state.fileBrowserMode.displayNameResId()),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                DropdownMenu(
+                    expanded = showModeDropdown,
+                    onDismissRequest = { showModeDropdown = false }
+                ) {
+                    FileBrowserMode.entries.forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(mode.displayNameResId())) },
+                            onClick = {
+                                showModeDropdown = false
+                                onBrowseModeChange(mode)
+                            },
+                            leadingIcon = if (mode == state.fileBrowserMode) {
+                                { Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                            } else null
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box {
+                FilledTonalIconButton(
+                    onClick = {
+                        if (isChapterMode) onCreateChapter()
+                        else showAddMenu = true
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(
+                            if (isChapterMode) R.string.writing_new_chapter
+                            else R.string.writing_add_file
+                        ),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                if (!isChapterMode) {
+                    DropdownMenu(
+                        expanded = showAddMenu,
+                        onDismissRequest = { showAddMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.writing_add_file)) },
+                            onClick = { showAddMenu = false; onCreateNewFile() },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.NoteAdd, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.writing_add_folder)) },
+                            onClick = { showAddMenu = false; onCreateNewFolder() },
+                            leadingIcon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) }
+                        )
+                    }
+                }
             }
         }
 
         HorizontalDivider()
 
-        LazyColumn(
-            modifier = Modifier.weight(1f)
-        ) {
-            itemsIndexed(chapters) { index, chapter ->
-                val isSelected = index == currentIndex
-                ChapterListItem(
-                    chapter = chapter,
-                    isSelected = isSelected,
-                    canMoveUp = index > 0,
-                    canMoveDown = index < chapters.size - 1,
-                    onClick = { onSelectChapter(index) },
-                    onMoveUp = { onMoveUp(index) },
-                    onMoveDown = { onMoveDown(index) },
-                    onDelete = { onDeleteChapter(index) }
+        if (isChapterMode) {
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                itemsIndexed(state.chapters) { index, chapter ->
+                    val isSelected = index == state.currentChapterIndex
+                    ChapterListItem(
+                        chapter = chapter,
+                        isSelected = isSelected,
+                        canMoveUp = index > 0,
+                        canMoveDown = index < state.chapters.size - 1,
+                        onClick = { onSelectChapter(index) },
+                        onMoveUp = { onMoveUp(index) },
+                        onMoveDown = { onMoveDown(index) },
+                        onDelete = { onFileDeleteRequest(chapter.fileName, chapter.filePath, true, index) }
+                    )
+                }
+            }
+
+            showChapterContextMenu?.let { idx ->
+                val chapter = state.chapters.getOrNull(idx) ?: return@let
+                AlertDialog(
+                    onDismissRequest = { showChapterContextMenu = null },
+                    title = { Text(chapter.title) },
+                    text = {
+                        Column {
+                            TextButton(onClick = {
+                                showChapterContextMenu = null
+                                onFileRenameRequest(chapter.filePath, chapter.fileName, true, idx)
+                            }) {
+                                Icon(Icons.Default.DriveFileRenameOutline, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.writing_rename_file))
+                            }
+                            TextButton(onClick = {
+                                showChapterContextMenu = null
+                                onEditChapterMeta(idx)
+                            }) {
+                                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.writing_edit_meta))
+                            }
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(onClick = { showChapterContextMenu = null }) {
+                            Text(stringResource(R.string.common_cancel))
+                        }
+                    }
+                )
+            }
+        } else {
+            if (state.fileTree.isEmpty()) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.writing_no_files),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            } else {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(state.fileTree, key = { it.relativePath }) { item ->
+                        FileTreeItemNode(
+                            item = item,
+                            depth = 0,
+                            isExpanded = state.expandedFolders.contains(item.relativePath),
+                            isSelected = state.currentFilePath == item.absolutePath,
+                            onToggleFolder = onToggleFolder,
+                            onSelectFile = onSelectNonChapterFile,
+                            onDelete = { onFileDeleteRequest(item.name, item.absolutePath, false, -1) },
+                            onLongPress = { showFileContextMenu = item }
+                        )
+                    }
+                }
+            }
+
+            showFileContextMenu?.let { item ->
+                AlertDialog(
+                    onDismissRequest = { showFileContextMenu = null },
+                    title = { Text(item.name) },
+                    text = {
+                        TextButton(onClick = {
+                            showFileContextMenu = null
+                            onFileRenameRequest(item.absolutePath, item.name, false, -1)
+                        }) {
+                            Icon(Icons.Default.DriveFileRenameOutline, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.writing_rename_file))
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(onClick = { showFileContextMenu = null }) {
+                            Text(stringResource(R.string.common_cancel))
+                        }
+                    }
                 )
             }
         }
@@ -504,13 +807,111 @@ private fun ChapterListPanel(
         HorizontalDivider()
 
         Text(
-            text = stringResource(R.string.writing_chapter_count, chapters.size),
+            text = if (isChapterMode) {
+                stringResource(R.string.writing_chapter_count, state.chapters.size)
+            } else {
+                stringResource(R.string.writing_file_count, countFilesInTree(state.fileTree))
+            },
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondary,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
+
+private fun countFilesInTree(tree: List<FileTreeItem>): Int {
+    var count = 0
+    for (item in tree) {
+        if (!item.isDirectory) count++
+        count += countFilesInTree(item.children)
+    }
+    return count
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun FileTreeItemNode(
+    item: FileTreeItem,
+    depth: Int,
+    isExpanded: Boolean,
+    isSelected: Boolean,
+    onToggleFolder: (String) -> Unit,
+    onSelectFile: (FileTreeItem) -> Unit,
+    onDelete: () -> Unit,
+    onLongPress: () -> Unit
+) {
+    val bgColor = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+    } else Color.Transparent
+
+    Column(modifier = Modifier.animateContentSize()) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        )
+                .background(bgColor)
+                .combinedClickable(
+                    onClick = { onSelectFile(item) },
+                    onLongClick = onLongPress
+                )
+                .padding(start = (8 + depth * 12).dp, end = 2.dp, top = 4.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (item.isDirectory) {
+                Icon(
+                    if (isExpanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = TextSecondary
+                )
+            } else {
+                Spacer(modifier = Modifier.width(18.dp))
+            }
+
+            Icon(
+                if (item.isDirectory) {
+                    if (isExpanded) Icons.Default.FolderOpen else Icons.Default.Folder
+                } else Icons.Default.Description,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp).padding(start = 4.dp),
+                tint = if (item.isDirectory) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                       else TextSecondary
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            IconButton(onClick = onDelete, modifier = Modifier.size(20.dp)) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.common_delete),
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                )
+            }
+        }
+
+        if (item.isDirectory && isExpanded) {
+            item.children.forEach { child ->
+                FileTreeItemNode(
+                    item = child,
+                    depth = depth + 1,
+                    isExpanded = false,
+                    isSelected = false,
+                    onToggleFolder = onToggleFolder,
+                    onSelectFile = onSelectFile,
+                    onDelete = { },
+                    onLongPress = { }
+                )
+            }
+        }
     }
 }
 
@@ -673,4 +1074,199 @@ private fun NoProjectContent(onNavigateToProjectList: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun FileDeleteConfirmDialog(
+    name: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.writing_delete_confirm_title)) },
+        text = {
+            Text(stringResource(R.string.writing_delete_confirm_message, name))
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) { Text(stringResource(R.string.common_delete)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun RenameFileDialog(
+    oldName: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newName by remember { mutableStateOf(oldName.removeSuffix(".md")) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.writing_rename_title)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = {
+                        newName = it
+                        error = validateFileName(it, oldName)
+                    },
+                    label = { Text(stringResource(R.string.writing_field_file_name)) },
+                    singleLine = true,
+                    isError = error != null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (error != null) {
+                    Text(
+                        text = error!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(newName) },
+                enabled = newName.isNotBlank()
+            ) { Text(stringResource(R.string.common_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun EditChapterMetaDialog(
+    currentMeta: ChapterMeta,
+    onConfirm: (ChapterMeta) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var title by remember { mutableStateOf(currentMeta.title) }
+    var volume by remember { mutableStateOf(currentMeta.volume) }
+    var summary by remember { mutableStateOf(currentMeta.summary) }
+    var order by remember { mutableStateOf(currentMeta.order.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.writing_edit_meta_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = title, onValueChange = { title = it },
+                    label = { Text(stringResource(R.string.writing_field_title)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = volume, onValueChange = { volume = it },
+                    label = { Text(stringResource(R.string.writing_field_volume)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = summary, onValueChange = { summary = it },
+                    label = { Text(stringResource(R.string.writing_field_summary)) },
+                    modifier = Modifier.fillMaxWidth(), maxLines = 3
+                )
+                OutlinedTextField(
+                    value = order, onValueChange = { order = it.filter { c -> c.isDigit() } },
+                    label = { Text(stringResource(R.string.writing_field_order)) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val newMeta = ChapterMeta(
+                    title = title.ifBlank { currentMeta.title },
+                    order = order.toIntOrNull() ?: currentMeta.order,
+                    volume = volume, summary = summary
+                )
+                onConfirm(newMeta)
+            }) { Text(stringResource(R.string.writing_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        }
+    )
+}
+
+@Composable
+private fun NewFileDialog(
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var fileName by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.writing_new_file_title)) },
+        text = {
+            OutlinedTextField(
+                value = fileName, onValueChange = { fileName = it },
+                label = { Text(stringResource(R.string.writing_field_file_name)) },
+                singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(fileName) },
+                enabled = fileName.isNotBlank()
+            ) { Text(stringResource(R.string.common_create)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        }
+    )
+}
+
+@Composable
+private fun NewFolderDialog(
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var folderName by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.writing_new_folder_title)) },
+        text = {
+            OutlinedTextField(
+                value = folderName, onValueChange = { folderName = it },
+                label = { Text(stringResource(R.string.writing_field_folder_name)) },
+                singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(folderName) },
+                enabled = folderName.isNotBlank()
+            ) { Text(stringResource(R.string.common_create)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        }
+    )
+}
+
+private fun validateFileName(name: String, oldName: String?): String? {
+    if (name.isBlank()) return "Name cannot be empty"
+    val invalidChars = setOf('/', '\\', ':', '*', '?', '"', '<', '>', '|')
+    if (name.any { it in invalidChars }) return "Invalid characters: / \\ : * ? \" < > |"
+    if (oldName != null && name == oldName) return null
+    return null
 }
