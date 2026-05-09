@@ -6,6 +6,7 @@ import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.data.repository.ProjectRepository
 import com.universe_st.quickwriter.util.CoverImageProcessor
 import com.universe_st.quickwriter.util.FileManager
+import com.universe_st.quickwriter.util.FileTreeItem
 import com.universe_st.quickwriter.util.AppUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -187,7 +188,7 @@ class ProjectManagementUseCase(
         val project = getProjectById(projectId)
             ?: return Result.failure(IllegalArgumentException("项目不存在"))
         val filePath = File(File(project.storagePath, "正文"), fileName).absolutePath
-        return fileManager.createFile(filePath).map { filePath }
+        return fileManager.createFile(filePath)
     }
 
     suspend fun deleteChapterFile(projectId: String, fileName: String): Result<Unit> {
@@ -195,6 +196,38 @@ class ProjectManagementUseCase(
             ?: return Result.failure(IllegalArgumentException("项目不存在"))
         val filePath = File(File(project.storagePath, "正文"), fileName).absolutePath
         return fileManager.deleteFileOrDirectory(filePath)
+    }
+
+    fun getFileTree(directoryPath: String): List<FileTreeItem> {
+        return fileManager.getFileTree(File(directoryPath))
+    }
+
+    suspend fun createFileInProject(filePath: String): Result<String> {
+        return fileManager.createFile(filePath)
+    }
+
+    suspend fun createDirectoryInProject(dirPath: String): Result<String> {
+        return fileManager.createDirectory(dirPath)
+    }
+
+    suspend fun deleteFileOrDir(path: String): Result<Unit> {
+        return fileManager.deleteFileOrDirectory(path)
+    }
+
+    suspend fun renameFileOrDir(oldPath: String, newName: String): Result<String> {
+        val oldFile = File(oldPath)
+        val newFile = File(oldFile.parentFile, newName)
+        return try {
+            if (!oldFile.exists()) throw IOException("File not found: $oldPath")
+            if (newFile.exists()) throw IOException("Target name already exists: $newName")
+            if (oldFile.renameTo(newFile)) {
+                Result.success(newFile.absolutePath)
+            } else {
+                Result.failure(IOException("Rename failed"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     fun getProjectDirectory(projectId: String): String {

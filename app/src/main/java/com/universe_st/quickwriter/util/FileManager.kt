@@ -125,38 +125,44 @@ class FileManager(private val context: Context) {
         }
     }
 
-    suspend fun createFile(filePath: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
+    fun createFile(filePath: String): Result<String> {
+        return try {
             val file = File(filePath)
-            if (!file.exists()) {
-                file.parentFile?.mkdirs()
-                file.createNewFile()
+            file.parentFile?.mkdirs()
+            if (file.createNewFile()) {
+                Result.success(file.absolutePath)
+            } else {
+                Result.failure(IOException("File already exists: $filePath"))
             }
-            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun createDirectory(dirPath: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
+    fun createDirectory(dirPath: String): Result<String> {
+        return try {
             val dir = File(dirPath)
-            if (!dir.exists()) {
-                dir.mkdirs()
+            if (dir.mkdirs()) {
+                Result.success(dir.absolutePath)
+            } else if (dir.exists() && dir.isDirectory) {
+                Result.success(dir.absolutePath)
+            } else {
+                Result.failure(IOException("Cannot create directory: $dirPath"))
             }
-            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun deleteFileOrDirectory(path: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
+    fun deleteFileOrDirectory(path: String): Result<Unit> {
+        return try {
             val file = File(path)
-            if (file.exists()) {
+            if (!file.exists()) {
+                Result.failure(IOException("Path not found: $path"))
+            } else {
                 file.deleteRecursively()
+                Result.success(Unit)
             }
-            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -401,4 +407,56 @@ class FileManager(private val context: Context) {
         }
     }
 
+    fun getFileTree(directory: File): List<FileTreeItem> {
+        if (!directory.exists() || !directory.isDirectory) return emptyList()
+        val rootPath = directory.absolutePath
+
+        fun buildTree(dir: File, rootLen: Int): List<FileTreeItem> {
+            val items = mutableListOf<FileTreeItem>()
+            val files = dir.listFiles() ?: return items
+
+            val (dirs, regularFiles) = files.partition { it.isDirectory }
+
+            for (d in dirs.sortedByDescending { it.lastModified() }) {
+                val absPath = d.absolutePath
+                val relPath = if (absPath.length > rootLen) absPath.substring(rootLen + 1) else d.name
+                items.add(FileTreeItem(
+                    name = d.name,
+                    relativePath = relPath,
+                    absolutePath = absPath,
+                    isDirectory = true,
+                    lastModified = d.lastModified(),
+                    children = buildTree(d, rootLen)
+                ))
+            }
+
+            for (f in regularFiles.sortedByDescending { it.lastModified() }) {
+                val absPath = f.absolutePath
+                val relPath = if (absPath.length > rootLen) absPath.substring(rootLen + 1) else f.name
+                if (f.name.startsWith(".")) continue
+                items.add(FileTreeItem(
+                    name = f.name,
+                    relativePath = relPath,
+                    absolutePath = absPath,
+                    isDirectory = false,
+                    lastModified = f.lastModified(),
+                    size = f.length()
+                ))
+            }
+
+            return items
+        }
+
+        return buildTree(directory, rootPath.length)
+    }
 }
+
+data class FileTreeItem(
+    val name: String,
+    val relativePath: String,
+    val absolutePath: String,
+    val isDirectory: Boolean,
+    val lastModified: Long,
+    val children: List<FileTreeItem> = emptyList(),
+    val size: Long = 0
+)
