@@ -36,7 +36,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.launch
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.*
@@ -111,6 +111,7 @@ fun ChatTab(
 
             Box(modifier = Modifier.weight(1f)) {
                 ChatContentArea(
+                    currentSessionId = currentSessionId,
                     messages = messages,
                     sessionState = sessionState,
                 inputText = viewModel.inputText,
@@ -499,6 +500,7 @@ private fun SessionListItem(
 
 @Composable
 private fun ChatContentArea(
+    currentSessionId: String?,
     messages: List<ChatMessage>,
     sessionState: SessionState,
     inputText: String,
@@ -538,23 +540,47 @@ private fun ChatContentArea(
         }
     }
 
-    var shouldAutoScroll by remember { mutableStateOf(true) }
+    var followBottom by remember { mutableStateOf(true) }
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
     val currentDisplayItems by rememberUpdatedState(displayItems)
-    val currentShouldAutoScroll by rememberUpdatedState(shouldAutoScroll)
+    val currentFollowBottom by rememberUpdatedState(followBottom)
+    val currentIsProgrammaticScroll by rememberUpdatedState(isProgrammaticScroll)
     val currentIsScrollingToBottom by rememberUpdatedState(isScrollingToBottom)
 
-    suspend fun scrollToBottom() {
+    LaunchedEffect(currentSessionId) {
+        followBottom = true
+    }
+
+    suspend fun scrollToBottom(animate: Boolean = true) {
         val lastIndex = currentDisplayItems.lastIndex
         if (lastIndex < 0) return
 
-        val layoutInfo = listState.layoutInfo
-        val lastItem = layoutInfo.visibleItemsInfo.lastOrNull { it.index == lastIndex }
-        val targetOffset = if (lastItem != null) {
-            lastItem.size - layoutInfo.viewportEndOffset
-        } else {
-            0
+        isProgrammaticScroll = true
+        try {
+            withFrameNanos { }
+            val layoutInfo = listState.layoutInfo
+            val lastItem = layoutInfo.visibleItemsInfo.lastOrNull { it.index == lastIndex }
+            if (lastItem == null) {
+                if (animate) {
+                    listState.animateScrollToItem(lastIndex)
+                } else {
+                    listState.scrollToItem(lastIndex)
+                }
+                return
+            }
+
+            // Animate so the bottom of the last item stays anchored to the viewport bottom.
+            // Positive offsets move the item upward, so shorter items get a positive offset
+            // and taller items naturally receive a negative offset.
+            val scrollOffset = layoutInfo.viewportEndOffset - lastItem.size
+            if (animate) {
+                listState.animateScrollToItem(lastIndex, scrollOffset)
+            } else {
+                listState.scrollToItem(lastIndex, scrollOffset)
+            }
+        } finally {
+            isProgrammaticScroll = false
         }
-        listState.animateScrollToItem(lastIndex, targetOffset)
     }
 
     val isAtBottom by remember {
@@ -571,11 +597,16 @@ private fun ChatContentArea(
     }
 
     LaunchedEffect(listState) {
-        snapshotFlow { isAtBottom }
-            .collect { atBottom ->
-                android.util.Log.d("ChatScroll", "[snapshotFlow:isAtBottom] atBottom=$atBottom -> shouldAutoScroll=$shouldAutoScroll")
-                if (!currentIsScrollingToBottom) {
-                    shouldAutoScroll = atBottom
+        snapshotFlow { isAtBottom to listState.isScrollInProgress }
+            .collect { (atBottom, isScrollInProgress) ->
+                android.util.Log.d(
+                    "ChatScroll",
+                    "[snapshotFlow:isAtBottom] atBottom=$atBottom scrolling=$isScrollInProgress followBottom=$followBottom"
+                )
+                if (atBottom) {
+                    followBottom = true
+                } else if (isScrollInProgress && !currentIsProgrammaticScroll) {
+                    followBottom = false
                 }
             }
     }
@@ -583,21 +614,20 @@ private fun ChatContentArea(
     // Auto-scroll when display items change (new items added, tool cards transition)
     // Keys: displayItems.size catches new items; messages.size catches TOOL result
     // messages arriving that update tool cards in-place (size unchanged but content changed)
-    LaunchedEffect(displayItems.size, messages.size) {
-        android.util.Log.d("ChatScroll", "[LaunchedEffect:items] size=${displayItems.size} msgs=${messages.size} shouldAutoScroll=$currentShouldAutoScroll")
-        if (currentShouldAutoScroll && !currentIsScrollingToBottom && currentDisplayItems.isNotEmpty()) {
+    LaunchedEffect(currentSessionId, displayItems.size, messages.size) {
+        android.util.Log.d("ChatScroll", "[LaunchedEffect:items] session=$currentSessionId size=${displayItems.size} msgs=${messages.size} followBottom=$currentFollowBottom")
+        if (currentFollowBottom && !currentIsScrollingToBottom && currentDisplayItems.isNotEmpty()) {
             android.util.Log.d("ChatScroll", "[LaunchedEffect:items] -> scrolling to bottom")
             scrollToBottom()
         }
     }
 
-    // Auto-scroll during streaming content growth — key on partialContent directly
-    // because snapshotFlow reads layoutInfo during snapshot apply (before layout is
-    // measured), so it never sees the updated item height until the next recomposition.
+    // Auto-scroll during streaming content growth — key on partialContent directly.
+    // withFrameNanos waits for the next frame so layout has measured the new content height;
+    // reading layoutInfo in the composition phase gives stale (pre-layout) values.
     LaunchedEffect(partialContent) {
-        if (isGenerating && currentShouldAutoScroll && currentDisplayItems.isNotEmpty()) {
-            val lastIndex = currentDisplayItems.lastIndex
-            listState.animateScrollToItem(lastIndex)
+        if (isGenerating && currentFollowBottom && currentDisplayItems.isNotEmpty()) {
+            scrollToBottom(animate = false)
         }
     }
 
@@ -720,7 +750,7 @@ private fun ChatContentArea(
                                         scope.launch {
                                             android.util.Log.d("ChatScroll", "[Button] CLICKED")
                                             onScrollToBottomStart()
-                                            shouldAutoScroll = true
+                                            followBottom = true
                                             try {
                                                 scrollToBottom()
                                             } finally {

@@ -291,7 +291,9 @@ sendMessage(sessionId, content)
 **流式渲染防闪烁** (ChatTab / ChatBubble):
 - 生成中的气泡已合并到 `displayMessages` 列表中（`id = Long.MAX_VALUE` 为稳定 key），不再是 LazyColumn 中独立的 `item {}`，避免消息更新时重建
 - `LaunchedEffect(displayItems.size, messages.size)` 在新 item 或 tool card 变化时滚动到底部
-- **流式内容增长滚动**：`LaunchedEffect(partialContent)` 直接监听流式内容变化触发 `animateScrollToItem(lastIndex)`，不使用 `snapshotFlow(layoutInfo)` 方案 —— 因后者在 snapshot apply 阶段（layout 测量之前）读取 `layoutInfo`，内容变高后 layout 更新但无新 snapshot 触发，导致 scroll 漏掉
+- **流式内容增长滚动**：`LaunchedEffect(partialContent)` 直接监听流式内容变化，通过 `withFrameNanos { }` 等待一帧后读取 `layoutInfo`（此时 layout 已完成测量），计算 `scrollOffset = viewportEndOffset - item.size` 尽量将气泡底部贴齐视口底部，并使用 `scrollToItem(lastIndex, scrollOffset)` 进行即时贴底，保证每个 token 更新都能跟随滚动
+- **滚动偏移修正**：当前实现改为使用 `scrollOffset = viewportEndOffset - item.size`，并在目标项尚未进入可视区时回退到 `scrollToItem(lastIndex)`/`animateScrollToItem(lastIndex)`，避免旧公式在内容增长时被 `coerceAtLeast(0)` 吞掉有效偏移
+- **手动滚动暂停**：ChatTab 维护 `followBottom` 状态，用户上滑离开底部时暂停自动跟随；当用户滚回底部或点击“滚动到底部”按钮时恢复跟随。切换会话时会自动重置为跟随模式
 - 流结束时先设置 `SessionState.Idle` 再持久化 AI 回复（避免生成中气泡与持久化消息双显示）
 - 流式文本**直接渲染**（即时显示 API 返回的增量内容），配有 `PulsingCursor` 闪烁光标指示生成状态 —— 不再使用 TypewriterText 逐字动画，避免动画落后于 API 速度导致的"突然全部显示"问题
 - 生成完成后切换为 Markdown 渲染（`com.github.jeziellago:compose-markdown:0.7.2`）
@@ -442,6 +444,8 @@ ChatTab(projectId, onNavigateToAiConfig?)
 | SSE `data:` 前缀变体不兼容 | 接受 `data:` 和 `data:`（空格可选） | StreamParser.kt |
 | 内容提取仅支持单一路径 | 新增 4 种 fallback 路径 | StreamParser.kt |
 | 生成中气泡 LazyColumn 独立 item 导致闪烁 | 合并为 `displayMessages` + 稳定 key | ChatTab.kt |
+| 流式消息自动滚动不够及时，文字逐字增长时未能持续贴底 | 流式阶段改为每次 `partialContent` 变化都执行即时 `scrollToItem(lastIndex, scrollOffset)` | ChatTab.kt |
+| 用户手动上滑后仍被自动贴底打断 | 引入 `followBottom` 状态，手动离底暂停、回到底部或点击按钮恢复 | ChatTab.kt |
 | Markdown 组件重渲染闪烁 | 更新为 `jeziellago/compose-markdown` | ChatBubble.kt, libs.versions.toml |
 | `INTERNET` 权限缺失 | 添加 `INTERNET` + `ACCESS_NETWORK_STATE` | AndroidManifest.xml |
 | 流结束生成中气泡与持久化消息双显示 | 先设 Idle 再持久化 | ApiDispatcher.kt |

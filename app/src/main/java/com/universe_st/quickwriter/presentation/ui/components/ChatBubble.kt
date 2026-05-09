@@ -11,7 +11,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,19 +24,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.model.ChatMessage
 import com.universe_st.quickwriter.domain.model.MessageRole
-import com.universe_st.quickwriter.domain.model.ToolCall
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import kotlinx.coroutines.delay
 
 @Composable
 fun MessageBubble(
@@ -57,11 +52,9 @@ fun MessageBubble(
         )
         MessageRole.ASSISTANT -> AssistantMessageBubble(
             content = message.content,
-            toolCalls = message.toolCalls,
-            isGenerating = false,
             modifier = modifier
         )
-        MessageRole.TOOL -> { }
+        MessageRole.TOOL -> { /* Tool results rendered as ToolExecutionCard in ChatTab */ }
         MessageRole.SYSTEM -> SystemMessageBubble(
             content = message.content,
             modifier = modifier
@@ -117,7 +110,6 @@ fun UserMessageBubble(
                         onClick = onRetry
                     )
                 }
-
                 SmallIconButton(
                     icon = Icons.Outlined.ContentCopy,
                     contentDescription = stringResource(R.string.chat_copy),
@@ -126,7 +118,6 @@ fun UserMessageBubble(
                         showCopied = true
                     }
                 )
-
                 if (onDelete != null) {
                     SmallIconButton(
                         icon = Icons.Outlined.DeleteOutline,
@@ -155,78 +146,55 @@ fun UserMessageBubble(
 @Composable
 fun AssistantMessageBubble(
     content: String,
-    toolCalls: List<ToolCall>? = null,
-    isGenerating: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val hasContent = content.isNotBlank()
-    val hasToolCalls = toolCalls != null && toolCalls.isNotEmpty()
-
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        if (hasContent || isGenerating) {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 340.dp)
-                    .clip(RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                when {
-                    isGenerating && hasContent -> {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                text = content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                            PulsingCursor()
-                        }
-                    }
-                    isGenerating && !hasContent -> {
-                        LoadingPlaceholder()
-                    }
-                    else -> {
-                        MarkdownText(markdown = content)
-                    }
-                }
-            }
-        }
-
-        // Tool calls now rendered as ToolExecutionCard in ChatTab via message preprocessing
-        if (hasToolCalls && (hasContent || isGenerating)) {
-            Spacer(modifier = Modifier.height(0.dp))
+        Box(
+            modifier = Modifier
+                .widthIn(max = 340.dp)
+                .clip(RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            MarkdownText(markdown = content)
         }
     }
 }
 
 @Composable
-private fun PulsingCursor(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulsingCursor")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "cursorAlpha"
-    )
-
-    Box(
+fun GeneratingBubble(
+    content: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
         modifier = modifier
-            .width(2.dp)
-            .height(16.dp)
-            .background(
-                MaterialTheme.colorScheme.primary.copy(alpha = alpha),
-                RoundedCornerShape(1.dp)
-            )
-    )
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Box(
+            modifier = Modifier
+                .widthIn(max = 340.dp)
+                .clip(RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            Column {
+                if (content.isNotEmpty()) {
+                    MarkdownText(markdown = content)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else {
+                    LoadingPlaceholder()
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -274,118 +242,6 @@ private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ToolCallBubble(
-    toolCalls: List<ToolCall>,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = stringResource(R.string.chat_tool_calls, toolCalls.size),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.tertiary,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 2.dp, start = 4.dp)
-        )
-
-        toolCalls.forEach { toolCall ->
-            var expanded by remember(toolCall.id) { mutableStateOf(false) }
-            val displayName = toolCall.function.name
-                .replace("Tool", "")
-                .replace("Project", " Project")
-                .replace(Regex("([a-z])([A-Z])"), "$1 $2")
-
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp)
-                    .clickable { expanded = !expanded },
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
-                tonalElevation = 1.dp
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.chat_tool_call_title, displayName),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = if (expanded) "▲" else "▼",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
-                        )
-                    }
-
-                    AnimatedVisibility(
-                        visible = expanded,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        val argsText = try {
-                            val gson = com.google.gson.GsonBuilder().setPrettyPrinting().create()
-                            val element = com.google.gson.JsonParser.parseString(toolCall.function.arguments)
-                            gson.toJson(element)
-                        } catch (_: Exception) {
-                            toolCall.function.arguments
-                        }
-                        Text(
-                            text = argsText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp),
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ToolResultBubble(
-    content: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 2.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 340.dp)
-                .clip(RoundedCornerShape(4.dp, 12.dp, 12.dp, 12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text = content.take(300) + if (content.length > 300) "…" else "",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                maxLines = 5,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
 fun SystemMessageBubble(
     content: String,
     modifier: Modifier = Modifier
@@ -403,38 +259,6 @@ fun SystemMessageBubble(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
-    }
-}
-
-@Composable
-fun TypingIndicator(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "typing")
-    val dotCount = 3
-
-    Row(
-        modifier = modifier.padding(horizontal = 4.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(dotCount) { index ->
-            val alpha by infiniteTransition.animateFloat(
-                initialValue = 0.3f,
-                targetValue = 1.0f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(600, delayMillis = index * 200),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "dot$index"
-            )
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
-                    )
-            )
-        }
     }
 }
 
