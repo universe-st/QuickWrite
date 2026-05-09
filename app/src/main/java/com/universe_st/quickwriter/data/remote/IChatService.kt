@@ -12,6 +12,7 @@ interface IChatService {
         projectTitle: String,
         projectAuthor: String,
         projectGenre: String,
+        projectDescription: String,
         storagePath: String,
         modelConfigId: Int?
     ): String

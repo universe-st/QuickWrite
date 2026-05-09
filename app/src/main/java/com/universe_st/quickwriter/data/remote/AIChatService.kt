@@ -110,11 +110,12 @@ class AIChatService : Service(), IChatService {
         projectTitle: String,
         projectAuthor: String,
         projectGenre: String,
+        projectDescription: String,
         storagePath: String,
         modelConfigId: Int?
     ): String {
         return sessionManager.createSessionWithProjectInfo(
-            projectId, projectTitle, projectAuthor, projectGenre, storagePath, modelConfigId
+            projectId, projectTitle, projectAuthor, projectGenre, projectDescription, storagePath, modelConfigId
         )
     }
 

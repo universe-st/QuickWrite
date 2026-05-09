@@ -100,6 +100,7 @@ class SessionManager(
         projectTitle: String,
         projectAuthor: String,
         projectGenre: String,
+        projectDescription: String,
         storagePath: String,
         modelConfigId: Int?
     ): String {
@@ -110,7 +111,7 @@ class SessionManager(
             Timber.w(e, "Failed to read writing rules for project %s", projectId)
             ""
         }
-        val systemPrompt = buildSystemPrompt(projectTitle, projectAuthor, projectGenre, storagePath, writingRules)
+        val systemPrompt = buildSystemPrompt(projectTitle, projectAuthor, projectGenre, projectDescription, storagePath, writingRules)
         val resolvedModelConfigId = modelConfigId ?: 0
 
         val sessionId = createSession(projectId, systemPrompt, resolvedModelConfigId)
@@ -326,8 +327,8 @@ class SessionManager(
         return _sessionStates[sessionId]?.value is SessionState.Generating
     }
 
-    fun buildSystemPrompt(title: String, author: String, genre: String, storagePath: String, writingRules: String = ""): String {
-        return promptManager.getNovelWritingAssistantPrompt(title, author, genre, storagePath, writingRules)
+    fun buildSystemPrompt(title: String, author: String, genre: String, description: String, storagePath: String, writingRules: String = ""): String {
+        return promptManager.getNovelWritingAssistantPrompt(title, author, genre, storagePath, description, writingRules)
     }
 
     companion object {

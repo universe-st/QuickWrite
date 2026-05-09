@@ -160,7 +160,7 @@ class AiChatViewModel(
                         if (project != null) {
                             service.createSessionWithProjectInfo(
                                 projectId, project.title, project.author,
-                                project.genre, project.storagePath, config.id
+                                project.genre, project.description ?: "", project.storagePath, config.id
                             )
                         } else {
                             service.createSession(projectId, null, config.id)
