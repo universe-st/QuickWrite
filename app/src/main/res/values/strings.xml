@@ -120,6 +120,35 @@
     <string name="writing_chapter_count">%1$d Chapters</string>
     <string name="writing_status_bar">Ch. %1$s · %2$s</string>
     <string name="writing_save_content_desc">Save</string>
+    <string name="writing_browse_chapters">Chapters</string>
+    <string name="writing_browse_settings">Settings</string>
+    <string name="writing_browse_timeline">Timeline</string>
+    <string name="writing_browse_logs">Logs</string>
+    <string name="writing_browse_config">Config</string>
+    <string name="writing_file_count">%1$d files</string>
+    <string name="writing_no_files">No files</string>
+    <string name="writing_delete_confirm_title">Confirm Delete</string>
+    <string name="writing_delete_confirm_message">Delete \"%1$s\"? This cannot be undone.</string>
+    <string name="writing_rename_title">Rename</string>
+    <string name="writing_rename_file">Rename File</string>
+    <string name="writing_edit_meta">Edit Metadata</string>
+    <string name="writing_edit_meta_title">Edit Chapter Metadata</string>
+    <string name="writing_field_title">Title</string>
+    <string name="writing_field_volume">Volume</string>
+    <string name="writing_field_summary">Summary</string>
+    <string name="writing_field_order">Order</string>
+    <string name="writing_field_file_name">File Name</string>
+    <string name="writing_field_folder_name">Folder Name</string>
+    <string name="writing_add_file">Add File</string>
+    <string name="writing_add_folder">Add Folder</string>
+    <string name="writing_new_file_title">New File</string>
+    <string name="writing_new_folder_title">New Folder</string>
+    <string name="writing_editor_editing_file">Editing: %1$s</string>
+    <string name="writing_editor_editing_chapter">Editing: Chapter</string>
+    <string name="error_invalid_file_name">Invalid file name. Avoid: / \\ : * ? \" &lt; &gt; |</string>
+    <string name="error_file_name_exists">A file with this name already exists</string>
+    <string name="error_folder_not_empty">Folder is not empty</string>
+    <string name="writing_save">Save</string>
 
     <!-- ===== New Chapter Dialog ===== -->
     <string name="chapter_new_title">New Chapter</string>

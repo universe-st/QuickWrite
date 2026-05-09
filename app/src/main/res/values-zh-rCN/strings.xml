@@ -120,6 +120,35 @@
     <string name="writing_chapter_count">%1$d 章</string>
     <string name="writing_status_bar">第 %1$s章 · 字数 %2$s</string>
     <string name="writing_save_content_desc">保存</string>
+    <string name="writing_browse_chapters">章节</string>
+    <string name="writing_browse_settings">设定</string>
+    <string name="writing_browse_timeline">时间线</string>
+    <string name="writing_browse_logs">记录</string>
+    <string name="writing_browse_config">配置</string>
+    <string name="writing_file_count">%1$d 个文件</string>
+    <string name="writing_no_files">暂无文件</string>
+    <string name="writing_delete_confirm_title">确认删除</string>
+    <string name="writing_delete_confirm_message">确定删除 \"%1$s\"？此操作不可撤销。</string>
+    <string name="writing_rename_title">重命名</string>
+    <string name="writing_rename_file">修改文件名</string>
+    <string name="writing_edit_meta">修改元数据</string>
+    <string name="writing_edit_meta_title">修改章节元数据</string>
+    <string name="writing_field_title">标题</string>
+    <string name="writing_field_volume">分卷</string>
+    <string name="writing_field_summary">摘要</string>
+    <string name="writing_field_order">序号</string>
+    <string name="writing_field_file_name">文件名</string>
+    <string name="writing_field_folder_name">文件夹名</string>
+    <string name="writing_add_file">添加文件</string>
+    <string name="writing_add_folder">添加文件夹</string>
+    <string name="writing_new_file_title">新建文件</string>
+    <string name="writing_new_folder_title">新建文件夹</string>
+    <string name="writing_editor_editing_file">正在编辑: %1$s</string>
+    <string name="writing_editor_editing_chapter">正在编辑: 章节</string>
+    <string name="error_invalid_file_name">文件名不合法，不能包含: / \\ : * ? \" &lt; &gt; |</string>
+    <string name="error_file_name_exists">已存在同名文件</string>
+    <string name="error_folder_not_empty">文件夹非空</string>
+    <string name="writing_save">保存</string>
 
     <!-- ===== 新建章节对话框 ===== -->
     <string name="chapter_new_title">新建章节</string>
