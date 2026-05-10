@@ -527,7 +527,7 @@ private fun EditorContent(
 
     if (!showChapterList && isChapterMode && state.chapters.isEmpty()) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
