@@ -42,6 +42,7 @@ import com.universe_st.quickwriter.presentation.ui.screens.ProjectDetailScreen
 import com.universe_st.quickwriter.presentation.ui.screens.ProjectEditScreen
 import com.universe_st.quickwriter.presentation.ui.screens.ProjectListScreen
 import com.universe_st.quickwriter.presentation.ui.screens.SettingsScreen
+import com.universe_st.quickwriter.presentation.ui.components.TxtImportDialog
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectCreateViewModel
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectCreateViewModelFactory
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailViewModel
@@ -96,6 +97,12 @@ fun MainScreen() {
         uri?.let {
             projectListViewModel.importProject(context, it)
         }
+    }
+    var showTxtImportDialog by remember { mutableStateOf<Uri?>(null) }
+    val txtFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { showTxtImportDialog = it }
     }
 
     Scaffold(
@@ -177,6 +184,9 @@ fun MainScreen() {
                     },
                     onImportProject = {
                         zipFilePickerLauncher.launch(arrayOf("application/zip"))
+                    },
+                    onImportTxt = {
+                        txtFilePickerLauncher.launch(arrayOf("text/plain", "application/octet-stream"))
                     },
                     viewModel = projectListViewModel
                 )
@@ -354,6 +364,20 @@ fun MainScreen() {
                 }
             )
         }
+    }
+
+    showTxtImportDialog?.let { uri ->
+        val fileName = uri.lastPathSegment?.substringAfterLast('/')?.removeSuffix(".txt") ?: ""
+        TxtImportDialog(
+            defaultTitle = fileName,
+            onConfirm = { title, author, genre, patterns, customRegex ->
+                showTxtImportDialog = null
+                projectListViewModel.importFromTxt(context, uri, title, author, genre, patterns, customRegex.ifBlank { null })
+            },
+            onDismiss = {
+                showTxtImportDialog = null
+            }
+        )
     }
 }
 

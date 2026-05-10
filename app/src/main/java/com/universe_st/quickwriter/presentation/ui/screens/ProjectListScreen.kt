@@ -37,6 +37,7 @@ fun ProjectListScreen(
     onProjectLongClick: (String) -> Unit,
     onProjectClick: (String) -> Unit,
     onImportProject: () -> Unit,
+    onImportTxt: () -> Unit,
     viewModel: ProjectListViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -108,6 +109,13 @@ fun ProjectListScreen(
                                 onClick = {
                                     showMenu = false
                                     onImportProject()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.menu_import_txt)) },
+                                onClick = {
+                                    showMenu = false
+                                    onImportTxt()
                                 }
                             )
                         }
