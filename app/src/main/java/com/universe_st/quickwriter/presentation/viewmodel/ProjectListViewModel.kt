@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.usecase.ProjectManagementUseCase
+import com.universe_st.quickwriter.util.ChapterPattern
 import com.universe_st.quickwriter.util.UiText
 import com.universe_st.quickwriter.domain.usecase.SettingsUseCase
 import com.universe_st.quickwriter.util.AppUtils
@@ -109,9 +110,51 @@ class ProjectListViewModel(
         }
     }
 
+    fun importFromTxt(
+        context: Context,
+        txtUri: Uri,
+        title: String,
+        author: String,
+        genre: String,
+        selectedPatterns: Set<ChapterPattern>,
+        customRegex: String?
+    ) {
+        viewModelScope.launch {
+            _uiState.value = ProjectListUiState.TxtImporting
+            try {
+                val result = projectManagementUseCase.importProjectFromTxt(
+                    context = context,
+                    txtUri = txtUri,
+                    title = title,
+                    author = author,
+                    genre = genre,
+                    selectedPatterns = selectedPatterns,
+                    customRegex = customRegex
+                )
+                if (result.isSuccess) {
+                    val chapterCount = result.getOrThrow()
+                    _uiState.value = ProjectListUiState.TxtImportSuccess(chapterCount)
+                    loadProjects()
+                } else {
+                    val error = result.exceptionOrNull()
+                    _uiState.value = ProjectListUiState.TxtImportError(
+                        UiText.DynamicString(error?.message ?: "Import failed")
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = ProjectListUiState.TxtImportError(
+                    UiText.DynamicString(e.message ?: "Import failed")
+                )
+            }
+        }
+    }
+
     fun resetImportState() {
         val current = _uiState.value
-        if (current is ProjectListUiState.ImportSuccess || current is ProjectListUiState.ImportError) {
+        if (current is ProjectListUiState.ImportSuccess ||
+            current is ProjectListUiState.ImportError ||
+            current is ProjectListUiState.TxtImportSuccess ||
+            current is ProjectListUiState.TxtImportError) {
             _uiState.value = ProjectListUiState.Empty
         }
     }
@@ -138,4 +181,7 @@ sealed class ProjectListUiState {
     data class Error(val message: UiText) : ProjectListUiState()
     data class ImportSuccess(val message: UiText) : ProjectListUiState()
     data class ImportError(val message: UiText) : ProjectListUiState()
+    object TxtImporting : ProjectListUiState()
+    data class TxtImportSuccess(val chapterCount: Int) : ProjectListUiState()
+    data class TxtImportError(val message: UiText) : ProjectListUiState()
 }

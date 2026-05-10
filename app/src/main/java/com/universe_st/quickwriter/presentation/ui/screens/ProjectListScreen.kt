@@ -65,6 +65,18 @@ fun ProjectListScreen(
                 )
                 viewModel.resetImportState()
             }
+            is ProjectListUiState.TxtImportSuccess -> {
+                val count = state.chapterCount
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.txt_import_success, count)
+                )
+                viewModel.resetImportState()
+            }
+            is ProjectListUiState.TxtImportError -> {
+                val msg = state.message.asString(context)
+                snackbarHostState.showSnackbar(msg)
+                viewModel.resetImportState()
+            }
             else -> {}
         }
     }
@@ -144,7 +156,7 @@ fun ProjectListScreen(
                 .padding(innerPadding)
         ) {
             when (uiState) {
-                is ProjectListUiState.Loading, is ProjectListUiState.Importing -> {
+                is ProjectListUiState.Loading, is ProjectListUiState.Importing, is ProjectListUiState.TxtImporting -> {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -154,6 +166,13 @@ fun ProjectListScreen(
                         if (uiState is ProjectListUiState.Importing) {
                             Text(
                                 text = stringResource(R.string.project_importing),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        if (uiState is ProjectListUiState.TxtImporting) {
+                            Text(
+                                text = stringResource(R.string.txt_import_importing),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -215,7 +234,9 @@ fun ProjectListScreen(
                     }
                 }
                 is ProjectListUiState.ImportSuccess,
-                is ProjectListUiState.ImportError -> {
+                is ProjectListUiState.ImportError,
+                is ProjectListUiState.TxtImportSuccess,
+                is ProjectListUiState.TxtImportError -> {
                     // Handled via LaunchedEffect + Snackbar
                 }
             }
