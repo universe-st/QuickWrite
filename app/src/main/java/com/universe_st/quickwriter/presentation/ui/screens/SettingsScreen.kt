@@ -1,5 +1,6 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -126,6 +127,18 @@ fun SettingsScreen(
     LaunchedEffect(initialSubScreen) {
         if (initialSubScreen != null) {
             currentSubScreen = initialSubScreen
+        }
+    }
+
+    BackHandler(enabled = currentSubScreen != null) {
+        when (currentSubScreen) {
+            SettingsSubScreen.AiConfigEdit -> {
+                editingConfig = null
+                currentSubScreen = SettingsSubScreen.AiConfigList
+            }
+            else -> {
+                currentSubScreen = null
+            }
         }
     }
 

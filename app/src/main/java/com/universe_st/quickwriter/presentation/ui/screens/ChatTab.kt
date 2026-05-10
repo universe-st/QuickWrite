@@ -1,6 +1,7 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -77,6 +78,16 @@ fun ChatTab(
     val sessionState by viewModel.sessionState.collectAsState()
     val currentSessionId = viewModel.currentSessionId
     val showSidebar = viewModel.showSidebar
+    val sidebarTransition = remember { MutableTransitionState(false) }
+    sidebarTransition.targetState = showSidebar
+
+    var showInput by remember { mutableStateOf(true) }
+    LaunchedEffect(showSidebar, sidebarTransition.currentState, sidebarTransition.isIdle) {
+        showInput = when {
+            showSidebar -> false
+            else -> sidebarTransition.isIdle && !sidebarTransition.currentState
+        }
+    }
     var deleteConfirmTarget by remember { mutableStateOf<String?>(null) }
     var deleteMessageIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -113,7 +124,7 @@ fun ChatTab(
         Box(modifier = Modifier.weight(1f)) {
         Row(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
-                visible = showSidebar,
+                visibleState = sidebarTransition,
                 enter = slideInHorizontally(initialOffsetX = { -it }),
                 exit = slideOutHorizontally(targetOffsetX = { -it })
             ) {
@@ -133,7 +144,7 @@ fun ChatTab(
                 )
             }
 
-            if (showSidebar) {
+            if (sidebarTransition.currentState) {
                 VerticalDivider()
             }
 
@@ -146,6 +157,7 @@ fun ChatTab(
                     isGenerating = isGenerating,
                     partialContent = partialContent,
                     streamingReasoning = streamingReasoning,
+                    showInput = showInput,
                     onInputChange = { viewModel.inputText = it },
                     onSend = {
                         if (referenceBlocks.isNotEmpty()) {
@@ -168,7 +180,7 @@ fun ChatTab(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                if (showSidebar) {
+                if (sidebarTransition.currentState) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -583,6 +595,7 @@ private fun ChatContentArea(
     isGenerating: Boolean,
     partialContent: String?,
     streamingReasoning: String?,
+    showInput: Boolean,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -783,14 +796,16 @@ private fun ChatContentArea(
                 )
             }
 
-            ChatInputArea(
-                inputText = inputText,
-                isGenerating = isGenerating,
-                enabled = true,
-                onInputChange = onInputChange,
-                onSend = onSend,
-                onStop = onStop
-            )
+            if (showInput) {
+                ChatInputArea(
+                    inputText = inputText,
+                    isGenerating = isGenerating,
+                    enabled = true,
+                    onInputChange = onInputChange,
+                    onSend = onSend,
+                    onStop = onStop
+                )
+            }
         }
     }
 }
