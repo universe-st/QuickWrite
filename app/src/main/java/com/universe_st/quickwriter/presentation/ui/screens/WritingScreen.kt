@@ -485,45 +485,43 @@ private fun WritingTopBar(
                         )
                     }
                 }
-                if (showSaveButton) {
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.writing_more_actions))
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
-                        ) {
-                            if (showSaveButton) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.writing_save_content_desc)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onSave()
-                                    },
-                                    leadingIcon = { Icon(Icons.Default.Save, contentDescription = null) }
-                                )
-                                HorizontalDivider()
-                            }
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.writing_more_actions))
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        if (showSaveButton) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.writing_copy_full_text)) },
+                                text = { Text(stringResource(R.string.writing_save_content_desc)) },
                                 onClick = {
                                     menuExpanded = false
-                                    val content = (uiState as? WritingUiState.Success)?.editorContent ?: ""
-                                    onCopyFullText(content)
+                                    onSave()
                                 },
-                                leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) }
+                                leadingIcon = { Icon(Icons.Default.Save, contentDescription = null) }
                             )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.writing_copy_plain_text)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    val content = (uiState as? WritingUiState.Success)?.editorContent ?: ""
-                                    onCopyPlainText(content)
-                                },
-                                leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, contentDescription = null) }
-                            )
+                            HorizontalDivider()
                         }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.writing_copy_full_text)) },
+                            onClick = {
+                                menuExpanded = false
+                                val content = (uiState as? WritingUiState.Success)?.editorContent ?: ""
+                                onCopyFullText(content)
+                            },
+                            leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.writing_copy_plain_text)) },
+                            onClick = {
+                                menuExpanded = false
+                                val content = (uiState as? WritingUiState.Success)?.editorContent ?: ""
+                                onCopyPlainText(content)
+                            },
+                            leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, contentDescription = null) }
+                        )
                     }
                 }
             }
