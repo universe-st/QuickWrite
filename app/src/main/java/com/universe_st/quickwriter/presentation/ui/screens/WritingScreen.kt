@@ -59,6 +59,8 @@ import com.universe_st.quickwriter.presentation.viewmodel.FileBrowserMode
 import com.universe_st.quickwriter.util.AppEditorConfig
 import com.universe_st.quickwriter.util.ChapterMeta
 import com.universe_st.quickwriter.util.FileTreeItem
+import com.universe_st.quickwriter.presentation.viewmodel.ReferenceBlock
+import android.widget.Toast
 
 private data class DeleteConfirmData(
     val name: String,
@@ -140,7 +142,8 @@ fun WritingScreen(
                             projectId = SessionManager.NO_PROJECT_ID,
                             onNavigateToAiConfig = onNavigateToAiConfig,
                             isNoProjectMode = true,
-                            onNavigateToProjectList = onNavigateToProjectList
+                            onNavigateToProjectList = onNavigateToProjectList,
+                            referenceBlocks = emptyList()
                         )
                     }
                     is WritingUiState.Loading -> {
@@ -168,6 +171,10 @@ fun WritingScreen(
                         }
                     }
                     is WritingUiState.Success -> {
+                        LaunchedEffect(state.project.id) {
+                            aiChatViewModel.loadSessions(state.project.id)
+                        }
+                        val context = LocalContext.current
                         Box(modifier = Modifier.fillMaxSize()) {
                             EditorContent(
                                 state = state,
@@ -193,14 +200,39 @@ fun WritingScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .alpha(if (state.selectedTab == 0) 1f else 0f),
-                                editorEnabled = state.selectedTab == 0
+                                editorEnabled = state.selectedTab == 0,
+                                onEditorDispose = { scrollY, selStart ->
+                                    viewModel.saveEditorScrollPosition(scrollY, selStart)
+                                },
+                                onAddToConversation = { selectedText, startLine, endLine ->
+                                    if (aiChatViewModel.currentSessionId == null) {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.chat_no_session_selected),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        return@EditorContent
+                                    }
+                                    val filePath = when {
+                                        state.fileBrowserMode == FileBrowserMode.CHAPTERS && state.currentChapterIndex >= 0 ->
+                                            state.chapters[state.currentChapterIndex].filePath
+                                        state.currentFilePath != null ->
+                                            state.currentFilePath
+                                        else -> return@EditorContent
+                                    }
+                                    viewModel.addReference(filePath, selectedText, startLine, endLine)
+                                },
+                                addToConversationLabel = stringResource(R.string.chat_add_to_conversation)
                             )
 
                             if (state.selectedTab == 1) {
                                 ChatTab(
                                     viewModel = aiChatViewModel,
                                     projectId = state.project.id,
-                                    onNavigateToAiConfig = onNavigateToAiConfig
+                                    onNavigateToAiConfig = onNavigateToAiConfig,
+                                    referenceBlocks = state.referenceBlocks,
+                                    onRemoveReference = { id -> viewModel.removeReference(id) },
+                                    onReferencesCleared = { viewModel.clearReferences() }
                                 )
                             }
                         }
@@ -484,7 +516,10 @@ private fun EditorContent(
     onCreateNewFolder: () -> Unit,
     onEditChapterMeta: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    editorEnabled: Boolean = true
+    editorEnabled: Boolean = true,
+    onEditorDispose: ((scrollY: Int, selectionStart: Int) -> Unit)? = null,
+    onAddToConversation: ((selectedText: String, startLine: Int, endLine: Int) -> Unit)? = null,
+    addToConversationLabel: String = "Add to Chat"
 ) {
     val isDark = MaterialTheme.colorScheme.background == Color(0xFF121212)
     val editorConfig = remember(isDark) { AppEditorConfig(isDark = isDark) }
@@ -586,7 +621,12 @@ private fun EditorContent(
                                 .padding(4.dp),
                             editorConfig = editorConfig,
                             highlightingMode = HighlightingMode.MARKDOWN,
-                            enabled = editorEnabled
+                            enabled = editorEnabled,
+                            initialScrollY = state.editorScrollY,
+                            initialSelectionStart = state.editorSelectionStart,
+                            onDispose = onEditorDispose,
+                            onAddToConversation = onAddToConversation,
+                            addToConversationLabel = addToConversationLabel
                         )
                     } else {
                         Box(

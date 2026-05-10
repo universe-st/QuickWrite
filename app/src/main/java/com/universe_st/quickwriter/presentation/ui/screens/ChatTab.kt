@@ -49,6 +49,7 @@ import com.universe_st.quickwriter.domain.model.StatItem
 import com.universe_st.quickwriter.domain.model.ToolResultParsed
 import com.universe_st.quickwriter.util.ToolResultParser
 import com.universe_st.quickwriter.util.UiText
+import com.universe_st.quickwriter.presentation.viewmodel.ReferenceBlock
 import com.universe_st.quickwriter.data.remote.SessionManager
 
 @Composable
@@ -57,7 +58,10 @@ fun ChatTab(
     projectId: String,
     onNavigateToAiConfig: () -> Unit = {},
     isNoProjectMode: Boolean = false,
-    onNavigateToProjectList: () -> Unit = {}
+    onNavigateToProjectList: () -> Unit = {},
+    referenceBlocks: List<ReferenceBlock> = emptyList(),
+    onRemoveReference: (String) -> Unit = {},
+    onReferencesCleared: () -> Unit = {}
 ) {
     LaunchedEffect(projectId, isNoProjectMode) {
         if (isNoProjectMode) {
@@ -143,10 +147,24 @@ fun ChatTab(
                     partialContent = partialContent,
                     streamingReasoning = streamingReasoning,
                     onInputChange = { viewModel.inputText = it },
-                    onSend = { viewModel.sendMessage() },
+                    onSend = {
+                        if (referenceBlocks.isNotEmpty()) {
+                            val input = viewModel.inputText.trim()
+                            if (input.isNotEmpty()) {
+                                val message = ReferenceBlock.buildReferenceText(referenceBlocks, input)
+                                viewModel.sendMessageWithContent(message)
+                                viewModel.inputText = ""
+                                onReferencesCleared()
+                            }
+                        } else {
+                            viewModel.sendMessage()
+                        }
+                    },
                     onStop = { viewModel.stopGeneration() },
                     onRetry = { viewModel.retryLastMessage() },
                     onDeleteMessage = { deleteMessageIndex = it },
+                    referenceBlocks = referenceBlocks,
+                    onRemoveReference = onRemoveReference,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -570,6 +588,8 @@ private fun ChatContentArea(
     onStop: () -> Unit,
     onRetry: () -> Unit,
     onDeleteMessage: (Int) -> Unit,
+    referenceBlocks: List<ReferenceBlock> = emptyList(),
+    onRemoveReference: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -755,6 +775,14 @@ private fun ChatContentArea(
                 }
             }
 
+            if (referenceBlocks.isNotEmpty()) {
+                ReferenceBlockBar(
+                    blocks = referenceBlocks,
+                    onRemove = onRemoveReference,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             ChatInputArea(
                 inputText = inputText,
                 isGenerating = isGenerating,
@@ -835,6 +863,63 @@ private fun ChatInputArea(
                         contentDescription = stringResource(R.string.chat_send),
                         modifier = Modifier.size(20.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReferenceBlockBar(
+    blocks: List<ReferenceBlock>,
+    onRemove: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        blocks.forEach { block ->
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                tonalElevation = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "${stringResource(R.string.chat_reference_label)} ${block.filePath}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = block.contentPreview,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(
+                        onClick = { onRemove(block.id) },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.chat_reference_remove),
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

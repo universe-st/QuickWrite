@@ -263,6 +263,18 @@ class AiChatViewModel(
         } catch (e: Exception) { Timber.e(e, "AiChatViewModel.sendMessage failed — message dropped") }
     }
 
+    fun sendMessageWithContent(content: String) {
+        val trimmed = content.trim()
+        if (trimmed.isEmpty()) return
+        if (!hasModelConfig) return
+        val service = chatService ?: return
+        val sessionId = currentSessionId ?: return
+
+        try {
+            service.sendMessage(sessionId, trimmed)
+        } catch (e: Exception) { Timber.e(e, "AiChatViewModel.sendMessageWithContent failed") }
+    }
+
     fun stopGeneration() {
         val sessionId = currentSessionId ?: return
         try {

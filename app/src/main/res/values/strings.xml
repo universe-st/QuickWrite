@@ -517,4 +517,11 @@
     <string name="tool_chapters">Chapters</string>
     <string name="tool_words">Words</string>
     <string name="tool_fields">Fields</string>
+    <!-- ===== Reference Blocks ===== -->
+    <string name="chat_add_to_conversation">Add to Chat</string>
+    <string name="chat_reference_label">Reference</string>
+    <string name="chat_reference_max_reached">Maximum 5 references</string>
+    <string name="chat_reference_remove">Remove reference</string>
+    <string name="chat_no_session_selected">Please select a conversation first</string>
+    <string name="chat_reference_added">Reference added</string>
 </resources>

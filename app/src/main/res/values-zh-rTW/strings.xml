@@ -517,4 +517,11 @@
     <string name="tool_chapters">章節</string>
     <string name="tool_words">字數</string>
     <string name="tool_fields">欄位</string>
+    <!-- ===== 引用區塊 ===== -->
+    <string name="chat_add_to_conversation">新增至對話</string>
+    <string name="chat_reference_label">引用</string>
+    <string name="chat_reference_max_reached">最多新增5個引用</string>
+    <string name="chat_reference_remove">移除引用</string>
+    <string name="chat_no_session_selected">請先選擇一個對話</string>
+    <string name="chat_reference_added">已新增引用</string>
 </resources>

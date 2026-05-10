@@ -29,6 +29,34 @@ data class ChapterFileInfo(
     val filePath: String
 )
 
+data class ReferenceBlock(
+    val id: String,
+    val filePath: String,
+    val contentPreview: String,
+    val content: String,
+    val startLine: Int,
+    val endLine: Int
+) {
+    companion object {
+        fun buildReferenceText(blocks: List<ReferenceBlock>, userInput: String): String {
+            if (blocks.isEmpty()) return userInput
+            val refLines = blocks.joinToString("\n\n") { ref ->
+                val lineInfo = if (ref.startLine == ref.endLine)
+                    ref.startLine.toString()
+                else
+                    "${ref.startLine}-${ref.endLine}"
+                val header = "<ref path=\"${ref.filePath}\" lines=\"$lineInfo\">"
+                if (ref.content.lines().size < 5 && ref.content.isNotBlank()) {
+                    "$header\n${ref.content}\n</ref>"
+                } else {
+                    "$header\n</ref>"
+                }
+            }
+            return "$refLines\n\n$userInput"
+        }
+    }
+}
+
 enum class FileBrowserMode {
     CHAPTERS, SETTINGS, TIMELINE, LOGS, CONFIG;
 
@@ -69,7 +97,10 @@ sealed class WritingUiState {
         val fileTree: List<FileTreeItem> = emptyList(),
         val expandedFolders: Set<String> = emptySet(),
         val currentFilePath: String? = null,
-        val fileLastModified: Long = 0
+        val fileLastModified: Long = 0,
+        val editorScrollY: Int = 0,
+        val editorSelectionStart: Int = 0,
+        val referenceBlocks: List<ReferenceBlock> = emptyList()
     ) : WritingUiState()
     data class Error(val message: UiText) : WritingUiState()
 }
@@ -108,7 +139,37 @@ class WritingViewModel(
                     return@launch
                 }
                 loadAutoSaveSettings()
-                loadChapters(project, useSavedTab = true)
+                val isSameProject = project.id == lastProjectId
+                val savedChapterIdx = if (isSameProject) lastChapterIndex else 0
+                val savedMode = if (isSameProject) lastFileBrowserMode else FileBrowserMode.CHAPTERS
+                val savedFilePath = if (isSameProject) lastCurrentFilePath else null
+
+                loadChapters(project, useSavedTab = true, restoreChapterIndex = savedChapterIdx)
+
+                if (isSameProject && savedMode != FileBrowserMode.CHAPTERS) {
+                    val state = _uiState.value as? WritingUiState.Success ?: return@launch
+                    val dirPath = File(state.project.storagePath, savedMode.dirName()).absolutePath
+                    val tree = projectManagementUseCase.getFileTree(dirPath)
+                    var newState = state.copy(
+                        fileBrowserMode = savedMode,
+                        fileTree = tree,
+                        currentFilePath = null,
+                        editorContent = ""
+                    )
+                    if (savedFilePath != null) {
+                        val file = File(savedFilePath)
+                        if (file.exists()) {
+                            val content = projectManagementUseCase.readFileContent(savedFilePath).getOrDefault("")
+                            newState = newState.copy(
+                                currentFilePath = savedFilePath,
+                                editorContent = content,
+                                wordCount = countWords(content),
+                                fileLastModified = file.lastModified()
+                            )
+                        }
+                    }
+                    _uiState.value = newState
+                }
             } catch (e: Exception) {
                 _uiState.value = WritingUiState.Error(UiText.StringResource(R.string.error_project_load_failed))
             }
@@ -174,8 +235,16 @@ class WritingViewModel(
     private suspend fun loadChapters(
         project: ProjectEntity,
         useSavedTab: Boolean = false,
-        preserveIndex: Boolean = false
+        preserveIndex: Boolean = false,
+        emitEmptyState: Boolean = true,
+        restoreChapterIndex: Int = 0
     ) {
+        val prevSuccess = _uiState.value as? WritingUiState.Success
+        val prevScrollY = prevSuccess?.editorScrollY
+            ?: if (project.id == lastProjectId) lastScrollY else 0
+        val prevSelectionStart = prevSuccess?.editorSelectionStart
+            ?: if (project.id == lastProjectId) lastSelectionStart else 0
+
         val currentFileName = if (preserveIndex) {
             val st = _uiState.value as? WritingUiState.Success
             st?.chapters?.getOrNull(st.currentChapterIndex)?.fileName
@@ -247,23 +316,71 @@ class WritingViewModel(
 
         val targetIndex = if (preserveIndex && currentFileName != null) {
             chapterInfoList.indexOfFirst { it.fileName == currentFileName }.let { if (it >= 0) it else 0 }
-        } else 0
+        } else {
+            restoreChapterIndex.coerceIn(0, (chapterInfoList.size - 1).coerceAtLeast(0))
+        }
 
-        _uiState.value = WritingUiState.Success(
-            project = project,
-            chapters = chapterInfoList,
-            currentChapterIndex = if (chapterInfoList.isEmpty()) -1 else targetIndex,
-            editorContent = "",
-            currentChapterMeta = ChapterMeta(),
-            wordCount = 0,
-            selectedTab = savedTab,
-            isSaving = false,
-            isDirty = false,
-            autoSaveImmediately = autoSaveImmediately
-        )
+        if (emitEmptyState) {
+            _uiState.value = WritingUiState.Success(
+                project = project,
+                chapters = chapterInfoList,
+                currentChapterIndex = if (chapterInfoList.isEmpty()) -1 else targetIndex,
+                editorContent = "",
+                currentChapterMeta = ChapterMeta(),
+                wordCount = 0,
+                selectedTab = savedTab,
+                isSaving = false,
+                isDirty = false,
+                autoSaveImmediately = autoSaveImmediately,
+                editorScrollY = prevScrollY,
+                editorSelectionStart = prevSelectionStart,
+                referenceBlocks = prevSuccess?.referenceBlocks ?: emptyList()
+            )
 
-        if (chapterInfoList.isNotEmpty()) {
-            selectChapterInternal(project, chapterInfoList, targetIndex)
+            if (chapterInfoList.isNotEmpty()) {
+                selectChapterInternal(project, chapterInfoList, targetIndex)
+            }
+        } else {
+            var editorContent = ""
+            var chapterMeta = ChapterMeta()
+            var fileLastModified = 0L
+            var updatedChapters = chapterInfoList
+
+            if (chapterInfoList.isNotEmpty() && targetIndex >= 0) {
+                val chapter = chapterInfoList[targetIndex]
+                val content = projectManagementUseCase.readFileContent(chapter.filePath).getOrDefault("")
+                val (meta, body) = ChapterFileHelper.parseChapterContent(content)
+                editorContent = body
+                chapterMeta = meta
+                val file = File(chapter.filePath)
+                fileLastModified = if (file.exists()) file.lastModified() else 0L
+                updatedChapters = chapterInfoList.toMutableList().apply {
+                    this[targetIndex] = chapter.copy(
+                        title = meta.title.ifBlank { chapter.title },
+                        order = meta.order,
+                        volume = meta.volume,
+                        summary = meta.summary
+                    )
+                }
+            }
+
+            _uiState.value = WritingUiState.Success(
+                project = project,
+                chapters = updatedChapters,
+                currentChapterIndex = if (chapterInfoList.isEmpty()) -1 else targetIndex,
+                editorContent = editorContent,
+                currentChapterMeta = chapterMeta,
+                wordCount = countWords(editorContent),
+                selectedTab = savedTab,
+                isSaving = false,
+                isDirty = false,
+                autoSaveImmediately = autoSaveImmediately,
+                fileLastModified = fileLastModified,
+                editorScrollY = prevScrollY,
+                editorSelectionStart = prevSelectionStart,
+                referenceBlocks = prevSuccess?.referenceBlocks ?: emptyList()
+            )
+            lastChapterIndex = targetIndex.coerceIn(0, (chapterInfoList.size - 1).coerceAtLeast(0))
         }
 
         projectManagementUseCase.recalculateProjectWordCount(project.id)
@@ -289,7 +406,10 @@ class WritingViewModel(
             summary = meta.summary
         )
 
-        val currentTab = (_uiState.value as? WritingUiState.Success)?.selectedTab ?: 0
+        val currentState = _uiState.value as? WritingUiState.Success
+        val currentTab = currentState?.selectedTab ?: 0
+        val currentScrollY = currentState?.editorScrollY ?: 0
+        val currentSelStart = currentState?.editorSelectionStart ?: 0
         val file = File(chapter.filePath)
         val fileLastModified = if (file.exists()) file.lastModified() else 0L
 
@@ -304,8 +424,13 @@ class WritingViewModel(
             isSaving = false,
             isDirty = false,
             autoSaveImmediately = autoSaveImmediately,
-            fileLastModified = fileLastModified
+            fileLastModified = fileLastModified,
+            editorScrollY = currentScrollY,
+            editorSelectionStart = currentSelStart,
+            referenceBlocks = currentState?.referenceBlocks ?: emptyList()
         )
+        lastChapterIndex = index
+        lastCurrentFilePath = null
     }
 
     fun selectChapter(index: Int) {
@@ -504,6 +629,7 @@ class WritingViewModel(
                     editorContent = ""
                 )
             }
+            lastFileBrowserMode = mode
         }
     }
 
@@ -534,6 +660,7 @@ class WritingViewModel(
                 saveMessage = null,
                 fileLastModified = lastMod
             )
+            lastCurrentFilePath = file.absolutePath
         }
     }
 
@@ -662,9 +789,106 @@ class WritingViewModel(
         val state = _uiState.value
         if (state is WritingUiState.NoProject && tab == 0) return
         val success = state as? WritingUiState.Success ?: return
+        if (tab == success.selectedTab) return
         _uiState.value = success.copy(selectedTab = tab)
         lastSelectedTab = tab
         lastProjectId = success.project.id
+
+        if (tab == 0) {
+            viewModelScope.launch {
+                if (success.fileBrowserMode == FileBrowserMode.CHAPTERS) {
+                    loadChapters(success.project, preserveIndex = true, emitEmptyState = false)
+                } else {
+                    refreshNonChapterFile(success)
+                }
+            }
+        }
+    }
+
+    fun saveEditorScrollPosition(scrollY: Int, selectionStart: Int) {
+        lastScrollY = scrollY
+        lastSelectionStart = selectionStart
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        _uiState.value = state.copy(editorScrollY = scrollY, editorSelectionStart = selectionStart)
+    }
+
+    fun addReference(filePath: String, selectedText: String, bodyStartLine: Int, bodyEndLine: Int) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        val blocks = state.referenceBlocks
+        if (blocks.size >= 5) return
+
+        viewModelScope.launch {
+            val fullContent = projectManagementUseCase.readFileContent(filePath).getOrDefault("")
+            val fmOffset = calculateFrontMatterLineCount(fullContent)
+            val fileStartLine = bodyStartLine + fmOffset + 1
+            val fileEndLine = bodyEndLine + fmOffset + 1
+
+            val lines = selectedText.lines()
+            val preview = if (lines.size > 2) {
+                lines.take(2).joinToString("\n") + "..."
+            } else {
+                lines.joinToString("\n")
+            }
+
+            val block = ReferenceBlock(
+                id = java.util.UUID.randomUUID().toString(),
+                filePath = filePath.removePrefix(state.project.storagePath + "/"),
+                contentPreview = preview,
+                content = selectedText,
+                startLine = fileStartLine,
+                endLine = fileEndLine
+            )
+            _uiState.value = state.copy(referenceBlocks = blocks + block)
+            setSelectedTab(1)
+        }
+    }
+
+    fun removeReference(id: String) {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        _uiState.value = state.copy(
+            referenceBlocks = state.referenceBlocks.filter { it.id != id }
+        )
+    }
+
+    fun clearReferences() {
+        val state = _uiState.value as? WritingUiState.Success ?: return
+        _uiState.value = state.copy(referenceBlocks = emptyList())
+    }
+
+    fun buildMessageWithReferences(userInput: String, references: List<ReferenceBlock>): String {
+        return ReferenceBlock.buildReferenceText(references, userInput)
+    }
+
+    private fun calculateFrontMatterLineCount(fullContent: String): Int {
+        val lines = fullContent.lines()
+        if (lines.isEmpty() || lines[0].trim() != "---") return 0
+        val endIndex = lines.drop(1).indexOfFirst { it.trim() == "---" }
+        if (endIndex == -1) return 0
+        return endIndex + 2
+    }
+
+    private suspend fun refreshNonChapterFile(state: WritingUiState.Success) {
+        val dirPath = File(state.project.storagePath, state.fileBrowserMode.dirName()).absolutePath
+        val tree = projectManagementUseCase.getFileTree(dirPath)
+
+        val currentPath = state.currentFilePath
+        if (currentPath != null) {
+            val file = File(currentPath)
+            if (file.exists() && file.lastModified() > state.fileLastModified) {
+                val content = projectManagementUseCase.readFileContent(currentPath).getOrDefault("")
+                _uiState.value = state.copy(
+                    fileTree = tree,
+                    editorContent = content,
+                    wordCount = countWords(content),
+                    isDirty = false,
+                    fileLastModified = file.lastModified()
+                )
+            } else {
+                _uiState.value = state.copy(fileTree = tree)
+            }
+        } else {
+            _uiState.value = state.copy(fileTree = tree)
+        }
     }
 
     fun retry() {
@@ -674,6 +898,11 @@ class WritingViewModel(
     companion object {
         private var lastSelectedTab: Int = 0
         private var lastProjectId: String? = null
+        private var lastScrollY: Int = 0
+        private var lastSelectionStart: Int = 0
+        private var lastChapterIndex: Int = 0
+        private var lastCurrentFilePath: String? = null
+        private var lastFileBrowserMode: FileBrowserMode = FileBrowserMode.CHAPTERS
         fun countWords(text: String): Int {
             if (text.isBlank()) return 0
             val chinese = text.count { c ->
