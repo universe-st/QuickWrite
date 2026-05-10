@@ -92,6 +92,7 @@ dependencies {
     
     implementation(libs.gson)
     implementation(libs.timber)
+    implementation(libs.juniversalchardet)
     implementation(libs.androidx.appcompat)
     
     implementation(project(":markor-editor"))
