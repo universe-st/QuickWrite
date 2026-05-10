@@ -120,6 +120,10 @@
     <string name="writing_chapter_count">%1$d Chapters</string>
     <string name="writing_status_bar">Ch. %1$s · %2$s</string>
     <string name="writing_save_content_desc">Save</string>
+    <string name="writing_copy_full_text">Copy Full Text</string>
+    <string name="writing_copy_plain_text">Copy Plain Text</string>
+    <string name="writing_copied">Copied to clipboard</string>
+    <string name="writing_more_actions">More Actions</string>
     <string name="writing_browse_chapters">Chapters</string>
     <string name="writing_browse_settings">Settings</string>
     <string name="writing_browse_timeline">Timeline</string>

@@ -120,6 +120,10 @@
     <string name="writing_chapter_count">%1$d 章</string>
     <string name="writing_status_bar">第 %1$s章 · 字数 %2$s</string>
     <string name="writing_save_content_desc">保存</string>
+    <string name="writing_copy_full_text">复制全文</string>
+    <string name="writing_copy_plain_text">复制纯文本</string>
+    <string name="writing_copied">已复制到剪贴板</string>
+    <string name="writing_more_actions">更多操作</string>
     <string name="writing_browse_chapters">章节</string>
     <string name="writing_browse_settings">设定</string>
     <string name="writing_browse_timeline">时间线</string>
