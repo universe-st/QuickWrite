@@ -31,6 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universe_st.markor_editor.HighlightingMode
@@ -93,6 +96,11 @@ fun WritingScreen(
     var showNewFileDialog by remember { mutableStateOf(false) }
     var showNewFolderDialog by remember { mutableStateOf(false) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
+    val copiedMessage = stringResource(R.string.writing_copied)
+
     val isChatTab = uiState is WritingUiState.NoProject || (uiState is WritingUiState.Success && (uiState as WritingUiState.Success).selectedTab == 1)
 
     Scaffold(
@@ -112,9 +120,22 @@ fun WritingScreen(
                 onToggleChapterList = { showChapterList = !showChapterList },
                 isChatTab = isChatTab,
                 showChatSidebar = aiChatViewModel.showSidebar,
-                onToggleChatSidebar = { aiChatViewModel.showSidebar = !aiChatViewModel.showSidebar }
+                onToggleChatSidebar = { aiChatViewModel.showSidebar = !aiChatViewModel.showSidebar },
+                onCopyFullText = { text ->
+                    clipboardManager.setText(AnnotatedString(text))
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(copiedMessage)
+                    }
+                },
+                onCopyPlainText = { text ->
+                    clipboardManager.setText(AnnotatedString(stripMarkdown(text)))
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(copiedMessage)
+                    }
+                }
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             WritingStatusBar(uiState)
         },
@@ -364,6 +385,24 @@ fun WritingScreen(
     }
 }
 
+private fun stripMarkdown(text: String): String {
+    return text
+        .replace(Regex("```[\\s\\S]*?```")) { "" }
+        .replace(Regex("`([^`]*)`"), "$1")
+        .replace(Regex("!\\[([^\\]]*)\\]\\([^)]*\\)"), "$1")
+        .replace(Regex("\\[([^\\]]*)\\]\\([^)]*\\)"), "$1")
+        .replace(Regex("^#{1,6}\\s+", RegexOption.MULTILINE), "")
+        .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
+        .replace(Regex("__(.+?)__"), "$1")
+        .replace(Regex("\\*(.+?)\\*"), "$1")
+        .replace(Regex("_(.+?)_"), "$1")
+        .replace(Regex("~~(.+?)~~"), "$1")
+        .replace(Regex("^[>*+-]\\s+", RegexOption.MULTILINE), "")
+        .replace(Regex("^\\d+\\.\\s+", RegexOption.MULTILINE), "")
+        .replace(Regex("^---+$", RegexOption.MULTILINE), "")
+        .trim()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WritingTopBar(
@@ -374,7 +413,9 @@ private fun WritingTopBar(
     onToggleChapterList: () -> Unit,
     isChatTab: Boolean = false,
     showChatSidebar: Boolean = false,
-    onToggleChatSidebar: () -> Unit = {}
+    onToggleChatSidebar: () -> Unit = {},
+    onCopyFullText: (String) -> Unit = {},
+    onCopyPlainText: (String) -> Unit = {}
 ) {
     val title = when (uiState) {
         is WritingUiState.Success -> uiState.project.title
@@ -385,6 +426,7 @@ private fun WritingTopBar(
     val wordCount = (uiState as? WritingUiState.Success)?.wordCount ?: 0
     val hasChapters = (uiState as? WritingUiState.Success)?.chapters?.isNotEmpty() == true
     val showSaveButton = (uiState as? WritingUiState.Success)?.autoSaveImmediately != true
+    var menuExpanded by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -444,8 +486,44 @@ private fun WritingTopBar(
                     }
                 }
                 if (showSaveButton) {
-                    IconButton(onClick = onSave) {
-                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.writing_save_content_desc))
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.writing_more_actions))
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            if (showSaveButton) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.writing_save_content_desc)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onSave()
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.Save, contentDescription = null) }
+                                )
+                                HorizontalDivider()
+                            }
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.writing_copy_full_text)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    val content = (uiState as? WritingUiState.Success)?.editorContent ?: ""
+                                    onCopyFullText(content)
+                                },
+                                leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.writing_copy_plain_text)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    val content = (uiState as? WritingUiState.Success)?.editorContent ?: ""
+                                    onCopyPlainText(content)
+                                },
+                                leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, contentDescription = null) }
+                            )
+                        }
                     }
                 }
             }
