@@ -8,7 +8,7 @@
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| MainScreen | `presentation/MainScreen.kt` | 主导航器 + 底部导航 + 对话框 (388行) |
+| MainScreen | `presentation/MainScreen.kt` | 主导航器 + 底部导航 + 对话框 (439行) |
 | QuickWriterApp | `presentation/QuickWriterApp.kt` | 应用入口 Composable (32行) |
 | SettingsScreen | `presentation/ui/screens/SettingsScreen.kt` | 设置页内部子导航 |
 
@@ -88,12 +88,12 @@ NavHost(
 
 | 路由 | 页面 | 底部导航栏 | 动画 |
 |------|------|-----------|------|
-| `project_list` | ProjectListScreen | ✅ 显示 | 滑出/滑入 (水平) |
-| `project_create` | ProjectCreateScreen | ❌ 隐藏 | 无 |
-| `project_detail/{projectId}` | ProjectDetailScreen | ❌ 隐藏 | 滑入 (水平, 从右) |
-| `project_edit/{projectId}` | ProjectEditScreen | ❌ 隐藏 | 无 |
-| `writing` | WritingScreen | ✅ 显示 | 无 |
-| `settings` | SettingsScreen | ✅ 显示 | 无 |
+| `project_list` | ProjectListScreen | ✅ 显示 | fadeIn/fadeOut (tween 250ms) |
+| `project_create` | ProjectCreateScreen | ❌ 隐藏 | fadeIn/fadeOut (tween 250ms) |
+| `project_detail/{projectId}` | ProjectDetailScreen | ❌ 隐藏 | fadeIn/fadeOut (tween 250ms) |
+| `project_edit/{projectId}` | ProjectEditScreen | ❌ 隐藏 | fadeIn/fadeOut (tween 250ms) |
+| `writing` | WritingScreen | ✅ 显示 | fadeIn/fadeOut (tween 250ms) |
+| `settings` | SettingsScreen | ✅ 显示 | fadeIn/fadeOut (tween 250ms) |
 
 底部导航栏在 `project_create` 和 `project_edit` 页面时隐藏：
 ```kotlin
@@ -140,7 +140,7 @@ navController.navigate(Screen.Writing.route) {
 NavHost composable 匹配 "writing"
     │
     ▼
-创建 WritingViewModel，渲染 WritingScreen
+创建 WritingViewModel + AiChatViewModel，渲染 WritingScreen
 ```
 
 ### 设置页面子导航
@@ -150,9 +150,9 @@ NavHost composable 匹配 "writing"
 SettingsScreen
     │
     ▼
-var currentSubScreen: SettingsSubScreen = Main
+var currentSubScreen: SettingsSubScreen? = null
     │
-    ├─ Main → SettingsMainScreen
+    ├─ null → SettingsMainScreen（设置主页面）
     ├─ AiConfigList → AiConfigListScreen
     ├─ AiConfigEdit → AiConfigEditScreen
     ├─ WritingSettings → WritingSettingsScreen
@@ -163,19 +163,13 @@ var currentSubScreen: SettingsSubScreen = Main
 ## 关键实现细节
 
 ### 页面切换动画
+所有页面使用统一的淡入/淡出动画：
 ```kotlin
-// 项目列表退出/进入
-composable(
-    route = "project_list",
-    exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
-    popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) }
-)
-
-// 项目详情进入/退出
-composable(
-    route = "project_detail/{projectId}",
-    enterTransition = { slideInHorizontally(initialOffsetX = { it }) },   // 从右滑入
-    popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }  // 向右滑出
+NavHost(
+    enterTransition = { fadeIn(animationSpec = tween(250)) },
+    exitTransition = { fadeOut(animationSpec = tween(250)) },
+    popEnterTransition = { fadeIn(animationSpec = tween(250)) },
+    popExitTransition = { fadeOut(animationSpec = tween(250)) }
 )
 ```
 

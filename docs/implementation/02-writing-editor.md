@@ -8,12 +8,12 @@
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| WritingScreen | `presentation/ui/screens/WritingScreen.kt` | 写作页面 UI (657行) |
-| WritingViewModel | `presentation/viewmodel/WritingViewModel.kt` | 写作状态管理 (408行) |
+| WritingScreen | `presentation/ui/screens/WritingScreen.kt` | 写作页面 UI (1333行) |
+| WritingViewModel | `presentation/viewmodel/WritingViewModel.kt` | 写作状态管理 (935行) |
 | MarkorEditor | `markor-editor/.../MarkorEditor.kt` | Compose 编辑器包装器 |
 | EditorConfig | `markor-editor/.../EditorConfig.kt` | 编辑器配置接口 |
 | AppEditorConfig | `util/AppEditorConfig.kt` | App 端配置实现 |
-| HighlightingEditor | `markor-editor/.../HighlightingEditor.java` | 核心编辑器控件 (611行) |
+| HighlightingEditor | `markor-editor/.../HighlightingEditor.java` | 核心编辑器控件 (625行) |
 | AutoTextFormatter | `markor-editor/.../AutoTextFormatter.java` | 自动格式化 |
 | LineNumbersView | `markor-editor/.../LineNumbersView.java` | 行号显示 |
 | SyntaxHighlighterBase | `markor-editor/.../SyntaxHighlighterBase.java` | 语法高亮基类 |
@@ -28,17 +28,27 @@
 sealed class WritingUiState {
     object NoProject : WritingUiState()      // 未设置当前项目
     object Loading : WritingUiState()         // 加载中
+    data class Initializing(val current: Int, val total: Int) : WritingUiState()  // 初始化章节排序
     data class Success(
         val project: ProjectEntity,
         val chapters: List<ChapterFileInfo>,
         val currentChapterIndex: Int,
         val editorContent: String,
+        val currentChapterMeta: ChapterMeta,
         val wordCount: Int,
         val selectedTab: Int,                 // 0=Editor, 1=Chat
         val isSaving: Boolean,
         val isDirty: Boolean,
-        val autoSaveImmediately: Boolean,
-        val saveMessage: UiText?
+        val autoSaveImmediately: Boolean = false,
+        val saveMessage: String? = null,
+        val fileBrowserMode: FileBrowserMode = FileBrowserMode.CHAPTERS,
+        val fileTree: List<FileTreeItem> = emptyList(),
+        val expandedFolders: Set<String> = emptySet(),
+        val currentFilePath: String? = null,
+        val fileLastModified: Long = 0,
+        val editorScrollY: Int = 0,
+        val editorSelectionStart: Int = 0,
+        val referenceBlocks: List<ReferenceBlock> = emptyList()
     ) : WritingUiState()
     data class Error(val message: UiText) : WritingUiState()
 }
@@ -64,9 +74,14 @@ fun MarkorEditor(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    editorConfig: EditorConfig,
-    highlightingMode: HighlightingMode = HighlightingMode.MARKDOWN,
-    enabled: Boolean = true
+    editorConfig: EditorConfig = DefaultEditorConfig(),
+    highlightingMode: HighlightingMode = HighlightingMode.PLAINTEXT,
+    enabled: Boolean = true,
+    initialScrollY: Int = 0,
+    initialSelectionStart: Int = 0,
+    onDispose: ((scrollY: Int, selectionStart: Int) -> Unit)? = null,
+    onAddToConversation: ((selectedText: String, startLine: Int, endLine: Int) -> Unit)? = null,
+    addToConversationLabel: String = "Add to Chat"
 )
 ```
 
@@ -108,6 +123,17 @@ interface EditorConfig {
 │  - selectChapter() / createNewChapter()     │
 │  - saveCurrentChapter() (自动/手动)          │
 │  - moveChapter() / deleteChapter()          │
+│  - switchBrowseMode() / selectNonChapterFile()│
+│  - toggleFolderExpanded()                   │
+│  - saveCurrentFile() / deleteFileOrFolder() │
+│  - renameFile()                             │
+│  - createNewFileInCurrentDir() / createNewFolderInCurrentDir()│
+│  - editChapterMeta()                        │
+│  - saveEditorScrollPosition()               │
+│  - addReference() / removeReference() / clearReferences()│
+│  - buildMessageWithReferences()             │
+│  - setSelectedTab() / retry()               │
+│  - deleteChapterWithConfirm()               │
 │  - countWords()                             │
 └──────────────────┬──────────────────────────┘
                    │

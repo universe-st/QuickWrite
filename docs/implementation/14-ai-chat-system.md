@@ -2,50 +2,50 @@
 
 ## 功能概述
 
-基于 Android Foreground Service 的 AI 对话系统，支持多会话并行、流式 SSE 响应、Function Calling (13个工具操作项目文件系统)、操作回溯。所有对话逻辑在 Service 中运行，UI 解绑/重建不中断对话。
+基于 Android Foreground Service 的 AI 对话系统，支持多会话并行、流式 SSE 响应、Function Calling (16个工具操作项目文件系统)、操作回溯。所有对话逻辑在 Service 中运行，UI 解绑/重建不中断对话。
 
 ## 关键文件
 
 ### UI 层 (新增)
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听、模型配置检查、会话加载状态追踪 (~250行) |
-| ChatTab | `presentation/ui/screens/ChatTab.kt` | 对话 Tab 主界面 — 会话列表、消息列表、输入区域 (~590行) |
-| ChatBubble | `presentation/ui/components/ChatBubble.kt` | 消息气泡组件 — 用户/AI/ToolCall/系统消息、复制/重试/删除 (~375行) |
+| AiChatViewModel | `presentation/viewmodel/AiChatViewModel.kt` | 对话 ViewModel — Service 绑定、会话管理、消息监听、模型配置检查、会话加载状态追踪 (293行) |
+| ChatTab | `presentation/ui/screens/ChatTab.kt` | 对话 Tab 主界面 — 会话列表、消息列表、输入区域 (888行) |
+| ChatBubble | `presentation/ui/components/ChatBubble.kt` | 消息气泡组件 — 用户/AI/ToolCall/系统消息、复制/重试/删除 (484行) |
 
 ### 数据层
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AiSessionEntity | `data/local/entity/AiSessionEntity.kt` | ai_sessions 表 — 会话元数据 (34行) |
-| AiMessageEntity | `data/local/entity/AiMessageEntity.kt` | ai_messages 表 — 消息记录 (42行) |
-| AiOperationEntity | `data/local/entity/AiOperationEntity.kt` | ai_operations 表 — AI 操作回溯 (40行) |
-| AiSessionDao | `data/local/dao/AiSessionDao.kt` | 会话 CRUD (39行) |
-| AiMessageDao | `data/local/dao/AiMessageDao.kt` | 消息 CRUD + 静默过滤 (40行) |
-| AiOperationDao | `data/local/dao/AiOperationDao.kt` | 操作记录 CRUD (21行) |
-| Migrations | `data/local/database/Migrations.kt` | v1→v2→v3 数据库迁移 (94行) |
-| AiConversationRepository | `data/repository/AiConversationRepository.kt` | 会话+消息持久化封装 + Entity↔Domain 转换 (97行) |
+| AiSessionEntity | `data/local/entity/AiSessionEntity.kt` | ai_sessions 表 — 会话元数据 (30行) |
+| AiMessageEntity | `data/local/entity/AiMessageEntity.kt` | ai_messages 表 — 消息记录 (45行) |
+| AiOperationEntity | `data/local/entity/AiOperationEntity.kt` | ai_operations 表 — AI 操作回溯 (46行) |
+| AiSessionDao | `data/local/dao/AiSessionDao.kt` | 会话 CRUD (25行) |
+| AiMessageDao | `data/local/dao/AiMessageDao.kt` | 消息 CRUD + 静默过滤 (27行) |
+| AiOperationDao | `data/local/dao/AiOperationDao.kt` | 操作记录 CRUD (22行) |
+| Migrations | `data/local/database/Migrations.kt` | v1→v2→v3→v4→v5 数据库迁移 (125行) |
+| AiConversationRepository | `data/repository/AiConversationRepository.kt` | 会话+消息持久化封装 + Entity↔Domain 转换 (95行) |
 
 ### 网络层
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AiModels (DTO) | `data/remote/dto/AiModels.kt` | API 请求/响应/流式 DTO (93行) |
-| AiApiService | `data/remote/AiApiService.kt` | Retrofit API 接口 (流式+非流式) (28行) |
-| AiApiClient | `data/remote/AiApiClient.kt` | OkHttp + Retrofit 实例工厂 (27行) |
-| AiServiceRepository | `data/repository/AiServiceRepository.kt` | API 调用封装 + Service 缓存 (55行) |
+| AiModels (DTO) | `data/remote/dto/AiModels.kt` | API 请求/响应/流式 DTO (85行) |
+| AiApiService | `data/remote/AiApiService.kt` | Retrofit API 接口 (流式+非流式) (29行) |
+| AiApiClient | `data/remote/AiApiClient.kt` | OkHttp + Retrofit 实例工厂 (28行) |
+| AiServiceRepository | `data/repository/AiServiceRepository.kt` | API 调用封装 + Service 缓存 (64行) |
 
 ### Service 层
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AIChatService | `data/remote/AIChatService.kt` | Foreground Service 入口 + 通知管理 (211行) |
-| IChatService | `data/remote/IChatService.kt` | Binder 暴露的服务接口 (43行) |
-| SessionManager | `data/remote/SessionManager.kt` | 会话生命周期管理 + 系统提示词构建（委托 PromptManager）+ 上下文维护 (~372行) |
-| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题（委托 PromptManager）+ Tool Call 循环 (~582行) |
-| ToolExecutor | `data/remote/ToolExecutor.kt` | 工具注册/分发/执行 + 修改前备份 + 操作记录 (315行) |
-| BackupManager | `data/remote/BackupManager.kt` | 备份存储 + FIFO 清理 (5GB上限) (86行) |
-| ToolRegistry | `data/remote/ToolRegistry.kt` | 13 个工具统一注册清单 (32行) |
-| StateFlowWrapper | `data/remote/StateFlowWrapper.kt` | Binder StateFlow 包装 (6行) |
+| AIChatService | `data/remote/AIChatService.kt` | Foreground Service 入口 + 通知管理 (208行) |
+| IChatService | `data/remote/IChatService.kt` | Binder 暴露的服务接口 (55行) |
+| SessionManager | `data/remote/SessionManager.kt` | 会话生命周期管理 + 系统提示词构建（委托 PromptManager）+ 上下文维护 (~389行) |
+| ApiDispatcher | `data/remote/ApiDispatcher.kt` | API 调度 + 流式消费 + 消息持久化 + 自动标题（委托 PromptManager）+ Tool Call 循环 (~522行) |
+| ToolExecutor | `data/remote/ToolExecutor.kt` | 工具注册/分发/执行 + 修改前备份 + 操作记录 (354行) |
+| BackupManager | `data/remote/BackupManager.kt` | 备份存储 + FIFO 清理 (5GB上限) (99行) |
+| ToolRegistry | `data/remote/ToolRegistry.kt` | 16 个工具统一注册清单 (40行) |
+| StateFlowWrapper | `data/remote/StateFlowWrapper.kt` | Binder StateFlow 包装 (9行) |
 
-### 工具层 (13 Tools)
+### 工具层 (16 Tools)
 | 文件 | 工具 | 类型 |
 |------|------|------|
 | `data/remote/tools/GetProjectListTool.kt` | T1. get_project_list | 只读 |
@@ -61,20 +61,23 @@
 | `data/remote/tools/UpdateProjectInfoTool.kt` | T11. update_project_info | 修改 |
 | `data/remote/tools/CreateProjectTool.kt` | T12. create_project | 修改 |
 | `data/remote/tools/DeleteProjectTool.kt` | T13. delete_project | 修改 |
+| `data/remote/tools/GetChapterMetaTool.kt` | T14. get_chapter_meta | 只读 |
+| `data/remote/tools/UpdateChapterMetaTool.kt` | T15. update_chapter_meta | 修改 |
+| `data/remote/tools/RenameSessionTool.kt` | T16. rename_session | 只读 |
 
 ### 领域模型
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| ChatModels | `domain/model/ChatModels.kt` | ChatMessage / MessageRole / SessionState / SessionSummary / SessionContext / ToolCall (55行) |
-| ChatTool | `domain/model/ChatTool.kt` | ChatTool 接口 / ToolDefinition / ToolContext (30行) |
-| AiOperation | `domain/model/AiOperation.kt` | AiOperation 抽象基类 + 8 种子类 + OperationType 枚举 + HashUtil (276行) |
+| ChatModels | `domain/model/ChatModels.kt` | ChatMessage / MessageRole / SessionState / SessionSummary / SessionContext / ToolCall (47行) |
+| ChatTool | `domain/model/ChatTool.kt` | ChatTool 接口 / ToolDefinition / ToolContext (24行) |
+| AiOperation | `domain/model/AiOperation.kt` | AiOperation 抽象基类 + 8 种子类 + OperationType 枚举 + HashUtil (227行) |
 
 ### 工具类
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 + reasoning_content (~123行) |
-| TokenEstimator | `util/TokenEstimator.kt` | 字符数/4 近似 token 估算 (12行) |
-| PromptManager | `util/PromptManager.kt` | 提示词模板加载与变量替换 (~54行) |
+| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 + reasoning_content (156行) |
+| TokenEstimator | `util/TokenEstimator.kt` | 字符数/4 近似 token 估算 (14行) |
+| PromptManager | `util/PromptManager.kt` | 提示词模板加载与变量替换 (70行) |
 
 ## 设计架构
 
@@ -101,7 +104,7 @@
 │  └──────────────┘              │             │
 │                        ┌───────▼───────────┐ │
 │                        │   ToolExecutor    │ │
-│                        │ 13个工具注册/执行   │ │
+│                        │ 16个工具注册/执行   │ │
 │                        │ BackupManager备份  │ │
 │                        │ Operation回溯      │ │
 │                        └───────────────────┘ │
@@ -182,17 +185,56 @@ sendMessage(sessionId, content)
 
 ## 核心类/函数
 
+### IChatService
+
+Binder 暴露的服务接口，ViewModel 通过它调用 Service 功能：
+
+```kotlin
+interface IChatService {
+    fun createSession(projectId: String, systemPrompt: String?, modelConfigId: Int?): String
+    fun createSessionWithProjectInfo(projectId, projectTitle, projectAuthor, projectGenre, projectDescription, storagePath, modelConfigId): String
+    fun createSessionWithoutProject(modelConfigId: Int?): String
+    fun deleteSession(sessionId: String)
+    fun switchToSession(sessionId: String)
+    fun getSessionList(): List<SessionSummary>
+    fun getSessionDetail(sessionId: String): SessionDetail?
+    fun renameSession(sessionId: String, title: String)
+    fun sendMessage(sessionId: String, content: String, attachedFiles: List<String> = emptyList())
+    fun stopGeneration(sessionId: String)
+    fun retryLastMessage(sessionId: String)
+    fun deleteMessage(sessionId: String, messageIndex: Int)
+    fun observeSessionState(sessionId: String): StateFlowWrapper<SessionState>
+    fun observeSessionList(): StateFlowWrapper<List<SessionSummary>>
+}
+
+data class SessionDetail(
+    val sessionId: String, val projectId: String, val title: String,
+    val systemPrompt: String, val modelConfigId: Int,
+    val messageCount: Int, val createdAt: Long, val updatedAt: Long,
+    val isGenerating: Boolean
+)
+```
+
 ### SessionManager
 
 | 方法 | 说明 |
 |------|------|
 | `createSession(projectId, systemPrompt?, modelConfigId?)` | 创建会话 → 缓存 + DB 异步写入 |
-| `createSessionWithProjectInfo(...)` | 使用项目信息自动构建系统提示词 |
+| `createSessionWithProjectInfo(...)` | 使用项目信息自动构建系统提示词（6参数） |
+| `createSessionWithoutProject(modelConfigId?)` | 创建非项目关联的会话 |
 | `getSessionContext(sessionId)` | 获取内存中的会话上下文 |
 | `loadSessionContext(sessionId)` | 从 DB 加载 + 解析消息 → 恢复上下文 |
 | `appendMessageToContext(sessionId, msg)` | 追加消息到内存上下文 |
+| `updateSessionContext(sessionId, messages)` | 替换内存上下文中的消息列表 |
+| `rebuildSessionContext(sessionId, newMessages)` | 用新消息重建上下文（保留 system prompt） |
 | `scheduleIdleRecycle()` | 5分钟空闲后自动清除（可取消） |
-| `buildSystemPrompt(title, author, genre, storagePath)` | 静态方法 — 构建系统提示词 |
+| `setActiveProject(projectId)` | 设置当前活跃项目，自动加载其会话列表 |
+| `setSessionState(sessionId, state)` / `getSessionState(sessionId)` | 读写会话生成状态 |
+| `refreshSessionList(projectId)` | 刷新项目会话列表（从 DB 到 StateFlow） |
+| `loadSessionFromDb(sessionId)` | 从 DB 预加载单个会话到缓存 |
+| `clear()` | 清除所有会话缓存 |
+| `isGenerating(sessionId)` | 检查会话是否正在生成 |
+| `buildSystemPrompt(title, author, genre, description, storagePath, writingRules)` | 实例方法 — 构建系统提示词（6参数） |
 
 ### ApiDispatcher
 
@@ -332,8 +374,8 @@ sendMessage(sessionId, content)
 | 模板文件 | 用途 | 变量 |
 |---------|------|------|
 | `default_assistant.md` | `createSession()` 默认提示词 | 无 |
-| `novel_writing_assistant.md` | `createSessionWithProjectInfo()` 项目提示词 | `{{title}}` `{{author}}` `{{genre}}` `{{storagePath}}` |
-| `title_generator.md` | `triggerAutoTitleIfNeeded()` 标题生成器 | 无 |
+| `novel_writing_assistant.md` | `createSessionWithProjectInfo()` 项目提示词 | `{{title}}` `{{author}}` `{{genre}}` `{{description}}` `{{storagePath}}` `{{writingRulesContent}}` |
+| `no_project_assistant.md` | `createSessionWithoutProject()` 非项目场景提示词 | 无 |
 
 `PromptManager` 在 `AIChatService` 创建时加载全部模板到内存，通过 `{{变量}}` 语法替换。修改提示词只需编辑 `.md` 文件。
 
@@ -435,7 +477,7 @@ ChatTab(projectId, onNavigateToAiConfig?)
 
 1. **API Key 仍为明文存储** — 需求要求加密（EncryptedSharedPreferences），当前未实现
 2. **Token 估算粗糙** — 使用字符数/4 近似，未使用 tiktoken 等精确方案
-3. **备份 ZIP 创建未实现** — `BackupManager.createProjectBackup()` 有容量检查但未实际调用 `zipProjectToFile()`
+3. **备份 ZIP 创建已部分实现** — `BackupManager.createProjectBackup()` 有容量检查；`ToolExecutor.prepareBackup()` 中 `delete_project` 分支已调用 `zipProjectToFile()` 创建项目 ZIP 备份
 4. **StreamParser 对 tool_calls finish_reason 检测依赖 Done chunk** — 未显式检测 `finish_reason == "tool_calls"`，改为检测 `toolCallAccumulators.isNotEmpty() && fullContent.isEmpty()`
 5. **并行会话 API 请求使用同一 OkHttp Dispatcher** — 默认 max 5 并发，未为不同 provider 创建独立 Dispatcher
 6. **Service 通知图标使用 ic_launcher_foreground** — 应使用专用通知图标

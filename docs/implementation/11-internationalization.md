@@ -10,7 +10,7 @@
 |------|------|------|
 | UiText | `util/UiText.kt` | 国际化文本封装类 (30行) |
 | LocaleHelper | `util/LocaleHelper.kt` | 语言环境切换工具 (98行) |
-| strings.xml (en) | `res/values/strings.xml` | 英文字符串资源 (375行) |
+| strings.xml (en) | `res/values/strings.xml` | 英文字符串资源 (492行) |
 | strings.xml (zh-rCN) | `res/values-zh-rCN/strings.xml` | 简体中文资源 |
 | strings.xml (zh-rTW) | `res/values-zh-rTW/strings.xml` | 繁体中文资源 |
 
@@ -20,7 +20,14 @@
 ```kotlin
 sealed class UiText {
     data class DynamicString(val value: String) : UiText()
-    data class StringResource(@StringRes val resId: Int, val args: Array<out Any> = emptyArray()) : UiText()
+    data class StringResource(@StringRes val resId: Int, val args: Array<out Any> = emptyArray()) : UiText() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is StringResource) return false
+            return resId == other.resId && args.contentEquals(other.args)
+        }
+        override fun hashCode(): Int = resId * 31 + args.contentHashCode()
+    }
 
     fun asString(context: Context): String {
         return when (this) {

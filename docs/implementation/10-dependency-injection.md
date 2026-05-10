@@ -8,7 +8,7 @@
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AppContainer | `di/AppContainer.kt` | 依赖注入容器 (56行) |
+| AppContainer | `di/AppContainer.kt` | 依赖注入容器 (100行) |
 | QuickWriteApplication | `QuickWriteApplication.kt` | Application 类，持有 AppContainer |
 | MainActivity | `MainActivity.kt` | 通过 Application 获取 AppContainer |
 | MainScreen | `presentation/MainScreen.kt` | 通过 AppContainer 创建 ViewModel |
@@ -21,9 +21,14 @@ AppContainer(context: Context)
 ├─ AppDatabase (singleton, DCL)
 │   ├─ ProjectDao
 │   ├─ AiModelConfigDao
-│   └─ UserSettingDao
+│   ├─ UserSettingDao
+│   ├─ AiSessionDao
+│   ├─ AiMessageDao
+│   └─ AiOperationDao
 │
 ├─ FileManager(context)
+│
+├─ AiApiClient                                # OkHttp 客户端
 │
 ├─ ProjectRepository(projectDao)
 │
@@ -31,9 +36,15 @@ AppContainer(context: Context)
 │
 ├─ UserSettingsRepository(userSettingDao)
 │
+├─ AiServiceRepository(aiModelConfigDao, aiApiClient)
+│
+├─ AiConversationRepository(aiSessionDao, aiMessageDao)
+│
 ├─ ProjectManagementUseCase(projectRepository, fileManager)
 │
-└─ SettingsUseCase(userSettingsRepository, aiModelConfigRepository)
+├─ SettingsUseCase(userSettingsRepository, aiModelConfigRepository)
+│
+└─ init { AppServiceContainer.xxx = ... }     # 服务层依赖桥接
 ```
 
 ## AppContainer 实现
@@ -48,18 +59,38 @@ class AppContainer(private val context: Context) {
     val projectDao: ProjectDao by lazy { database.projectDao() }
     val aiModelConfigDao: AiModelConfigDao by lazy { database.aiModelConfigDao() }
     val userSettingDao: UserSettingDao by lazy { database.userSettingDao() }
+    val aiSessionDao: AiSessionDao by lazy { database.aiSessionDao() }
+    val aiMessageDao: AiMessageDao by lazy { database.aiMessageDao() }
+    val aiOperationDao: AiOperationDao by lazy { database.aiOperationDao() }
 
     val fileManager: FileManager by lazy { FileManager(context) }
+
+    val aiApiClient: AiApiClient by lazy { AiApiClient() }
 
     val projectRepository: ProjectRepository by lazy { ProjectRepository(projectDao) }
     val aiModelConfigRepository: AiModelConfigRepository by lazy { AiModelConfigRepository(aiModelConfigDao) }
     val userSettingsRepository: UserSettingsRepository by lazy { UserSettingsRepository(userSettingDao) }
+    val aiServiceRepository: AiServiceRepository by lazy { AiServiceRepository(aiModelConfigDao, aiApiClient) }
+    val aiConversationRepository: AiConversationRepository by lazy { AiConversationRepository(aiSessionDao, aiMessageDao) }
 
     val projectManagementUseCase: ProjectManagementUseCase by lazy {
         ProjectManagementUseCase(projectRepository, fileManager)
     }
     val settingsUseCase: SettingsUseCase by lazy {
         SettingsUseCase(userSettingsRepository, aiModelConfigRepository)
+    }
+
+    init {
+        AppServiceContainer.aiSessionDao = aiSessionDao
+        AppServiceContainer.aiMessageDao = aiMessageDao
+        AppServiceContainer.aiOperationDao = aiOperationDao
+        AppServiceContainer.aiServiceRepository = aiServiceRepository
+        AppServiceContainer.projectDao = projectDao
+        AppServiceContainer.aiModelConfigDao = aiModelConfigDao
+        AppServiceContainer.fileManager = fileManager
+        AppServiceContainer.projectRepository = projectRepository
+        AppServiceContainer.projectManagementUseCase = projectManagementUseCase
+        AppServiceContainer.userSettingsRepository = userSettingsRepository
     }
 }
 ```
@@ -83,14 +114,15 @@ class ProjectListViewModelFactory(
 
 ### ViewModel 工厂依赖关系
 
-| ViewModel | 所需 UseCase |
-|-----------|------------|
+| ViewModel | 所需 UseCase / Repository |
+|-----------|--------------------------|
 | ProjectListViewModel | ProjectManagementUseCase + SettingsUseCase |
 | ProjectCreateViewModel | ProjectManagementUseCase |
 | ProjectEditViewModel | ProjectManagementUseCase |
 | ProjectDetailViewModel | ProjectManagementUseCase + SettingsUseCase |
 | WritingViewModel | ProjectManagementUseCase + SettingsUseCase |
 | SettingsViewModel | SettingsUseCase |
+| AiChatViewModel | AiConversationRepository + AiModelConfigRepository + ProjectRepository (via Application + AppContainer) |
 
 ## 数据流
 

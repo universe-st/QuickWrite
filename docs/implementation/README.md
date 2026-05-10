@@ -19,7 +19,7 @@
 | 11 | [国际化](./11-internationalization.md) | UiText、多语言切换、字符串资源 | ~4 |
 | 12 | [启动与入口](./12-splash-and-entry.md) | 闪屏、应用入口、Activity | ~3 |
 | 13 | [工具类](./13-utilities.md) | AppUtils、CoverImageProcessor、AppEditorConfig | ~4 |
-| 14 | [AI 对话系统](./14-ai-chat-system.md) | Foreground Service、会话管理、流式API、Function Calling (13 tools)、操作回溯 | ~40 |
+| 14 | [AI 对话系统](./14-ai-chat-system.md) | Foreground Service、会话管理、流式API、Function Calling (16 tools)、操作回溯 | ~40 |
 
 ## 文档使用说明
 
@@ -46,5 +46,5 @@
 
 ---
 
-**最后更新**: 2026-05-01  
+**最后更新**: 2026-05-10  
 **维护者**: 开发团队

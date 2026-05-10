@@ -19,13 +19,14 @@
 ```kotlin
 class QuickWriteApplication : Application() {
     lateinit var appContainer: AppContainer
+        private set
 
     override fun onCreate() {
         super.onCreate()
-        appContainer = AppContainer(applicationContext)
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        appContainer = AppContainer(this)
     }
 }
 ```
@@ -95,10 +96,10 @@ fun QuickWriterApp() {
 @Composable
 fun SplashScreen(
     modifier: Modifier = Modifier,
-    statusText: String = "初始化中..."
+    statusText: String = ""
 )
 ```
-- 深蓝色背景 (#1a237e)
+- SplashGradient 渐变背景
 - `Icons.Default.Create` 图标 (80dp)
 - 应用名 "QuickWrite" (32sp Bold)
 - 标语文字
@@ -111,8 +112,8 @@ fun SplashScreen(
     │
     ▼
 QuickWriteApplication.onCreate()
-    ├─ AppContainer(applicationContext)       // 创建 DI 容器
-    └─ Timber.plant(DebugTree())             // Debug 日志
+    ├─ Timber.plant(DebugTree())             // Debug 日志
+    └─ AppContainer(this)                    // 创建 DI 容器
     │
     ▼
 MainActivity.attachBaseContext()

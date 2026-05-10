@@ -9,7 +9,7 @@
 | 文件 | 路径 | 用途 |
 |------|------|------|
 | ChapterFileHelper | `util/ChapterFileHelper.kt` | YAML Front Matter 解析和构建 (69行) |
-| WritingViewModel | `presentation/viewmodel/WritingViewModel.kt` | 章节操作逻辑 (408行) |
+| WritingViewModel | `presentation/viewmodel/WritingViewModel.kt` | 章节操作逻辑 (935行) |
 | ProjectManagementUseCase | `domain/usecase/ProjectManagementUseCase.kt` | 章节文件 CRUD 编排 |
 
 ## 核心类/函数
@@ -126,16 +126,18 @@ ChapterMeta + body
 
 ### 创建新章节
 1. `WritingViewModel.createNewChapter(title)`
-2. 生成文件名格式（由调用方决定，通常基于序号）
-3. 调用 `useCase.createChapterFile(projectId, fileName, initialContent)`
+2. 以章节标题作为文件名：`"${sanitizedTitle}.md"`（标题经 sanitize 处理）
+3. 调用 `useCase.createChapterFile(projectId, fileName)` 生成空文件
 4. 初始化内容包含 YAML Front Matter（含 title 和下一个 order 值）
-5. 更新项目 `chapterCount`
+5. 调用 `recalculateProjectWordCount()` 重新计算项目总字数
+6. 重新加载章节列表 `loadChapters()`
 
 ### 删除章节
 1. `WritingViewModel.deleteChapter(index)` 
 2. 从文件系统删除 `.md` 文件
-3. 更新项目 `chapterCount`
-4. 如果删除的是当前选中章节，自动选中相邻章节
+3. 调用 `recalculateProjectWordCount()` 重新计算项目总字数
+4. 重新加载章节列表 `loadChapters()`
+5. 如果删除的是当前选中章节，自动选中相邻章节
 
 ### 重排序
 1. `WritingViewModel.moveChapter(fromIndex, toIndex)`

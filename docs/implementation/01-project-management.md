@@ -18,7 +18,7 @@
 | ProjectCreateViewModel | `presentation/viewmodel/ProjectCreateViewModel.kt` | 创建表单状态管理 |
 | ProjectEditViewModel | `presentation/viewmodel/ProjectEditViewModel.kt` | 编辑表单状态管理 |
 | ProjectDetailViewModel | `presentation/viewmodel/ProjectDetailViewModel.kt` | 详情页状态管理 |
-| ProjectManagementUseCase | `domain/usecase/ProjectManagementUseCase.kt` | 项目管理业务逻辑 (261行) |
+| ProjectManagementUseCase | `domain/usecase/ProjectManagementUseCase.kt` | 项目管理业务逻辑 (410行) |
 | ProjectRepository | `data/repository/ProjectRepository.kt` | 项目数据仓库 |
 | ProjectDao | `data/local/dao/ProjectDao.kt` | Room DAO |
 | ProjectEntity | `data/local/entity/ProjectEntity.kt` | 数据库实体 |
@@ -45,10 +45,18 @@ data class ProjectEntity(
 )
 ```
 
-### DAO 排序查询
-- `getAllProjects()` → `ORDER BY modified_time DESC`
-- `getAllProjectsByCreatedTime()` → `ORDER BY created_time DESC`
-- `getAllProjectsByTitle()` → `ORDER BY title ASC`
+### DAO 方法
+- `getAllProjects()` → `ORDER BY modified_time DESC` (Flow)
+- `getAllProjectsByCreatedTime()` → `ORDER BY created_time DESC` (Flow)
+- `getAllProjectsByTitle()` → `ORDER BY title ASC` (Flow)
+- `getProjectById(id)` → 按主键查询 (suspend)
+- `getProjectByTitle(title)` → 按标题查询 (suspend)
+- `insertProject(project)` → 插入 (OnConflictStrategy.REPLACE)
+- `updateProject(project)` → 更新
+- `deleteProject(project)` → 删除
+- `deleteProjectById(id)` → 按主键删除
+- `updateWordCount(projectId, wordCount)` → 更新字数
+- `incrementChapterCount(projectId)` → 章节数 +1
 
 ### UiState 密封类
 ```kotlin
@@ -110,7 +118,7 @@ enum class SortOption {
 1. 用户填写表单 → `updateTitle()`/`updateAuthor()` 触发实时验证
 2. `validateFormData()` 调用 `useCase.validateProjectTitle()` 和 `validateProjectAuthor()`
 3. 点击"创建项目" → `createProject()` 设置 Loading 状态
-4. UseCase: `ProjectRepository.createProject()` 插入数据库 → 成功则 `FileManager.createProjectDirectoryStructure()` 创建目录 → `FileManager.createInfoJson()` 写入 info.json
+4. UseCase: `ProjectRepository.createProject()` 插入数据库 → 成功则 `FileManager.createProjectDirectoryStructure()` 创建目录 → `FileManager.createInfoJson()` 写入 info.json → `projectRepository.updateWordCount(project.id, 0)` 初始化字数
 5. 如果目录创建失败，回滚数据库记录（删除刚插入的项目）
 6. Success 状态 → `LaunchedEffect` 触发 `onNavigateBack()`
 
@@ -144,7 +152,7 @@ enum class SortOption {
 
 ### 项目排序
 - 三种排序选项存储在 `ProjectListViewModel._sortOption: MutableStateFlow<SortOption>`
-- 切换排序调用 `updateSortOption(sortOption)` 更新 StateFlow
+- 切换排序调用 `sortProjects(sortOption)` 更新 StateFlow
 - `combine(sortOption, currentProjectId)` 自动触发重新查询
 - 当前项目始终置顶（通过 `baseFlow.map { projects -> ... }` 实现）
 

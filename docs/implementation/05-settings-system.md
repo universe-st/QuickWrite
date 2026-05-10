@@ -12,8 +12,8 @@
 | AppSettingsScreen | `presentation/ui/screens/AppSettingsScreen.kt` | 外观与字体设置 UI (369行) |
 | WritingSettingsScreen | `presentation/ui/screens/WritingSettingsScreen.kt` | 写作参数设置 UI |
 | SettingsViewModel | `presentation/viewmodel/SettingsViewModel.kt` | 设置状态管理 |
-| SettingsUseCase | `domain/usecase/SettingsUseCase.kt` | 设置业务逻辑 (171行) |
-| UserSettingsRepository | `data/repository/UserSettingsRepository.kt` | 设置数据仓库 (184行) |
+| SettingsUseCase | `domain/usecase/SettingsUseCase.kt` | 设置业务逻辑 (185行) |
+| UserSettingsRepository | `data/repository/UserSettingsRepository.kt` | 设置数据仓库 (194行) |
 | UserSettingEntity | `data/local/entity/UserSettingEntity.kt` | 设置数据库实体 |
 | UserSettingDao | `data/local/dao/UserSettingDao.kt` | 设置 DAO |
 | SettingsComponents | `presentation/ui/components/SettingsComponents.kt` | 设置 UI 组件库 |
@@ -46,17 +46,20 @@ data class UserSettingEntity(
 | `ai_writing` | `max_tool_call_rounds` | Int | `30` | 最大工具调用轮数 |
 | `workspace` | `current_project_id` | String? | `null` | 当前项目 ID |
 
+> **注意**: 表中"类型"列为语义类型（便于理解），Room 数据库中所有设置值均以 `String` 形式存储于 `user_settings.value` 列，读取时通过 `.toIntOrNull()`、`.toBooleanStrictOrNull()`、`.toFloatOrNull()` 等转换回语义类型。
+
 ### SettingsSubScreen（设置子页面导航）
 ```kotlin
-sealed class SettingsSubScreen {
-    object Main : SettingsSubScreen()
-    object AiConfigList : SettingsSubScreen()
-    object AiConfigEdit : SettingsSubScreen()
-    object WritingSettings : SettingsSubScreen()
-    object AppSettings : SettingsSubScreen()
-    object About : SettingsSubScreen()
+sealed class SettingsSubScreen(val route: String) {
+    object AiConfigList : SettingsSubScreen("ai_config_list")
+    object AiConfigEdit : SettingsSubScreen("ai_config_edit")
+    object WritingSettings : SettingsSubScreen("writing_settings")
+    object AppSettings : SettingsSubScreen("app_settings")
+    object About : SettingsSubScreen("about")
 }
 ```
+
+> **注意**: 设置主页面在 `currentSubScreen` 为 `null` 时显示，不使用单独的枚举 case。
 
 ### UI 组件
 ```kotlin
@@ -190,6 +193,6 @@ UI 自动更新（如果是主题/字体/语言，可能触发 activity.recreate
 
 ---
 
-**文档版本**: 1.1  
-**最后更新**: 2026-05-01  
-**变更**: `default_max_tokens` 默认值 2000 → 50000；新增 `SettingsIntEditItem` 组件替换 Max Tokens 和 Max Tool Call Rounds 的拖曳条；新增 `max_tool_call_rounds` 设置键
+**文档版本**: 1.2  
+**最后更新**: 2026-05-10  
+**变更**: 修正 SettingsSubScreen 定义（添加 `route` 构造函数参数，移除 `Main`）；更新文件行数；新增 String 存储说明

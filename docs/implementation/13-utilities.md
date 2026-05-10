@@ -9,16 +9,16 @@
 | 文件 | 路径 | 用途 |
 |------|------|------|
 | AppUtils | `util/AppUtils.kt` | 通用工具函数 (77行) |
-| CoverImageProcessor | `util/CoverImageProcessor.kt` | 封面图片处理 (116行) |
-| AppEditorConfig | `util/AppEditorConfig.kt` | 编辑器配置实现 |
-| FileManager | `util/FileManager.kt` | 文件系统管理 (368行) |
-| ChapterFileHelper | `util/ChapterFileHelper.kt` | 章节文件格式 (69行) |
+| CoverImageProcessor | `util/CoverImageProcessor.kt` | 封面图片处理 (93行) |
+| AppEditorConfig | `util/AppEditorConfig.kt` | 编辑器配置实现 (18行) |
+| FileManager | `util/FileManager.kt` | 文件系统管理 (465行) |
+| ChapterFileHelper | `util/ChapterFileHelper.kt` | 章节文件格式 (59行) |
 | UiText | `util/UiText.kt` | 国际化文本封装 (30行) |
-| LocaleHelper | `util/LocaleHelper.kt` | 语言环境切换 (98行) |
-| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 (~116行) |
-| TokenEstimator | `util/TokenEstimator.kt` | Token 近似估算 (12行) |
-| PromptManager | `util/PromptManager.kt` | AI 提示词模板管理 (~54行) |
-| HashUtil | `domain/model/HashUtil.kt` | SHA-256 文件哈希 (17行) |
+| LocaleHelper | `util/LocaleHelper.kt` | 语言环境切换 (85行) |
+| StreamParser | `util/StreamParser.kt` | SSE 流式响应解析，兼容多格式 (156行) |
+| TokenEstimator | `util/TokenEstimator.kt` | Token 近似估算 (14行) |
+| PromptManager | `util/PromptManager.kt` | AI 提示词模板管理 (70行) |
+| HashUtil | `domain/model/HashUtil.kt` | SHA-256 文件哈希 (20行) |
 
 > 注：FileManager、ChapterFileHelper、UiText、LocaleHelper 各有独立的功能文档，本文档聚焦于 AppUtils、CoverImageProcessor 和 AppEditorConfig 三个工具类。
 
@@ -46,13 +46,13 @@ object AppUtils {
 fun formatRelativeTime(context: Context, timestamp: Long): String {
     val diff = System.currentTimeMillis() - timestamp
     return when {
-        diff < 60_000L       → context.getString(R.string.time_just_now)      // "刚刚"
-        diff < 3600_000L     → "${diff/60000}分钟前"
-        diff < 86400_000L    → "${diff/3600000}小时前"
-        diff < 604800_000L   → "${diff/86400000}天前"
-        diff < 2592000_000L  → "${diff/604800000}周前"
-        diff < 31536000_000L → "${diff/2592000000}月前"
-        else                 → "${diff/31536000000}年前"
+        diff < 60_000L       → context.getString(R.string.time_just_now)
+        diff < 3600_000L     → context.getString(R.string.time_minutes_ago, diff / 60_000L)
+        diff < 86400_000L    → context.getString(R.string.time_hours_ago, diff / 3600_000L)
+        diff < 604800_000L   → context.getString(R.string.time_days_ago, diff / 86400_000L)
+        diff < 2592000_000L  → context.getString(R.string.time_weeks_ago, diff / 604800_000L)
+        diff < 31536000_000L → context.getString(R.string.time_months_ago, diff / 2592000_000L)
+        else                 → context.getString(R.string.time_years_ago, diff / 31536000_000L)
     }
 }
 ```
@@ -61,9 +61,9 @@ fun formatRelativeTime(context: Context, timestamp: Long): String {
 ```kotlin
 fun formatWordCount(context: Context, wordCount: Int): String {
     return when {
-        wordCount > 10000 → "%.1f万字".format(wordCount / 10000.0)
-        wordCount > 1000  → "%.1f千字".format(wordCount / 1000.0)
-        else              → "${wordCount}字"
+        wordCount > 10000 -> context.getString(R.string.word_count_ten_k, wordCount / 10000.0)
+        wordCount > 1000  -> context.getString(R.string.word_count_k, wordCount / 1000.0)
+        else              -> context.getString(R.string.word_count_single, wordCount)
     }
 }
 ```
@@ -139,8 +139,15 @@ saveCoverImage(context, sourceUri, projectDir)  [IO Dispatcher]
 class PromptManager(context: Context) {
     fun resolve(templateKey: String, variables: Map<String, String> = emptyMap()): String
     fun getDefaultAssistantPrompt(): String
-    fun getNovelWritingAssistantPrompt(title, author, genre, storagePath): String
-    fun getTitleGeneratorPrompt(): String
+    fun getNovelWritingAssistantPrompt(
+        title: String,
+        author: String,
+        genre: String,
+        storagePath: String,
+        description: String = "",
+        writingRules: String = ""
+    ): String
+    fun getNoProjectAssistantPrompt(): String
 }
 ```
 
@@ -148,8 +155,8 @@ class PromptManager(context: Context) {
 ```
 assets/prompts/
 ├── default_assistant.md          # 无变量：默认助手提示词
-├── novel_writing_assistant.md    # 含 {{title}} {{author}} {{genre}} {{storagePath}} 占位符
-└── title_generator.md            # 无变量：标题生成器提示词
+├── novel_writing_assistant.md    # 含 {{title}} {{author}} {{genre}} {{description}} {{storagePath}} {{writingRulesContent}} 占位符
+└── no_project_assistant.md       # 无变量：非项目场景助手提示词
 ```
 
 ### 设计要点
@@ -165,26 +172,22 @@ assets/prompts/
 ```kotlin
 class AppEditorConfig(
     private val isDark: Boolean,
-    private val fontFamily: String = "default"
+    private val fontFamily: String = "",
+    private val fontSizeSp: Int = 14
 ) : EditorConfig {
     override fun isDarkModeEnabled(): Boolean = isDark
     override fun getFontFamily(): String = fontFamily
     override fun getEditorForegroundColor(): Int =
         if (isDark) android.graphics.Color.WHITE
         else android.graphics.Color.BLACK
-    override fun getTabWidth(): Int = 4
-    override fun isSpellingRedUnderlineEnabled(): Boolean = false
-    override fun isDebugEnabled(): Boolean = BuildConfig.DEBUG
 }
 ```
 
 实现 `EditorConfig` 接口，为 markor-editor 提供配置：
 - **isDarkModeEnabled**: 从 Compose 的 `MaterialTheme.colorScheme.background` 计算
-- **getFontFamily**: 从用户设置读取（当前固定 "default"）
+- **getFontFamily**: 从用户设置读取（默认空字符串）
 - **getEditorForegroundColor**: 深色模式白色，浅色模式黑色
-- **getTabWidth**: 固定 4 空格
-- **isSpellingRedUnderlineEnabled**: 禁用拼写检查红线
-- **isDebugEnabled**: Debug 模式启用
+- **fontSizeSp**: 编辑器字号，默认 14sp
 
 ## 跨工具类依赖关系
 

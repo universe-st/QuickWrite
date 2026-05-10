@@ -128,10 +128,12 @@ val Typography = Typography(
 )
 ```
 
+> **注意**: 上述代码省略了 `fontFamily = FontFamily.Default` 和 `letterSpacing` 属性以保持简洁，实际代码中包含这两个属性的完整定义。
+
 ### TopAppBar 差异化策略
 | 页面类型 | 背景色 | 示例页面 |
 |---------|--------|---------|
-| 主列表页 | `primary` (深蓝) | ProjectListScreen, SettingsMainScreen |
+| 主列表页 | `PrimaryGradient` (深蓝渐变) | ProjectListScreen, SettingsMainScreen |
 | 编辑/表单页 | `surface` (白色/深色表面) | ProjectCreateScreen, ProjectEditScreen, AiConfigEditScreen |
 | 详情/子页 | `surfaceVariant` (浅灰) | ProjectDetailScreen, WritingScreen, AppSettingsScreen, AboutScreen |
 
@@ -194,23 +196,6 @@ QuickWriterTheme(darkTheme = result)
     └─ darkTheme=false → LightColorScheme (深蓝主色)
 ```
 
-## 数据流
-
-### 主题模式决策
-```
-UserSettingsRepository.getThemeMode()
-    │
-    ├─ "system" → isSystemInDarkTheme()
-    ├─ "dark"   → true
-    └─ "light"  → false
-    │
-    ▼
-QuickWriterTheme(darkTheme = result)
-    │
-    ├─ darkTheme=true  → DarkColorScheme
-    └─ darkTheme=false → LightColorScheme
-```
-
 ## 关键实现细节
 
 ### 状态栏处理
@@ -245,3 +230,9 @@ QuickWriterTheme(darkTheme = result)
 2. `Typography` 全局使用 `FontFamily.Default`，不支持用户自定义字体族
 3. 缺少用户自定义主题色功能（当前主色硬编码）
 4. 部分页面仍使用硬编码中文字符串（如 ProjectDetailScreen TopAppBar title），应迁移到 stringResource
+
+---
+
+**文档版本**: 1.1  
+**最后更新**: 2026-05-10  
+**变更**: Typography 代码块添加 fontFamily/letterSpacing 省略说明；修正 SettingsMainScreen TopAppBar 背景为 PrimaryGradient；删除重复的"数据流/主题模式决策"章节

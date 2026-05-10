@@ -50,7 +50,7 @@ com.universe_st.quickwriter/
 #### 已完成功能 ✅
 - 项目基础架构搭建（AppContainer, AppDatabase）
 - MVVM 架构实现（手动依赖注入）
-- Room 数据库和表结构设计（ProjectEntity, AiModelConfigEntity, UserSettingEntity）
+- Room 数据库和表结构设计（ProjectEntity, AiModelConfigEntity, UserSettingEntity, AiSessionEntity, AiMessageEntity, AiOperationEntity）
 - 项目列表页面 UI 和功能（ProjectListScreen, ProjectCard）
 - 项目创建页面 UI 和功能（ProjectCreateScreen）
 - 项目编辑页面 UI 和功能（ProjectEditScreen）
@@ -66,30 +66,23 @@ com.universe_st.quickwriter/
 - 用户设置数据管理（UserSettingsRepository, SettingsUseCase）
 - 写作设置界面（WritingSettingsScreen）
 - 写作编辑器页面（WritingScreen，基于 markor-editor，含章节管理）
+- AI 对话系统（ChatTab + AiChatViewModel + AIChatService，含流式 API、Function Calling、操作回溯）
 - 关于界面（AboutScreen）
 - 数据验证和错误处理基本框架
 - 项目删除功能（长按交互 + 确认对话框）
 - 启动界面和闪屏（SplashScreen, QuickWriterApp）
-- 全部 6 个 ViewModel 实现（含工厂类）
+- 全部 7 个 ViewModel 实现
 - Room TypeConverters 支持（List\<String\> 转换）
 - 项目排序功能（按创建时间、修改时间、名称）
 - markor-editor 模块导入（基于 Markor HighlightingEditor 移植，支持语法高亮、行号、自动格式化）
 
 #### 进行中功能 🚧
-- AI 对话 UI (ChatTab) 待实现（Service 层已就绪）
 - 单元测试和集成测试编写
 
 #### 待开发功能 ⏳
-- Markdown 编辑器
 - 文档管理系统（文件管理界面）
-- 正文章节编辑器
 - 小说设定管理界面（人物/地点/组织/物品）
 - 时间线管理功能
-- AI对话 Tab UI (ChatBubble/MessageList/InputArea/SessionList)
-- 导出和分享功能
-- 小说设定管理界面（人物/地点/组织/物品）
-- 时间线管理功能
-- AI对话和写作助手界面
 - 导出和分享功能
 
 ## 工作规范
@@ -406,23 +399,38 @@ sealed class SomeUiState {
 - `presentation/ui/components/ProjectCard.kt`: 项目卡片组件
 - `presentation/ui/components/ProjectCoverImage.kt`: 封面图片加载组件
 - `presentation/ui/components/SettingsComponents.kt`: 设置页面组件
+- `presentation/ui/components/ChatBubble.kt`: 对话气泡组件
+- `presentation/ui/components/ToolExecutionCard.kt`: 工具执行卡片组件
+- `presentation/ui/screens/ChatTab.kt`: AI 对话界面
 - `presentation/viewmodel/ProjectListViewModel.kt`: 项目列表 ViewModel
 - `presentation/viewmodel/ProjectCreateViewModel.kt`: 项目创建 ViewModel
 - `presentation/viewmodel/ProjectEditViewModel.kt`: 项目编辑 ViewModel
 - `presentation/viewmodel/ProjectDetailViewModel.kt`: 项目详情 ViewModel
 - `presentation/viewmodel/WritingViewModel.kt`: 写作编辑器 ViewModel（含章节管理逻辑）
 - `presentation/viewmodel/SettingsViewModel.kt`: 设置页面 ViewModel
+- `presentation/viewmodel/AiChatViewModel.kt`: AI 对话 ViewModel
 
 ### 数据层文件
 - `data/repository/ProjectRepository.kt`: 项目数据仓库
 - `data/repository/AiModelConfigRepository.kt`: AI模型配置仓库
 - `data/repository/UserSettingsRepository.kt`: 用户设置仓库
+- `data/repository/AiConversationRepository.kt`: AI对话数据仓库
+- `data/repository/AiServiceRepository.kt`: AI服务仓库（API Key管理、默认URL）
+- `data/remote/AiApiClient.kt`: AI API 客户端（OkHttp + Retrofit）
+- `data/remote/AiApiService.kt`: AI API 服务接口
 - `data/local/dao/ProjectDao.kt`: 项目数据访问对象
 - `data/local/dao/AiModelConfigDao.kt`: AI模型配置数据访问对象
 - `data/local/dao/UserSettingDao.kt`: 用户设置数据访问对象
+- `data/local/dao/AiSessionDao.kt`: AI会话数据访问对象
+- `data/local/dao/AiMessageDao.kt`: AI消息数据访问对象
+- `data/local/dao/AiOperationDao.kt`: AI操作数据访问对象
 - `data/local/entity/ProjectEntity.kt`: 项目数据库实体
 - `data/local/entity/AiModelConfigEntity.kt`: AI模型配置数据库实体
 - `data/local/entity/UserSettingEntity.kt`: 用户设置数据库实体
+- `data/local/entity/AiSessionEntity.kt`: AI会话数据库实体
+- `data/local/entity/AiMessageEntity.kt`: AI消息数据库实体
+- `data/local/entity/AiOperationEntity.kt`: AI操作数据库实体
+- `data/local/database/Migrations.kt`: 数据库迁移（v1→v2→v3→v4→v5）
 
 ## 构建系统配置
 
@@ -484,26 +492,20 @@ markor-editor/src/main/
 ## 开发注意事项
 
 ### 1. 当前已知问题
-- Room 数据库使用了已弃用的 `fallbackToDestructiveMigration()`
 - API 密钥使用 DataStore 存储但未加密
 - 项目删除功能的 UI 交互需要优化（长按触发删除）
 - 缺少错误处理的详细反馈机制
-- AI模型配置与网络请求集成尚未完成
 
 ### 2. 技术债务
-- 需要实现正确的数据库迁移策略
 - 需要添加单元测试和集成测试
 - 需要配置代码质量检查工具（lint, detekt）
 - 需要实现 API 密钥的安全存储
 
 ### 3. 开发优先级
-1. AI 写作辅助功能（网络请求层、对话界面）
-2. 正文章节编辑器与 Markdown 编辑器
-3. 小说设定管理界面（人物/地点/组织/物品）
-4. 时间线管理功能
-5. 导出和分享功能
-6. 单元测试和集成测试
-7. 技术债务清理（数据库迁移策略、API 密钥加密、代码质量工具）
+1. 导出和分享功能
+2. 小说设定管理界面（人物/地点/组织/物品）
+3. 时间线管理功能
+4. 单元测试和集成测试
 
 ## 与 AI 协作的最佳实践
 
@@ -560,7 +562,8 @@ markor-editor/src/main/
 docs/
 ├── requirements/                  # 需求文档
 │   ├── requirement.md             # 完整的产品需求和技术规范
-│   └── 编辑器需求文档.md           # 编辑器功能详细需求
+│   ├── 编辑器需求文档.md           # 编辑器功能详细需求
+│   └── 对话系统需求文档.md         # AI 对话系统需求
 ├── planning/                      # 开发计划
 │   ├── 第一期需求.md               # 第一期开发计划和进度
 │   └── 第二期需求.md               # 第二期开发计划和需求
@@ -568,6 +571,8 @@ docs/
 │   └── 依赖清单.md                 # 使用的依赖库列表
 ├── integration/                   # 集成说明
 │   └── markor-editor集成说明.md    # Markor 编辑器移植详细记录
+├── design/                        # 设计文档
+│   └── 01-ai-tool-call-view.md    # AI 工具调用视图设计
 └── implementation/                # 功能点实现文档
     ├── README.md                  # 目录索引
     ├── 01-project-management.md   # 项目管理（CRUD、排序）
@@ -582,7 +587,8 @@ docs/
     ├── 10-dependency-injection.md # 依赖注入（AppContainer）
     ├── 11-internationalization.md # 国际化（UiText/LocaleHelper）
     ├── 12-splash-and-entry.md     # 启动与入口
-    └── 13-utilities.md            # 工具类（AppUtils/CoverImageProcessor）
+    ├── 13-utilities.md            # 工具类（AppUtils/CoverImageProcessor）
+    └── 14-ai-chat-system.md       # AI 对话系统（Service/Session/Tools）
 ```
 
 ## 联系方式
@@ -591,6 +597,6 @@ docs/
 
 ---
 
-**文档版本**: 2.8  
-**最后更新**: 2026-04-29  
+**文档版本**: 2.9  
+**最后更新**: 2026-05-10  
 **适用范围**: AI Agents 和开发团队

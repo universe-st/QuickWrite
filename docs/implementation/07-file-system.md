@@ -8,7 +8,7 @@
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| FileManager | `util/FileManager.kt` | 文件系统核心操作工具 (430行) |
+| FileManager | `util/FileManager.kt` | 文件系统核心操作工具 (518行) |
 | ChapterFileHelper | `util/ChapterFileHelper.kt` | 章节文件格式解析 (69行) |
 
 ## 核心类/函数
@@ -25,8 +25,8 @@ private fun createDirectoryStructureAt(projectDir: File)
 ```kotlin
 suspend fun readFileContent(filePath: String): Result<String>
 suspend fun writeFileContent(filePath: String, content: String): Result<Unit>
-suspend fun createFile(filePath: String): Result<Unit>
-suspend fun createDirectory(dirPath: String): Result<Unit>
+suspend fun createFile(filePath: String): Result<String>
+suspend fun createDirectory(dirPath: String): Result<String>
 ```
 
 ### 文件操作
@@ -48,26 +48,16 @@ suspend fun extractZipTo(zipFile: File, outputDir: File): Result<Unit>  // ZIP �
 
 ### 元数据
 ```kotlin
-fun createInfoJson(projectDir: File, title: String, author: String, genre: String, createdTime: Long)
+fun createInfoJson(projectDir: File, title: String, author: String, genre: String, description: String, createdTime: Long)
 fun readInfoJson(projectDir: File): InfoJsonData?  // 解析 info.json
 
 data class InfoJsonData(
     val title: String,
     val author: String,
     val genre: String,
+    val description: String,
     val createdTime: Long
 )
-```
-
-### 封面辅助
-```kotlin
-fun getCoverImagePath(projectId: String): String
-fun hasCoverImage(projectId: String): Boolean
-```
-
-### 元数据
-```kotlin
-fun createInfoJson(projectDir: File, title: String, author: String, genre: String, createdTime: Long)
 ```
 
 ### 常量
@@ -82,12 +72,44 @@ companion object {
 }
 ```
 
+### 字数统计
+```kotlin
+fun countWords(text: String): Int    // companion object，识别中英文混合字数
+suspend fun countWordsInFile(filePath: String): Int            // 统计单文件字数（自动剥离 YAML Front Matter）
+suspend fun countWordsInDirectory(directoryPath: String, extensions: List<String> = listOf(".md")): Int  // 递归统计目录字数
+```
+
+### 文件树
+```kotlin
+suspend fun getFileTree(directory: File): List<FileTreeItem>
+
+data class FileTreeItem(
+    val name: String,
+    val relativePath: String,
+    val absolutePath: String,
+    val isDirectory: Boolean,
+    val lastModified: Long,
+    val children: List<FileTreeItem> = emptyList(),
+    val size: Long = 0
+)
+```
+
+### 封面辅助
+```kotlin
+fun getCoverImagePath(projectId: String): String
+fun hasCoverImage(projectId: String): Boolean
+```
+
+### 其他
+```kotlin
+suspend fun directoryExists(path: String): Boolean     // 检查目录是否存在
+```
+
 ## 项目目录结构
 
 ```
 {filesDir}/projects/{projectId}/
 ├── info.json                # 项目元数据 (JSON)
-├── 简介.md                  # 项目简介模板
 ├── 正文/                    # 正文章节 (*.md)
 ├── 设定/
 │   ├── 人物/
@@ -97,8 +119,7 @@ companion object {
 ├── 时间线/
 ├── 记录/
 └── 配置/
-    ├── AI指令.md            # AI 写作指令模板
-    └── 写作规范.md           # 写作规范模板
+    └── 写作规范.md           # 写作规范（空文件）
 ```
 
 ### info.json 格式
@@ -160,12 +181,10 @@ fileManager.createProjectDirectoryStructure(projectId)  [IO]
     │
     ├─ getProjectDirectory(projectId) → 创建根目录
     ├─ 创建 8 个子目录 (正文/设定/人物/地点/组织/物品/时间线/记录/配置)
-    ├─ createIntroFile() → 简介.md (空文件)
-    ├─ createAiInstructionFile() → 配置/AI指令.md ("# AI写作指令\n\n")
-    └─ createWritingRulesFile() → 配置/写作规范.md ("# 写作规范\n\n")
+    ├─ createWritingRulesFile() → 配置/写作规范.md (空文件)
     │
     ▼
-fileManager.createInfoJson(projectDir, title, author, genre, createdTime)
+fileManager.createInfoJson(projectDir, title, author, genre, description, createdTime)
     │
     └─ 写入 info.json (UTF-8, 格式化 JSON)
 ```
@@ -243,10 +262,8 @@ fun isPathSafe(path: String): Boolean {
 
 ### 模板文件内容
 创建项目时生成的模板文件：
-- `简介.md` — 空文件
-- `配置/AI指令.md` — `"# AI写作指令\n\n"`
-- `配置/写作规范.md` — `"# 写作规范\n\n"`
-- `info.json` — 含 title/author/genre/createdTime/version
+- `配置/写作规范.md` — 空文件（仅创建，不写入任何内容）
+- `info.json` — 含 title/author/genre/description/createdTime/version
 
 ### ZIP 空目录处理
 导出时如果项目目录为空（只含根目录本身），自动调用 `createDirectoryStructureAt()` 创建完整目录结构，确保导出的 ZIP 包含标准目录树。

@@ -2,14 +2,14 @@
 
 ## 功能概述
 
-使用 Room 数据库进行本地持久化，包含 6 张数据表和对应的 DAO、Repository 层。通过 Flow 提供响应式数据流，支持协程异步操作。数据库通过 `Migrations.MIGRATION_1_2` 实现 v1→v2 升级（新增 3 张 AI 相关表）。
+使用 Room 数据库进行本地持久化，包含 6 张数据表和对应的 DAO、Repository 层。通过 Flow 提供响应式数据流，支持协程异步操作。数据库通过 4 个 Migration 对象实现 v1→v2→v3→v4→v5 升级。
 
 ## 关键文件
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| AppDatabase | `data/local/database/AppDatabase.kt` | Room 数据库配置 (版本 2) |
-| Migrations | `data/local/database/Migrations.kt` | v1→v2 迁移 (新增 3 表) |
+| AppDatabase | `data/local/database/AppDatabase.kt` | Room 数据库配置 (版本 5) |
+| Migrations | `data/local/database/Migrations.kt` | v1→v2, v2→v3, v3→v4, v4→v5 迁移 |
 | Converters | `data/local/database/Converters.kt` | Room 类型转换器 |
 | ProjectEntity | `data/local/entity/ProjectEntity.kt` | 项目表实体 |
 | AiModelConfigEntity | `data/local/entity/AiModelConfigEntity.kt` | AI 配置表实体 |
@@ -42,7 +42,7 @@
         AiMessageEntity::class,     // v2
         AiOperationEntity::class    // v2
     ],
-    version = 2,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -67,7 +67,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(Migrations.MIGRATION_1_2)  // v2
+                    .addMigrations(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3, Migrations.MIGRATION_3_4, Migrations.MIGRATION_4_5)
                     .build()
                 INSTANCE = instance
                 instance
@@ -79,8 +79,16 @@ abstract class AppDatabase : RoomDatabase() {
 
 - 数据库名称：`quickwrite_database`
 - 单例模式：双重检查锁定（DCL）
-- 迁移策略：`fallbackToDestructiveMigration(false)`（不启用破坏性迁移）
+- 迁移策略：4 个 Migration 对象，不启用破坏性迁移
 - 编译时处理：KSP（替代 kapt）
+
+### 数据库迁移
+| Migration | 版本 | 变更内容 |
+|-----------|------|---------|
+| MIGRATION_1_2 | 1→2 | 新增 `ai_sessions`, `ai_messages`, `ai_operations` 三张表及索引 |
+| MIGRATION_2_3 | 2→3 | `ai_messages` 表新增 `reasoning_content TEXT` 列 |
+| MIGRATION_3_4 | 3→4 | 重建 `ai_sessions` 表（移除与 projects 表的外键约束） |
+| MIGRATION_4_5 | 4→5 | `ai_model_configs` 表新增 `thinking_enabled` (默认1) 和 `reasoning_effort` (默认'high') 列 |
 
 ## 实体定义
 
@@ -108,18 +116,20 @@ data class ProjectEntity(
 @Entity(tableName = "ai_model_configs")
 data class AiModelConfigEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val configName: String,
-    val provider: String,
-    val apiKey: String,
-    val baseUrl: String? = null,
-    val modelName: String,
-    val temperature: Float = 0.8f,
-    val maxTokens: Int = 2000,
-    val topP: Float = 1.0f,
-    val topK: Int = 1,
-    val frequencyPenalty: Float = 0f,
-    val presencePenalty: Float = 0f,
-    val isDefault: Boolean = false
+    @ColumnInfo(name = "config_name") val configName: String,
+    @ColumnInfo(name = "provider") val provider: String,
+    @ColumnInfo(name = "api_key") val apiKey: String,
+    @ColumnInfo(name = "base_url") val baseUrl: String?,
+    @ColumnInfo(name = "model_name") val modelName: String,
+    @ColumnInfo(name = "temperature") val temperature: Float = 0.7f,
+    @ColumnInfo(name = "max_tokens") val maxTokens: Int = 50000,
+    @ColumnInfo(name = "top_p") val topP: Float = 1.0f,
+    @ColumnInfo(name = "top_k") val topK: Int = 50,
+    @ColumnInfo(name = "frequency_penalty") val frequencyPenalty: Float = 0.0f,
+    @ColumnInfo(name = "presence_penalty") val presencePenalty: Float = 0.0f,
+    @ColumnInfo(name = "thinking_enabled") val thinkingEnabled: Boolean = true,
+    @ColumnInfo(name = "reasoning_effort") val reasoningEffort: String = "high",
+    @ColumnInfo(name = "is_default") val isDefault: Boolean = false
 )
 ```
 
@@ -143,7 +153,7 @@ class Converters {
     
     @TypeConverter
     fun toStringList(value: String?): List<String>? {
-        return value?.split(",")?.map { it.trim() }
+        return value?.split(",")?.filter { it.isNotEmpty() }
     }
 }
 ```
@@ -178,11 +188,11 @@ interface ProjectDao {
     @Query("DELETE FROM projects WHERE id = :id")
     suspend fun deleteProjectById(id: String)
 
-    @Query("UPDATE projects SET word_count = :wordCount, modified_time = :modifiedTime WHERE id = :id")
-    suspend fun updateWordCount(id: String, wordCount: Int, modifiedTime: Long)
+    @Query("UPDATE projects SET word_count = :wordCount WHERE id = :projectId")
+    suspend fun updateWordCount(projectId: String, wordCount: Int)
 
-    @Query("UPDATE projects SET chapter_count = chapter_count + 1, modified_time = :modifiedTime WHERE id = :id")
-    suspend fun incrementChapterCount(id: String, modifiedTime: Long)
+    @Query("UPDATE projects SET chapter_count = chapter_count + 1 WHERE id = :projectId")
+    suspend fun incrementChapterCount(projectId: String)
 }
 ```
 
@@ -250,15 +260,15 @@ interface UserSettingDao {
 class ProjectRepository(private val projectDao: ProjectDao) {
     fun getAllProjects(): Flow<List<ProjectEntity>>
     suspend fun getProjectById(id: String): ProjectEntity?
-    suspend fun createProject(project: ProjectEntity)
-    suspend fun updateProject(project: ProjectEntity)
-    suspend fun deleteProject(project: ProjectEntity)
-    suspend fun deleteProjectById(id: String)
-    suspend fun insertProjectDirect(project: ProjectEntity)   // 直接插入已构建的实体（导入场景）
+    suspend fun createProject(title: String, author: String, genre: String, description: String?, coverImagePath: String?, storagePath: String): Result<ProjectEntity>
+    suspend fun updateProject(id: String, title: String, author: String, genre: String, description: String?, coverImagePath: String?, currentProject: ProjectEntity): Result<ProjectEntity>
+    suspend fun deleteProject(project: ProjectEntity): Result<Unit>
+    suspend fun deleteProjectById(id: String): Result<Unit>
+    suspend fun insertProjectDirect(project: ProjectEntity): Result<Unit>
     suspend fun isProjectTitleUnique(title: String, excludeId: String? = null): Boolean
-    suspend fun updateWordCount(projectId: String, wordCount: Int)
-    suspend fun incrementChapterCount(projectId: String)
-    suspend fun updateModifiedTime(projectId: String)
+    suspend fun updateWordCount(projectId: String, wordCount: Int): Result<Unit>
+    suspend fun incrementChapterCount(projectId: String): Result<Unit>
+    suspend fun updateModifiedTime(projectId: String, project: ProjectEntity): Result<Unit>
 }
 ```
 
@@ -267,20 +277,29 @@ class ProjectRepository(private val projectDao: ProjectDao) {
 class AiModelConfigRepository(private val dao: AiModelConfigDao) {
     fun getAllConfigs(): Flow<List<AiModelConfigEntity>>
     suspend fun getDefaultConfig(): AiModelConfigEntity?
-    suspend fun createConfig(config: AiModelConfigEntity)  // 含唯一性检查
-    suspend fun updateConfig(config: AiModelConfigEntity)
-    suspend fun setDefaultConfig(id: Int)
-    suspend fun deleteConfig(id: Int)                       // 自动转移默认
+    suspend fun createConfig(configName: String, provider: String, apiKey: String, baseUrl: String?, modelName: String, ...): Result<AiModelConfigEntity>
+    suspend fun updateConfig(id: Int, configName: String, provider: String, ...): Result<Unit>
+    suspend fun setDefaultConfig(id: Int): Result<Unit>
+    suspend fun deleteConfig(config: AiModelConfigEntity): Result<Unit>
     suspend fun isConfigNameUnique(name: String, excludeId: Int? = null): Boolean
     suspend fun hasAnyConfig(): Boolean
 
     companion object {
-        const val PROVIDER_OPENAI = "OpenAI"
-        const val PROVIDER_ANTHROPIC = "Anthropic"
-        const val PROVIDER_CUSTOM = "Custom"
+        const val PROVIDER_OPENAI = "openai"
+        const val PROVIDER_ANTHROPIC = "anthropic"
+        const val PROVIDER_CUSTOM = "custom"
+        const val PROVIDER_DEEPSEEK = "deepseek"
+        const val PROVIDER_ZHIPU = "zhipu"
+        const val PROVIDER_KIMI = "kimi"
+        const val PROVIDER_SILICONFLOW = "siliconflow"
+        
         const val MODEL_GPT_35_TURBO = "gpt-3.5-turbo"
         const val MODEL_GPT_4 = "gpt-4"
-        const val MODEL_CLAUDE_3 = "claude-3"
+        const val MODEL_CLAUDE_3 = "claude-3-opus"
+        const val MODEL_DEEPSEEK_CHAT = "deepseek-v4-flash"
+        const val MODEL_GLM4_FLASH = "glm-4-flash"
+        const val MODEL_MOONSHOT_V1_8K = "moonshot-v1-8k"
+        const val MODEL_DEEPSEEK_V3 = "deepseek-ai/DeepSeek-V3"
     }
 }
 ```
@@ -288,23 +307,42 @@ class AiModelConfigRepository(private val dao: AiModelConfigDao) {
 ### UserSettingsRepository
 ```kotlin
 class UserSettingsRepository(private val userSettingDao: UserSettingDao) {
+    fun getAllSettings(): Flow<List<UserSettingEntity>>
+    fun getSettingsByCategory(category: String): Flow<List<UserSettingEntity>>
+    
     // 通用存取
     suspend fun getSetting(key: String): String?
     suspend fun getSetting(key: String, defaultValue: String): String
     suspend fun setSetting(key: String, value: String, category: String): Result<Unit>
+    suspend fun deleteSetting(key: String): Result<Unit>
+    suspend fun deleteSettingsByCategory(category: String): Result<Unit>
     
     // 类型化存取（含默认值）
     suspend fun getThemeMode(): String          // 默认 "system"
+    suspend fun setThemeMode(mode: String): Result<Unit>
     suspend fun getFontSize(): Int              // 默认 14
+    suspend fun setFontSize(size: Int): Result<Unit>
+    suspend fun getFontFamily(): String         // 默认 "default"
+    suspend fun setFontFamily(family: String): Result<Unit>
     suspend fun getAutoSaveInterval(): Int      // 默认 5
+    suspend fun setAutoSaveInterval(minutes: Int): Result<Unit>
     suspend fun getAutoSaveImmediately(): Boolean  // 默认 false
+    suspend fun setAutoSaveImmediately(enabled: Boolean): Result<Unit>
     suspend fun getLanguage(): String           // 默认 "system"
+    suspend fun setLanguage(code: String): Result<Unit>
     suspend fun getCurrentProjectId(): String?
     fun getCurrentProjectIdAsFlow(): Flow<String?>
+    suspend fun setCurrentProjectId(projectId: String?): Result<Unit>
     suspend fun getUseModelConfig(): Boolean    // 默认 true
+    suspend fun setUseModelConfig(useModelConfig: Boolean): Result<Unit>
     suspend fun getDefaultTemperature(): Float  // 默认 0.8
-    suspend fun getDefaultMaxTokens(): Int      // 默认 2000
+    suspend fun setDefaultTemperature(temperature: Float): Result<Unit>
+    suspend fun getDefaultMaxTokens(): Int      // 默认 50000
+    suspend fun setDefaultMaxTokens(tokens: Int): Result<Unit>
     suspend fun getDefaultTopP(): Float         // 默认 1.0
+    suspend fun setDefaultTopP(topP: Float): Result<Unit>
+    suspend fun getMaxToolCallRounds(): Int     // 默认 30
+    suspend fun setMaxToolCallRounds(rounds: Int): Result<Unit>
 }
 ```
 
@@ -355,8 +393,6 @@ ksp("androidx.room:room-compiler:${version}")
 
 ## 已知问题/技术债务
 
-1. **数据库迁移**: 使用 `fallbackToDestructiveMigration(false)` 拒绝破坏性迁移，版本升级时必须编写 Migration 对象
-2. **API Key 明文存储**: `AiModelConfigEntity.apiKey` 以明文存储在 Room 数据库中，需要加密
-3. **TypeConverter 未被使用**: `Converters` 类已定义但当前实体中没有 `List<String>` 字段需要转换
-4. **无 DAO 测试**: 缺少 Room DAO 的插桩测试
-5. `ProjectDao.deleteProject()` 方法已存在但未被调用（实际使用 `deleteProjectById()`）
+1. **API Key 明文存储**: `AiModelConfigEntity.apiKey` 以明文存储在 Room 数据库中，需要加密
+2. **TypeConverter 未被使用**: `Converters` 类已定义但当前实体中没有 `List<String>` 字段需要转换
+3. **无 DAO 测试**: 缺少 Room DAO 的插桩测试
