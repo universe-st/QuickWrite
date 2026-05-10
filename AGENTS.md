@@ -381,6 +381,10 @@ sealed class SomeUiState {
 - `util/AppEditorConfig.kt`: 编辑器配置（常用文件类型、扩展名等）
 - `util/LocaleHelper.kt`: 多语言环境切换辅助工具
 - `util/AppUtils.kt`: 通用应用工具（类型简称、日期格式化等）
+- `ui/theme/Color.kt`: 完整语义色板定义（浅色 29 色 + 深色 29 色 + 向后兼容别名）
+- `ui/theme/Type.kt`: 13 级 Material 3 排版阶梯
+- `ui/theme/Shape.kt`: Material 3 形状系统（5 级圆角）
+- `ui/theme/Theme.kt`: 主题 Composable（lightColorScheme + darkColorScheme + shapes）
 - `data/local/database/Converters.kt`: Room TypeConverters（List&lt;String&gt; 转换）
 - `domain/usecase/ProjectManagementUseCase.kt`: 项目管理的业务逻辑
 - `domain/usecase/SettingsUseCase.kt`: 设置管理的业务逻辑

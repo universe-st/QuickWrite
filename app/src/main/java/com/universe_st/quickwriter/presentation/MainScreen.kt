@@ -4,8 +4,9 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -101,7 +102,10 @@ fun MainScreen() {
         contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             if (currentRoute != Screen.ProjectCreate.route && currentRoute != Screen.ProjectEdit.route) {
-                NavigationBar {
+                NavigationBar(
+                    tonalElevation = 0.dp,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.nav_projects)) },
                         label = { Text(stringResource(R.string.nav_projects)) },
@@ -111,7 +115,10 @@ fun MainScreen() {
                             navController.navigate(Screen.ProjectList.route) {
                                 popUpTo(Screen.ProjectList.route) { inclusive = true }
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.nav_writing)) },
@@ -122,7 +129,10 @@ fun MainScreen() {
                             navController.navigate(Screen.Writing.route) {
                                 popUpTo(Screen.ProjectList.route)
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.nav_settings)) },
@@ -133,22 +143,26 @@ fun MainScreen() {
                             navController.navigate(Screen.Settings.route) {
                                 popUpTo(Screen.ProjectList.route)
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                 }
+                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     ) { paddingValues ->
         NavHost(
             navController = navController,
             startDestination = Screen.ProjectList.route,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues),
+            enterTransition = { fadeIn(animationSpec = tween(250)) },
+            exitTransition = { fadeOut(animationSpec = tween(250)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(250)) },
+            popExitTransition = { fadeOut(animationSpec = tween(250)) }
         ) {
-            composable(
-                route = Screen.ProjectList.route,
-                exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
-                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) }
-            ) {
+            composable(Screen.ProjectList.route) {
                 selectedTab = 0
 
                 ProjectListScreen(
@@ -187,9 +201,7 @@ fun MainScreen() {
 
             composable(
                 route = Screen.ProjectDetail.route,
-                arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
-                enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
-                popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
+                arguments = listOf(navArgument("projectId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val projectId = backStackEntry.arguments?.getString("projectId") ?: return@composable
                 val projectDetailViewModel: ProjectDetailViewModel = viewModel(

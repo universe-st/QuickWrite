@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universe_st.quickwriter.R
-import com.universe_st.quickwriter.ui.theme.PrimaryDark
+import com.universe_st.quickwriter.ui.theme.SplashGradient
 
 /**
  * 闪屏界面。
@@ -38,7 +38,7 @@ fun SplashScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(PrimaryDark),
+            .background(SplashGradient),
         contentAlignment = Alignment.Center
     ) {
         Column(

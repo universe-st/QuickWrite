@@ -1,5 +1,8 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -23,6 +28,7 @@ import com.universe_st.quickwriter.presentation.ui.components.ProjectCard
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListUiState
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListViewModel
 import com.universe_st.quickwriter.util.FileManager
+import com.universe_st.quickwriter.ui.theme.PrimaryGradient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,9 +72,10 @@ fun ProjectListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.project_list_title)) },
-                actions = {
+            Box(modifier = Modifier.background(brush = PrimaryGradient)) {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.project_list_title)) },
+                    actions = {
                     IconButton(
                         onClick = { showSortDialog = true }
                     ) {
@@ -95,19 +102,38 @@ fun ProjectListScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = Color.Transparent,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateProject,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .shadow(
+                        elevation = 6.dp,
+                        shape = FloatingActionButtonDefaults.shape,
+                        clip = true
+                    )
+                    .background(
+                        brush = PrimaryGradient,
+                        shape = FloatingActionButtonDefaults.shape
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(),
+                        onClick = onCreateProject
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.project_list_create))
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(R.string.project_list_create),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
             }
         },
         contentWindowInsets = WindowInsets(0.dp)
