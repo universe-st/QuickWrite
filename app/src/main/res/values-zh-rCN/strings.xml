@@ -401,6 +401,25 @@
     <string name="project_import_failed_detail">导入失败：%1$s</string>
     <string name="project_importing">正在导入项目，请稍候...</string>
 
+    <!-- ===== TXT导入 ===== -->
+    <string name="menu_import_txt">导入TXT</string>
+    <string name="txt_import_title">导入TXT小说</string>
+    <string name="txt_import_label_title">书名</string>
+    <string name="txt_import_label_author">作者</string>
+    <string name="txt_import_label_genre">类型</string>
+    <string name="txt_import_label_patterns">章节识别模式</string>
+    <string name="txt_import_pattern_cn">第X章/第X回</string>
+    <string name="txt_import_pattern_en">Chapter X</string>
+    <string name="txt_import_pattern_num">纯数字标题</string>
+    <string name="txt_import_pattern_vol">分卷标记</string>
+    <string name="txt_import_pattern_custom">自定义正则</string>
+    <string name="txt_import_custom_hint">输入正则表达式</string>
+    <string name="txt_import_btn_start">开始导入</string>
+    <string name="txt_import_importing">正在导入TXT，请稍候...</string>
+    <string name="txt_import_success">导入成功，共 %1$d 个章节</string>
+    <string name="txt_import_no_chapter">未检测到章节，请检查章节识别模式</string>
+    <string name="txt_import_file_too_large">文件过大（超过500MB）</string>
+
     <!-- ===== 时间格式 ===== -->
     <string name="time_just_now">刚刚</string>
     <string name="time_minutes_ago">%1$d分钟前</string>

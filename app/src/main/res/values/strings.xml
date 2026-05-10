@@ -401,6 +401,25 @@
     <string name="project_import_failed_detail">Import failed: %1$s</string>
     <string name="project_importing">Importing project, please wait...</string>
 
+    <!-- ===== TXT Import ===== -->
+    <string name="menu_import_txt">Import TXT</string>
+    <string name="txt_import_title">Import TXT Novel</string>
+    <string name="txt_import_label_title">Title</string>
+    <string name="txt_import_label_author">Author</string>
+    <string name="txt_import_label_genre">Genre</string>
+    <string name="txt_import_label_patterns">Chapter Detection</string>
+    <string name="txt_import_pattern_cn">Ch. X / Vol. X</string>
+    <string name="txt_import_pattern_en">Chapter X</string>
+    <string name="txt_import_pattern_num">Numbered Headings</string>
+    <string name="txt_import_pattern_vol">Volume Mark</string>
+    <string name="txt_import_pattern_custom">Custom Regex</string>
+    <string name="txt_import_custom_hint">Enter regex pattern</string>
+    <string name="txt_import_btn_start">Start Import</string>
+    <string name="txt_import_importing">Importing TXT, please wait...</string>
+    <string name="txt_import_success">Imported successfully, %1$d chapters</string>
+    <string name="txt_import_no_chapter">No chapters detected. Please check the detection patterns.</string>
+    <string name="txt_import_file_too_large">File is too large (max 500MB)</string>
+
     <!-- ===== Time Format ===== -->
     <string name="time_just_now">Just now</string>
     <string name="time_minutes_ago">%1$d minutes ago</string>

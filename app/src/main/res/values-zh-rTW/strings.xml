@@ -401,6 +401,25 @@
     <string name="project_import_failed_detail">匯入失敗：%1$s</string>
     <string name="project_importing">正在匯入專案，請稍候...</string>
 
+    <!-- ===== TXT匯入 ===== -->
+    <string name="menu_import_txt">匯入TXT</string>
+    <string name="txt_import_title">匯入TXT小說</string>
+    <string name="txt_import_label_title">書名</string>
+    <string name="txt_import_label_author">作者</string>
+    <string name="txt_import_label_genre">類型</string>
+    <string name="txt_import_label_patterns">章節識別模式</string>
+    <string name="txt_import_pattern_cn">第X章/第X回</string>
+    <string name="txt_import_pattern_en">Chapter X</string>
+    <string name="txt_import_pattern_num">純數字標題</string>
+    <string name="txt_import_pattern_vol">分卷標記</string>
+    <string name="txt_import_pattern_custom">自訂義正則</string>
+    <string name="txt_import_custom_hint">輸入正則表達式</string>
+    <string name="txt_import_btn_start">開始匯入</string>
+    <string name="txt_import_importing">正在匯入TXT，請稍候...</string>
+    <string name="txt_import_success">匯入成功，共 %1$d 個章節</string>
+    <string name="txt_import_no_chapter">未檢測到章節，請檢查章節識別模式</string>
+    <string name="txt_import_file_too_large">文件過大（超過500MB）</string>
+
     <!-- ===== 時間格式 ===== -->
     <string name="time_just_now">剛剛</string>
     <string name="time_minutes_ago">%1$d分鐘前</string>
