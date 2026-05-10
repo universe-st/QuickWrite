@@ -366,6 +366,147 @@ class ProjectManagementUseCase(
         }
     }
 
+    suspend fun importProjectFromTxt(
+        context: Context,
+        txtUri: Uri,
+        title: String,
+        author: String,
+        genre: String,
+        selectedPatterns: Set<com.universe_st.quickwriter.util.ChapterPattern>,
+        customRegex: String?
+    ): Result<Int> {
+        var storagePath: String? = null
+        try {
+            val fileSize = context.contentResolver.openFileDescriptor(txtUri, "r")?.statSize ?: 0
+            if (fileSize > 500L * 1024 * 1024) {
+                return Result.failure(IllegalArgumentException("File is too large (max 500MB)"))
+            }
+
+            val tmpFile = java.io.File(context.cacheDir, "txt_import_${AppUtils.generateProjectId()}")
+            try {
+                context.contentResolver.openInputStream(txtUri)?.use { input ->
+                    tmpFile.outputStream().use { output ->
+                        input.copyTo(output, 8192)
+                    }
+                } ?: return Result.failure(java.io.IOException("Cannot open TXT file"))
+
+                val charset = com.universe_st.quickwriter.util.TxtEncodingDetector.detectEncoding(tmpFile)
+                val parseResult = com.universe_st.quickwriter.util.TxtChapterParser.parseChapters(
+                    context = context,
+                    txtUri = txtUri,
+                    charset = charset,
+                    selectedPatterns = selectedPatterns,
+                    customRegex = customRegex
+                )
+
+                if (parseResult.chapters.isEmpty()) {
+                    return Result.failure(IllegalStateException("No chapters detected"))
+                }
+
+                var finalTitle = title.trim().ifBlank { "Imported Novel" }
+                if (!projectRepository.isProjectTitleUnique(finalTitle)) {
+                    var suffix = 1
+                    while (!projectRepository.isProjectTitleUnique("$finalTitle ($suffix)")) {
+                        suffix++
+                    }
+                    finalTitle = "$finalTitle ($suffix)"
+                }
+
+                val projectId = AppUtils.generateProjectId()
+                storagePath = fileManager.getProjectDirectory(projectId).absolutePath
+                val projectDir = java.io.File(storagePath)
+
+                fileManager.createProjectDirectoryStructure(projectId)
+
+                var chapterCount = 0
+                var totalWords = 0
+
+                val safeGenre = if (FileManager.NOVEL_GENRES.contains(genre)) genre else "其他"
+
+                if (parseResult.preludeBody != null && parseResult.preludeBody.isNotBlank()) {
+                    val preludeMeta = com.universe_st.quickwriter.util.ChapterMeta(
+                        title = "序章",
+                        order = 0
+                    )
+                    val preludeContent = com.universe_st.quickwriter.util.ChapterFileHelper.buildChapterContent(
+                        preludeMeta,
+                        parseResult.preludeBody
+                    )
+                    val preludeFile = java.io.File(
+                        java.io.File(projectDir, "正文"),
+                        "${AppUtils.sanitizeFileName("序章")}.md"
+                    )
+                    preludeFile.writeText(preludeContent, kotlin.text.Charsets.UTF_8)
+                    totalWords += FileManager.countWords(parseResult.preludeBody)
+                    chapterCount++
+                }
+
+                for (slice in parseResult.chapters) {
+                    val meta = com.universe_st.quickwriter.util.ChapterMeta(
+                        title = slice.title,
+                        order = chapterCount
+                    )
+                    val content = com.universe_st.quickwriter.util.ChapterFileHelper.buildChapterContent(
+                        meta,
+                        slice.body
+                    )
+                    var fileName = AppUtils.sanitizeFileName(slice.title).ifBlank { "Chapter_${slice.index}" }
+                    if (!fileName.endsWith(".md")) {
+                        fileName = "$fileName.md"
+                    }
+                    var chapterFile = java.io.File(java.io.File(projectDir, "正文"), fileName)
+                    var dedupSuffix = 1
+                    while (chapterFile.exists()) {
+                        dedupSuffix++
+                        val baseName = fileName.removeSuffix(".md")
+                        chapterFile = java.io.File(java.io.File(projectDir, "正文"), "${baseName}_$dedupSuffix.md")
+                    }
+                    chapterFile.writeText(content, kotlin.text.Charsets.UTF_8)
+                    totalWords += FileManager.countWords(slice.body)
+                    chapterCount++
+                }
+
+                fileManager.createInfoJson(
+                    projectDir,
+                    finalTitle,
+                    author.trim(),
+                    safeGenre,
+                    "",
+                    AppUtils.getCurrentTimestamp()
+                )
+
+                val project = com.universe_st.quickwriter.data.local.entity.ProjectEntity(
+                    id = projectId,
+                    title = finalTitle,
+                    author = author.trim(),
+                    genre = safeGenre,
+                    description = null,
+                    coverImagePath = null,
+                    storagePath = storagePath,
+                    createdTime = AppUtils.getCurrentTimestamp(),
+                    modifiedTime = AppUtils.getCurrentTimestamp(),
+                    status = "active",
+                    wordCount = totalWords,
+                    chapterCount = chapterCount
+                )
+
+                projectRepository.insertProjectDirect(project)
+
+                Timber.tag("TxtImport").i(
+                    "Import successful: id=%s title=%s chapters=%d words=%d",
+                    projectId, finalTitle, chapterCount, totalWords
+                )
+                return Result.success(chapterCount)
+            } finally {
+                tmpFile.delete()
+            }
+        } catch (e: Exception) {
+            Timber.tag("TxtImport").e(e, "TXT import failed")
+            storagePath?.let { try { java.io.File(it).deleteRecursively() } catch (_: Exception) {} }
+            return Result.failure(e)
+        }
+    }
+
     private fun countChapterFiles(storagePath: String): Int {
         val chaptersDir = File(storagePath, "正文")
         return if (chaptersDir.exists() && chaptersDir.isDirectory) {
