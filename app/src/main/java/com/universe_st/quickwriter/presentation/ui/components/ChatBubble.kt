@@ -226,6 +226,10 @@ private fun parseReferencesFromContent(content: String): Pair<List<ParsedReferen
             if (i < lines.size && lines[i] == "</ref>") i++
             refs.add(ParsedReferenceInfo(filePath, lineRange, contentLines))
         } else {
+            if (lines[i].isBlank()) {
+                i++
+                continue
+            }
             break
         }
     }
