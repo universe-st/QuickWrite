@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,6 +20,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @Composable
@@ -29,11 +31,19 @@ fun ProjectCoverImage(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    val effectivePath = coverImagePath
-        ?: project.coverImagePath
-        ?: if (File(project.storagePath, "cover.jpg").exists()) {
-            File(project.storagePath, "cover.jpg").absolutePath
-        } else null
+    var effectivePath by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(project.id, coverImagePath) {
+        val path = withContext(Dispatchers.IO) {
+            coverImagePath
+                ?: project.coverImagePath
+                ?: run {
+                    val coverFile = File(project.storagePath, "cover.jpg")
+                    if (coverFile.exists()) coverFile.absolutePath else null
+                }
+        }
+        effectivePath = path
+    }
 
     Box(
         modifier = modifier
@@ -44,12 +54,12 @@ fun ProjectCoverImage(
             )
     ) {
         if (!effectivePath.isNullOrEmpty()) {
-            val coverFile = File(effectivePath)
-            val cacheKey = "${effectivePath}_${coverFile.lastModified()}"
+            val coverFile = File(effectivePath!!)
+            val lastMod = remember(coverFile) { coverFile.lastModified() }
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(coverFile)
-                    .memoryCacheKey(cacheKey)
+                    .memoryCacheKey("${effectivePath}_$lastMod")
                     .crossfade(true)
                     .build(),
                 contentDescription = stringResource(R.string.project_cover_content_desc),
@@ -66,7 +76,7 @@ fun ProjectCoverImage(
             ) {
                 Text(
                     text = project.title.firstOrNull()?.toString() ?: "?",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold
                 )

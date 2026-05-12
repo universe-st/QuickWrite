@@ -76,7 +76,6 @@ fun UserMessageBubble(
     onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     var showCopied by remember { mutableStateOf(false) }
 
@@ -98,7 +97,7 @@ fun UserMessageBubble(
                 refInfos.forEach { ref ->
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -491,7 +490,7 @@ private fun SmallIconButton(
             imageVector = icon,
             contentDescription = contentDescription,
             modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

@@ -27,7 +27,6 @@ fun SettingsSwitchItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -144,7 +143,7 @@ fun SettingsSliderItem(
             }
             if (valueText != null) {
                 Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
+                    shape = MaterialTheme.shapes.small,
                     color = if (enabled) MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceVariant
                 ) {

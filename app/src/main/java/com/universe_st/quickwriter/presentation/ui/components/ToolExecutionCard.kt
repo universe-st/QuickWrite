@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.domain.model.ExpandableItem
 import com.universe_st.quickwriter.domain.model.StatItem
@@ -121,8 +120,7 @@ fun ToolExecutionCard(
                             Text(
                                 text = if (expanded) "▲" else "▼",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                fontSize = 10.sp
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                             )
                         }
                     }
@@ -194,8 +192,7 @@ private fun StatusBadge(success: Boolean) {
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
-            fontSize = 10.sp
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
         )
     }
 }
@@ -210,8 +207,7 @@ private fun StatRow(statItems: List<StatItem>) {
             Text(
                 text = "${statLabel(stat.label)}: ${stat.value}",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                fontSize = 11.sp
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
             )
         }
     }
@@ -231,8 +227,7 @@ private fun ExpandedContent(parsed: ToolResultParsed?) {
             Text(
                 text = parsed.expandableContent,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                fontSize = 12.sp
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
         } else if (parsed.expandableItems != null) {
             parsed.expandableItems.forEach { item ->
@@ -254,16 +249,14 @@ private fun ExpandableItemRow(item: ExpandableItem) {
                 text = item.title,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 12.sp
+                color = MaterialTheme.colorScheme.primary
             )
             if (item.subtitle != null) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = item.subtitle,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    fontSize = 11.sp
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
         }
@@ -271,7 +264,6 @@ private fun ExpandableItemRow(item: ExpandableItem) {
             text = item.content,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            fontSize = 12.sp,
             maxLines = 3
         )
     }
