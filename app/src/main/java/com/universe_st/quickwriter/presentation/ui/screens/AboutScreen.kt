@@ -132,7 +132,7 @@ fun AboutScreen(
 @Composable
 fun AppInfoItem(
     label: String,
-    value: String
+        value: String
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -145,8 +145,8 @@ fun AppInfoItem(
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

@@ -1,7 +1,6 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,7 +10,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.universe_st.quickwriter.data.local.entity.AiModelConfigEntity
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
 import com.universe_st.quickwriter.presentation.ui.components.SettingsClickItem
@@ -39,15 +37,13 @@ fun SettingsMainScreen(
 
     Scaffold(
         topBar = {
-            Box(modifier = Modifier.background(MaterialTheme.colorScheme.primary)) {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.settings_title)) },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+            TopAppBar(
+                title = { Text(stringResource(R.string.settings_title)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 )
-            }
+            )
         },
         contentWindowInsets = WindowInsets(0.dp)
     ) { innerPadding ->
@@ -55,7 +51,8 @@ fun SettingsMainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SettingsSection(

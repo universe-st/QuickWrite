@@ -35,7 +35,7 @@ import com.universe_st.quickwriter.data.local.entity.ProjectEntity
 import com.universe_st.quickwriter.presentation.ui.components.ProjectCoverImage
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailUiState
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectDetailViewModel
-import com.universe_st.quickwriter.ui.theme.TextSecondary
+
 import com.universe_st.quickwriter.util.AppUtils
 import java.io.File
 
@@ -491,7 +491,7 @@ fun ProjectDetailContent(
                     Text(
                         text = project.author,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     SuggestionChip(
                         onClick = { },
@@ -524,7 +524,7 @@ fun ProjectDetailContent(
                         text = "描述",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = project.description,
@@ -641,7 +641,7 @@ fun InfoRow(label: String, value: String, maxLines: Int = 1) {
             text = label,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
