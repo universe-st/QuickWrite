@@ -142,7 +142,7 @@ public class HighlightingEditor extends AppCompatEditText {
         // Scroll handle init
         _scrollHandlePaint.setStyle(Paint.Style.FILL);
         float density = getResources().getDisplayMetrics().density;
-        _handleHotZonePx = (int) (56 * density + 0.5f);
+        _handleHotZonePx = (int) (24 * density + 0.5f);
     }
 
     @Override
@@ -653,7 +653,7 @@ public class HighlightingEditor extends AppCompatEditText {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         final int touchX = (int) event.getX();
-        final int hotZoneLeft = getWidth() - getPaddingRight() - _handleHotZonePx;
+        final int hotZoneLeft = getWidth() - _handleHotZonePx;
         final boolean inHotZone = touchX >= hotZoneLeft;
 
         switch (event.getAction()) {
@@ -722,10 +722,14 @@ public class HighlightingEditor extends AppCompatEditText {
         final int handleRadiusPx = handleWidthPx / 2;
 
         final int availableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
-        final int handleTop = getPaddingTop() + (int) ((availableHeight - handleHeightPx) * fraction);
-        final int hotZoneLeft = getWidth() - getPaddingRight() - _handleHotZonePx;
-        final int handleCenterX = hotZoneLeft + _handleHotZonePx / 2;
-        final int handleLeft = handleCenterX - handleWidthPx / 2;
+
+        // Screen position: flush with right edge
+        final int handleTopScreen = getPaddingTop() + (int) ((availableHeight - handleHeightPx) * fraction);
+        final int handleLeftScreen = getWidth() - handleWidthPx;
+
+        // Compensate for canvas translation in onDraw (translate(-scrollX, -scrollY))
+        final int drawX = handleLeftScreen + getScrollX();
+        final int drawY = handleTopScreen + getScrollY();
 
         final int baseColor = getCurrentTextColor();
         final int alpha = (int) (_scrollHandleAlpha * 0.4f * 255);
@@ -737,8 +741,8 @@ public class HighlightingEditor extends AppCompatEditText {
         ));
 
         canvas.drawRoundRect(
-                handleLeft, handleTop,
-                handleLeft + handleWidthPx, handleTop + handleHeightPx,
+                drawX, drawY,
+                drawX + handleWidthPx, drawY + handleHeightPx,
                 handleRadiusPx, handleRadiusPx,
                 _scrollHandlePaint
         );
