@@ -1,6 +1,10 @@
 /*#######################################################
  *
  *   Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Modified 2026-05-12 for QuickWrite project:
+ *   - Added scroll handle overlay (drawScrollHandle, onTouchEvent, fade animations)
+ *   - Fixed scroll handle to stay fixed in viewport (canvas translation compensation)
+ *   - Fixed scroll handle horizontal position to be flush with right edge
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
