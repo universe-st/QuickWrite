@@ -382,16 +382,6 @@ fun MainScreen() {
 }
 
 @Composable
-fun PlaceholderScreen(text: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text)
-    }
-}
-
-@Composable
 fun ProjectActionDialog(
     projectTitle: String,
     onEdit: () -> Unit,

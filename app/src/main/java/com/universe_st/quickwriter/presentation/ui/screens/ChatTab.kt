@@ -575,11 +575,10 @@ private fun SessionListItem(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = session.lastMessage,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 11.sp
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
