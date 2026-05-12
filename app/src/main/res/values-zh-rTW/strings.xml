@@ -299,6 +299,8 @@
     <string name="ai_provider_zhipu">智譜 (GLM)</string>
     <string name="ai_provider_kimi">Kimi (月之暗面)</string>
     <string name="ai_provider_siliconflow">矽基流動</string>
+    <string name="ai_provider_qwen">通義千問</string>
+    <string name="ai_provider_moonshot">Moonshot</string>
     <string name="ai_provider_custom">自訂API</string>
 
     <!-- ===== 關於頁面 ===== -->

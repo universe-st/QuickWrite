@@ -452,27 +452,7 @@ private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            repeat(3) { index ->
-                val dotAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.2f,
-                    targetValue = 1.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(400, delayMillis = index * 150),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "loadingDot$index"
-                )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dotAlpha)
-                        )
-                )
-            }
-        }
+        LoadingDots()
     }
 }
 

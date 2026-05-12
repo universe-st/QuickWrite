@@ -299,6 +299,8 @@
     <string name="ai_provider_zhipu">Zhipu (GLM)</string>
     <string name="ai_provider_kimi">Kimi (Moonshot)</string>
     <string name="ai_provider_siliconflow">SiliconFlow</string>
+    <string name="ai_provider_qwen">Qwen (Tongyi)</string>
+    <string name="ai_provider_moonshot">Moonshot</string>
     <string name="ai_provider_custom">Custom API</string>
 
     <!-- ===== About Screen ===== -->
