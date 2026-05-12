@@ -1,0 +1,67 @@
+<h2>QuickWrite 应用现状总览</h2>
+<p class="subtitle">Android 长篇小说创作助手 — Jetpack Compose + Material Design 3</p>
+
+<div class="section">
+  <h3>当前主题</h3>
+  <div style="display:flex; gap:16px; flex-wrap:wrap; margin:12px 0;">
+    <div style="background:linear-gradient(180deg, #1a237e, #283593); color:#fff; padding:16px; border-radius:12px; flex:1; min-width:150px;">
+      <div style="font-size:12px; opacity:0.7;">Primary Gradient</div>
+      <div style="font-size:18px; font-weight:600; margin:4px 0;">#1a237e</div>
+      <div style="font-size:13px;">Deep Blue 深蓝</div>
+    </div>
+    <div style="background:#3949AB; color:#fff; padding:16px; border-radius:12px; flex:1; min-width:150px;">
+      <div style="font-size:12px; opacity:0.7;">Secondary</div>
+      <div style="font-size:18px; font-weight:600; margin:4px 0;">#3949AB</div>
+      <div style="font-size:13px;">Indigo 靛蓝</div>
+    </div>
+    <div style="background:#FF9800; color:#fff; padding:16px; border-radius:12px; flex:1; min-width:150px;">
+      <div style="font-size:12px; opacity:0.7;">Accent / CTA</div>
+      <div style="font-size:18px; font-weight:600; margin:4px 0;">#FF9800</div>
+      <div style="font-size:13px;">Orange 橙色</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>10 个页面</h3>
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:12px; margin-top:12px;">
+    <div class="placeholder">🏠 项目列表 ProjectList</div>
+    <div class="placeholder">✏️ 项目创建 ProjectCreate</div>
+    <div class="placeholder">📋 项目详情 ProjectDetail</div>
+    <div class="placeholder">🛠️ 项目编辑 ProjectEdit</div>
+    <div class="placeholder">📝 写作编辑器 WritingScreen</div>
+    <div class="placeholder">💬 AI 对话 ChatTab</div>
+    <div class="placeholder">⚙️ 系统设置 Settings</div>
+    <div class="placeholder">🤖 AI 配置 AiConfig</div>
+    <div class="placeholder">📱 关于 AboutScreen</div>
+    <div class="placeholder">🚀 启动页 SplashScreen</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>已发现的关键问题</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>做得好的 ✅</h4>
+      <ul>
+        <li>完整的 M3 语义色彩系统（浅/深各29色）</li>
+        <li>所有用户文字已国际化（stringResource）</li>
+        <li>状态驱动 UI（Loading/Empty/Error/Success）</li>
+        <li>可复用组件体系（SettingsComponents、ChatBubble 等）</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>需要改进 🔧</h4>
+      <ul>
+        <li>多处硬编码字号（绕过 Typography 系统）</li>
+        <li>TextSecondary (#757575) 硬编码颜色，暗色模式不适配</li>
+        <li>Scaffold 全部用 WindowInsets(0.dp)，不尊重系统安全区</li>
+        <li>暗色模式检测方式脆弱（颜色相等比较）</li>
+        <li>TabRow、ClipboardManager 等 API 已弃用</li>
+        <li>多处代码重复（动画、when 分支）</li>
+        <li>渐变颜色硬编码，不引用主题色</li>
+        <li>无自定义字体（头尾规范说要用 Roboto + 思源黑体）</li>
+      </ul>
+    </div>
+  </div>
+</div>

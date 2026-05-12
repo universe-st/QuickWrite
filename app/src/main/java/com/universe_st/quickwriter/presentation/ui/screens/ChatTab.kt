@@ -4,11 +4,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,9 +30,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -528,6 +529,7 @@ private fun SessionSidebar(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SessionListItem(
     session: SessionSummary,
@@ -551,12 +553,10 @@ private fun SessionListItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onClick() },
-                    onLongPress = { onLongClick() }
-                )
-            }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -617,6 +617,7 @@ private fun ChatContentArea(
 
     val streamingContent = if (isGenerating) {
         val pc = partialContent ?: ""
+        // TODO: Replace startsWith("Executing tool:") with proper state field for tool execution status
         if (pc.startsWith("Executing tool:")) null else pc
     } else null
 
@@ -871,7 +872,11 @@ private fun ChatInputArea(
                         onSend()
                     },
                     modifier = Modifier.size(48.dp),
-                    enabled = enabled && inputText.isNotBlank()
+                    enabled = enabled && inputText.isNotBlank(),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary
+                    )
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.Send,
@@ -897,7 +902,7 @@ private fun ReferenceBlockBar(
         blocks.forEach { block ->
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.tertiaryContainer,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
