@@ -18,7 +18,7 @@ import com.universe_st.quickwriter.presentation.ui.components.SettingsClickItem
 import androidx.compose.ui.res.stringResource
 import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSection
-import com.universe_st.quickwriter.ui.theme.PrimaryGradient
+
 
 sealed class SettingsSubScreen(val route: String) {
     object AiConfigList : SettingsSubScreen("ai_config_list")
@@ -39,7 +39,7 @@ fun SettingsMainScreen(
 
     Scaffold(
         topBar = {
-            Box(modifier = Modifier.background(brush = PrimaryGradient)) {
+            Box(modifier = Modifier.background(MaterialTheme.colorScheme.primary)) {
                 TopAppBar(
                     title = { Text(stringResource(R.string.settings_title)) },
                     colors = TopAppBarDefaults.topAppBarColors(

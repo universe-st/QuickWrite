@@ -33,7 +33,12 @@ private val LightColorScheme = lightColorScheme(
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
     error = LightError,
-    onError = LightOnError
+    onError = LightOnError,
+    errorContainer = LightErrorContainer,
+    onErrorContainer = LightOnErrorContainer,
+    inverseSurface = LightInverseSurface,
+    inverseOnSurface = LightInverseOnSurface,
+    inversePrimary = LightInversePrimary
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -58,7 +63,12 @@ private val DarkColorScheme = darkColorScheme(
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
     error = DarkError,
-    onError = DarkOnError
+    onError = DarkOnError,
+    errorContainer = DarkErrorContainer,
+    onErrorContainer = DarkOnErrorContainer,
+    inverseSurface = DarkInverseSurface,
+    inverseOnSurface = DarkInverseOnSurface,
+    inversePrimary = DarkInversePrimary
 )
 
 @Composable

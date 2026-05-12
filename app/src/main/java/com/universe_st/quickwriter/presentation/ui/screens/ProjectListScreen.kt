@@ -28,7 +28,7 @@ import com.universe_st.quickwriter.presentation.ui.components.ProjectCard
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListUiState
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListViewModel
 import com.universe_st.quickwriter.util.FileManager
-import com.universe_st.quickwriter.ui.theme.PrimaryGradient
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +85,7 @@ fun ProjectListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Box(modifier = Modifier.background(brush = PrimaryGradient)) {
+            Box(modifier = Modifier.background(MaterialTheme.colorScheme.primary)) {
                 TopAppBar(
                     title = { Text(stringResource(R.string.project_list_title)) },
                     actions = {
@@ -139,7 +139,7 @@ fun ProjectListScreen(
                         clip = true
                     )
                     .background(
-                        brush = PrimaryGradient,
+                        MaterialTheme.colorScheme.primary,
                         shape = FloatingActionButtonDefaults.shape
                     )
                     .clickable(
