@@ -76,7 +76,6 @@ fun UserMessageBubble(
     onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
     var showCopied by remember { mutableStateOf(false) }
 
@@ -98,7 +97,7 @@ fun UserMessageBubble(
                 refInfos.forEach { ref ->
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -226,6 +225,10 @@ private fun parseReferencesFromContent(content: String): Pair<List<ParsedReferen
             if (i < lines.size && lines[i] == "</ref>") i++
             refs.add(ParsedReferenceInfo(filePath, lineRange, contentLines))
         } else {
+            if (lines[i].isBlank()) {
+                i++
+                continue
+            }
             break
         }
     }
@@ -448,27 +451,7 @@ private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            repeat(3) { index ->
-                val dotAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.2f,
-                    targetValue = 1.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(400, delayMillis = index * 150),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "loadingDot$index"
-                )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dotAlpha)
-                        )
-                )
-            }
-        }
+        LoadingDots()
     }
 }
 
@@ -507,7 +490,7 @@ private fun SmallIconButton(
             imageVector = icon,
             contentDescription = contentDescription,
             modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

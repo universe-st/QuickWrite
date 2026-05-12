@@ -1,23 +1,18 @@
 package com.universe_st.quickwriter.presentation.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -28,7 +23,7 @@ import com.universe_st.quickwriter.presentation.ui.components.ProjectCard
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListUiState
 import com.universe_st.quickwriter.presentation.viewmodel.ProjectListViewModel
 import com.universe_st.quickwriter.util.FileManager
-import com.universe_st.quickwriter.ui.theme.PrimaryGradient
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,10 +80,9 @@ fun ProjectListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Box(modifier = Modifier.background(brush = PrimaryGradient)) {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.project_list_title)) },
-                    actions = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.project_list_title)) },
+                actions = {
                     IconButton(
                         onClick = { showSortDialog = true }
                     ) {
@@ -122,37 +116,21 @@ fun ProjectListScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-            }
         },
         floatingActionButton = {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .shadow(
-                        elevation = 6.dp,
-                        shape = FloatingActionButtonDefaults.shape,
-                        clip = true
-                    )
-                    .background(
-                        brush = PrimaryGradient,
-                        shape = FloatingActionButtonDefaults.shape
-                    )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(),
-                        onClick = onCreateProject
-                    ),
-                contentAlignment = Alignment.Center
+            FloatingActionButton(
+                onClick = onCreateProject,
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                contentColor = MaterialTheme.colorScheme.onTertiary
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = stringResource(R.string.project_list_create),
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    contentDescription = stringResource(R.string.project_list_create)
                 )
             }
         },
@@ -194,7 +172,7 @@ fun ProjectListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = Icons.Outlined.AutoStories,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)

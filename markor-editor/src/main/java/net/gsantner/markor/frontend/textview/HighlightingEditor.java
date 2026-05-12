@@ -7,8 +7,10 @@
 #########################################################*/
 package net.gsantner.markor.frontend.textview;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
@@ -23,6 +25,7 @@ import android.view.ActionMode;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
@@ -79,6 +82,18 @@ public class HighlightingEditor extends AppCompatEditText {
     private int _textChangedNumber;
     private final Runnable _textChangedRecorder = TextViewUtils.makeDebounced(getHandler(), 1000, () -> _textChangedNumber++);
 
+    // Scroll handle
+    private final Paint _scrollHandlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private float _scrollHandleAlpha = 0f;
+    private boolean _isHandleDragging = false;
+    private float _handleDragStartY;
+    private int _handleDragStartScrollY;
+    private int _handleHotZonePx;
+    private ValueAnimator _fadeAnimator;
+    private final Runnable _autoHideRunnable = this::hideScrollHandle;
+    private static final long AUTO_HIDE_DELAY_MS = 3000;
+    private static final long FADE_DURATION_MS = 500;
+
     public HighlightingEditor(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -123,11 +138,23 @@ public class HighlightingEditor extends AppCompatEditText {
 
         // Custom options
         setupCustomOptions();
+
+        // Scroll handle init
+        _scrollHandlePaint.setStyle(Paint.Style.FILL);
+        float density = getResources().getDisplayMetrics().density;
+        _handleHotZonePx = (int) (56 * density + 0.5f);
     }
 
     @Override
     protected void onScrollChanged(int horiz, int vert, int oldHoriz, int oldVert) {
         super.onScrollChanged(horiz, vert, oldHoriz, oldVert);
+        if (!_isHandleDragging) {
+            removeCallbacks(_autoHideRunnable);
+            if (_scrollHandleAlpha < 0.5f) {
+                showScrollHandle();
+            }
+            postDelayed(_autoHideRunnable, AUTO_HIDE_DELAY_MS);
+        }
     }
 
     @Override
@@ -144,10 +171,10 @@ public class HighlightingEditor extends AppCompatEditText {
         try {
             super.onDraw(canvas);
         } catch (Exception e) {
-            // Hinder drawing from crashing the app
-            Log.e(getClass().getName(), "HighlightingEdtior onDraw->super.onDraw crash" + e);
+            Log.e(getClass().getName(), "HighlightingEditor onDraw->super.onDraw crash" + e);
             Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
         }
+        drawScrollHandle(canvas);
     }
 
     // Highlighting
@@ -585,14 +612,12 @@ public class HighlightingEditor extends AppCompatEditText {
         setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                // Add custom items programmatically
                 menu.add(0, 0, 0, "☰");
                 return true;
             }
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                // Modify menu items here if necessary
                 return true;
             }
 
@@ -607,7 +632,6 @@ public class HighlightingEditor extends AppCompatEditText {
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-                // Cleanup if needed
             }
         });
     }
@@ -621,5 +645,124 @@ public class HighlightingEditor extends AppCompatEditText {
      */
     public int getTextChangedNumber() {
         return _textChangedNumber;
+    }
+
+    // Scroll handle
+    // ---------------------------------------------------------------------------------------------
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        final int touchX = (int) event.getX();
+        final int hotZoneLeft = getWidth() - getPaddingRight() - _handleHotZonePx;
+        final boolean inHotZone = touchX >= hotZoneLeft;
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (inHotZone) {
+                    _isHandleDragging = true;
+                    _handleDragStartY = event.getY();
+                    _handleDragStartScrollY = getScrollY();
+                    removeCallbacks(_autoHideRunnable);
+                    showScrollHandle();
+                    performHandleScroll(event.getY());
+                    return true;
+                }
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                if (_isHandleDragging) {
+                    performHandleScroll(event.getY());
+                    return true;
+                }
+                break;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                if (_isHandleDragging) {
+                    _isHandleDragging = false;
+                    postDelayed(_autoHideRunnable, AUTO_HIDE_DELAY_MS);
+                    return true;
+                }
+                break;
+        }
+
+        return super.onTouchEvent(event);
+    }
+
+    private void performHandleScroll(float touchY) {
+        final Layout layout = getLayout();
+        if (layout == null) return;
+
+        final int contentHeight = layout.getHeight();
+        final int visibleHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+        final int maxScrollY = Math.max(0, contentHeight - visibleHeight);
+        if (maxScrollY <= 0) return;
+
+        final int availableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+        final float fraction = Math.max(0f, Math.min(1f, (touchY - getPaddingTop()) / availableHeight));
+        final int targetScrollY = Math.round(fraction * maxScrollY);
+        setScrollY(targetScrollY);
+    }
+
+    private void drawScrollHandle(Canvas canvas) {
+        if (_scrollHandleAlpha <= 0f) return;
+
+        final Layout layout = getLayout();
+        if (layout == null) return;
+
+        final int contentHeight = layout.getHeight();
+        final int visibleHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+        final int maxScrollY = Math.max(0, contentHeight - visibleHeight);
+        if (maxScrollY <= 0) return;
+
+        final float fraction = Math.max(0f, Math.min(1f, (float) getScrollY() / maxScrollY));
+        final float density = getResources().getDisplayMetrics().density;
+        final int handleWidthPx = (int) (8 * density + 0.5f);
+        final int handleHeightPx = (int) (24 * density + 0.5f);
+        final int handleRadiusPx = handleWidthPx / 2;
+
+        final int availableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+        final int handleTop = getPaddingTop() + (int) ((availableHeight - handleHeightPx) * fraction);
+        final int hotZoneLeft = getWidth() - getPaddingRight() - _handleHotZonePx;
+        final int handleCenterX = hotZoneLeft + _handleHotZonePx / 2;
+        final int handleLeft = handleCenterX - handleWidthPx / 2;
+
+        final int baseColor = getCurrentTextColor();
+        final int alpha = (int) (_scrollHandleAlpha * 0.4f * 255);
+        _scrollHandlePaint.setColor(Color.argb(
+                Math.min(255, Math.max(0, alpha)),
+                Color.red(baseColor),
+                Color.green(baseColor),
+                Color.blue(baseColor)
+        ));
+
+        canvas.drawRoundRect(
+                handleLeft, handleTop,
+                handleLeft + handleWidthPx, handleTop + handleHeightPx,
+                handleRadiusPx, handleRadiusPx,
+                _scrollHandlePaint
+        );
+    }
+
+    private void showScrollHandle() {
+        animateScrollHandle(1f);
+    }
+
+    private void hideScrollHandle() {
+        animateScrollHandle(0f);
+    }
+
+    private void animateScrollHandle(float targetAlpha) {
+        if (_fadeAnimator != null) {
+            _fadeAnimator.cancel();
+        }
+        final float fromAlpha = _scrollHandleAlpha;
+        _fadeAnimator = ValueAnimator.ofFloat(fromAlpha, targetAlpha);
+        _fadeAnimator.setDuration(FADE_DURATION_MS);
+        _fadeAnimator.addUpdateListener(animation -> {
+            _scrollHandleAlpha = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        _fadeAnimator.start();
     }
 }

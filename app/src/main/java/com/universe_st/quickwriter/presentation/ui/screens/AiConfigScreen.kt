@@ -27,6 +27,7 @@ import com.universe_st.quickwriter.R
 import com.universe_st.quickwriter.presentation.ui.components.SettingsIntEditItem
 import com.universe_st.quickwriter.presentation.ui.components.SettingsSliderItem
 import com.universe_st.quickwriter.presentation.viewmodel.AiConfigFormData
+import com.universe_st.quickwriter.util.ProviderDisplayHelper
 import com.universe_st.quickwriter.presentation.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -187,18 +188,7 @@ fun AiConfigCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            val providerName = stringResource(
-                when (config.provider) {
-                    AiModelConfigRepository.PROVIDER_OPENAI -> R.string.ai_provider_openai
-                    AiModelConfigRepository.PROVIDER_ANTHROPIC -> R.string.ai_provider_anthropic
-                    AiModelConfigRepository.PROVIDER_DEEPSEEK -> R.string.ai_provider_deepseek
-                    AiModelConfigRepository.PROVIDER_ZHIPU -> R.string.ai_provider_zhipu
-                    AiModelConfigRepository.PROVIDER_KIMI -> R.string.ai_provider_kimi
-                    AiModelConfigRepository.PROVIDER_SILICONFLOW -> R.string.ai_provider_siliconflow
-                    AiModelConfigRepository.PROVIDER_CUSTOM -> R.string.ai_provider_custom
-                    else -> R.string.ai_provider_custom
-                }
-            )
+            val providerName = ProviderDisplayHelper.getDisplayName(config.provider)
             Text(
                 text = stringResource(R.string.ai_config_provider_label, providerName),
                 style = MaterialTheme.typography.bodyMedium,
@@ -241,9 +231,9 @@ fun AiConfigEditScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }
@@ -273,18 +263,7 @@ fun AiConfigEditScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = stringResource(
-                        when (formData.provider) {
-                            AiModelConfigRepository.PROVIDER_OPENAI -> R.string.ai_provider_openai
-                            AiModelConfigRepository.PROVIDER_ANTHROPIC -> R.string.ai_provider_anthropic
-                            AiModelConfigRepository.PROVIDER_DEEPSEEK -> R.string.ai_provider_deepseek
-                            AiModelConfigRepository.PROVIDER_ZHIPU -> R.string.ai_provider_zhipu
-                            AiModelConfigRepository.PROVIDER_KIMI -> R.string.ai_provider_kimi
-                            AiModelConfigRepository.PROVIDER_SILICONFLOW -> R.string.ai_provider_siliconflow
-                            AiModelConfigRepository.PROVIDER_CUSTOM -> R.string.ai_provider_custom
-                            else -> R.string.ai_provider_custom
-                        }
-                    ),
+                    value = ProviderDisplayHelper.getDisplayName(formData.provider),
                     onValueChange = { },
                     readOnly = true,
                     label = { Text(stringResource(R.string.ai_config_field_provider)) },
@@ -299,16 +278,16 @@ fun AiConfigEditScreen(
                     onDismissRequest = { providerMenuExpanded = false }
                 ) {
                     listOf(
-                        AiModelConfigRepository.PROVIDER_DEEPSEEK to stringResource(R.string.ai_provider_deepseek),
-                        AiModelConfigRepository.PROVIDER_KIMI to stringResource(R.string.ai_provider_kimi),
-                        AiModelConfigRepository.PROVIDER_ZHIPU to stringResource(R.string.ai_provider_zhipu),
-                        AiModelConfigRepository.PROVIDER_OPENAI to stringResource(R.string.ai_provider_openai),
-                        AiModelConfigRepository.PROVIDER_ANTHROPIC to stringResource(R.string.ai_provider_anthropic),
-                        AiModelConfigRepository.PROVIDER_SILICONFLOW to stringResource(R.string.ai_provider_siliconflow),
-                        AiModelConfigRepository.PROVIDER_CUSTOM to stringResource(R.string.ai_provider_custom)
-                    ).forEach { (provider, name) ->
+                        AiModelConfigRepository.PROVIDER_DEEPSEEK,
+                        AiModelConfigRepository.PROVIDER_KIMI,
+                        AiModelConfigRepository.PROVIDER_ZHIPU,
+                        AiModelConfigRepository.PROVIDER_OPENAI,
+                        AiModelConfigRepository.PROVIDER_ANTHROPIC,
+                        AiModelConfigRepository.PROVIDER_SILICONFLOW,
+                        AiModelConfigRepository.PROVIDER_CUSTOM
+                    ).forEach { provider ->
                         DropdownMenuItem(
-                            text = { Text(name) },
+                            text = { Text(ProviderDisplayHelper.getDisplayName(provider)) },
                             onClick = {
                                 viewModel.updateAiProvider(provider)
                                 providerMenuExpanded = false

@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.universe_st.markor_editor.HighlightingMode
 import com.universe_st.quickwriter.R
 import com.universe_st.markor_editor.MarkorEditor
@@ -44,10 +43,11 @@ import com.universe_st.quickwriter.presentation.viewmodel.ChapterFileInfo
 import com.universe_st.quickwriter.presentation.viewmodel.WritingUiState
 import com.universe_st.quickwriter.presentation.viewmodel.WritingViewModel
 import com.universe_st.quickwriter.data.remote.SessionManager
-import com.universe_st.quickwriter.ui.theme.TextSecondary
+// TextSecondary removed — use MaterialTheme.colorScheme.onSurfaceVariant instead
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CreateNewFolder
@@ -187,7 +187,7 @@ fun WritingScreen(
                                     state.total
                                 ),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -547,6 +547,7 @@ private fun WritingTabRow(
         else -> 0
     }
 
+    // TODO: Migrate to non-deprecated TabRow API when available in the Compose version used
     @Suppress("DEPRECATION")
     TabRow(
         selectedTabIndex = if (!editorEnabled && selectedTab == 0) 1 else selectedTab,
@@ -597,8 +598,8 @@ private fun EditorContent(
     onAddToConversation: ((selectedText: String, startLine: Int, endLine: Int) -> Unit)? = null,
     addToConversationLabel: String = "Add to Chat"
 ) {
-    val isDark = MaterialTheme.colorScheme.background == Color(0xFF121212)
-    val editorConfig = remember(isDark) { AppEditorConfig(isDark = isDark) }
+    val isDarkTheme = isSystemInDarkTheme()
+    val editorConfig = remember(isDarkTheme) { AppEditorConfig(isDark = isDarkTheme) }
     val isChapterMode = state.fileBrowserMode == FileBrowserMode.CHAPTERS
 
     if (!showChapterList && isChapterMode && state.chapters.isEmpty()) {
@@ -610,7 +611,7 @@ private fun EditorContent(
                 Text(
                     stringResource(R.string.writing_no_chapters),
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(onClick = onCreateChapter) {
@@ -712,7 +713,7 @@ private fun EditorContent(
                             Text(
                                 stringResource(R.string.writing_no_files),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -894,7 +895,7 @@ private fun FileListPanel(
                     Text(
                         stringResource(R.string.writing_no_files),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
@@ -947,7 +948,7 @@ private fun FileListPanel(
                 stringResource(R.string.writing_file_count, countFilesInTree(state.fileTree))
             },
             style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
         )
     }
@@ -995,7 +996,7 @@ private fun FileTreeItemNode(
                     if (isExpanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
-                    tint = TextSecondary
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Spacer(modifier = Modifier.width(18.dp))
@@ -1008,7 +1009,7 @@ private fun FileTreeItemNode(
                 contentDescription = null,
                 modifier = Modifier.size(16.dp).padding(start = 4.dp),
                 tint = if (item.isDirectory) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                       else TextSecondary
+                       else MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.width(4.dp))
@@ -1123,20 +1124,18 @@ private fun ChapterListItem(
                 Text(
                     text = chapter.volume,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 11.sp
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             if (chapter.summary.isNotBlank()) {
                 Text(
                     text = chapter.summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 10.sp
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -1174,7 +1173,7 @@ private fun WritingStatusBar(uiState: WritingUiState) {
             Text(
                 text = info,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
@@ -1199,13 +1198,13 @@ private fun NoProjectContent(onNavigateToProjectList: () -> Unit) {
             Text(
                 text = stringResource(R.string.writing_under_development),
                 style = MaterialTheme.typography.bodyLarge,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = stringResource(R.string.writing_no_project_hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(onClick = onNavigateToProjectList) {

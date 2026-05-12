@@ -1,31 +1,23 @@
 package com.universe_st.quickwriter.presentation.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.universe_st.quickwriter.data.local.entity.ProjectEntity
-import com.universe_st.quickwriter.ui.theme.TextSecondary
 import com.universe_st.quickwriter.util.AppUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ProjectCard(
     project: ProjectEntity,
@@ -35,32 +27,15 @@ fun ProjectCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var isPressed by remember { mutableStateOf(false) }
-
-    val scaleAnim by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
-        label = "cardScale"
-    )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .scale(scaleAnim)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onClick() },
-                    onPress = {
-                        isPressed = true
-                        tryAwaitRelease()
-                        isPressed = false
-                    },
-                    onLongPress = {
-                        isPressed = false
-                        onLongClick()
-                    }
-                )
-            },
-        shape = RoundedCornerShape(12.dp),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        shape = MaterialTheme.shapes.small,
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isCurrentProject) 4.dp else 2.dp
         ),
@@ -77,7 +52,7 @@ fun ProjectCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.size(72.dp, 96.dp)) {
+            Box(modifier = Modifier.size(80.dp, 120.dp)) {
                 ProjectCoverImage(
                     project = project,
                     modifier = Modifier.fillMaxSize()
@@ -116,7 +91,7 @@ fun ProjectCard(
                 Text(
                     text = project.author,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -124,7 +99,7 @@ fun ProjectCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     tonalElevation = 0.dp
                 ) {
@@ -145,12 +120,12 @@ fun ProjectCard(
                     Text(
                         text = AppUtils.formatRelativeTime(context, project.modifiedTime),
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = AppUtils.formatWordCount(context, project.wordCount),
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

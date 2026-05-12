@@ -87,40 +87,58 @@ fun MarkorEditor(
                     }
                 })
 
-                if (onAddToConversation != null) {
-                    setCustomSelectionActionModeCallback(object : ActionMode.Callback {
-                        override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                            menu?.add(0, 0, 0, "☰")
-                            menu?.add(0, 1, 1, currentAddToConversationLabel)
-                            return true
-                        }
-
-                        override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-                            when (item?.itemId) {
-                                0 -> this@apply.selectLines()
-                                1 -> {
-                                        val selStart = min(selectionStart, selectionEnd)
-                                        val selEnd = kotlin.math.max(selectionStart, selectionEnd)
-                                        if (selStart != selEnd) {
-                                            val fullText = text?.toString() ?: return false
-                                            val selectedText = fullText.substring(selStart, selEnd)
-                                            val startLine = fullText.substring(0, selStart).count { it == '\n' }
-                                            var endLine = fullText.substring(0, selEnd).count { it == '\n' }
-                                            if (selectedText.endsWith("\n")) {
-                                                endLine = (endLine - 1).coerceAtLeast(startLine)
-                                            }
-                                            currentOnAddToConversation?.invoke(selectedText, startLine, endLine)
-                                        mode?.finish()
-                                    }
-                                }
+                setCustomSelectionActionModeCallback(object : ActionMode.Callback {
+                    override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                        menu?.apply {
+                            add(Menu.NONE, android.R.id.selectAll, 0, android.R.string.selectAll)
+                            add(Menu.NONE, android.R.id.cut, 1, android.R.string.cut)
+                            add(Menu.NONE, android.R.id.copy, 2, android.R.string.copy)
+                            add(Menu.NONE, android.R.id.paste, 3, android.R.string.paste)
+                            add(Menu.NONE, 0, 4, "☰")
+                            if (onAddToConversation != null) {
+                                add(Menu.NONE, 1, 5, currentAddToConversationLabel)
                             }
-                            return true
                         }
+                        return true
+                    }
 
-                        override fun onDestroyActionMode(mode: ActionMode?) {}
-                        override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?) = false
-                    })
-                }
+                    override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
+                        return when (item?.itemId) {
+                            0 -> {
+                                this@apply.selectLines()
+                                true
+                            }
+                            1 -> {
+                                val selStart = min(selectionStart, selectionEnd)
+                                val selEnd = kotlin.math.max(selectionStart, selectionEnd)
+                                if (selStart != selEnd) {
+                                    val fullText = text?.toString() ?: return false
+                                    val selectedText = fullText.substring(selStart, selEnd)
+                                    val startLine = fullText.substring(0, selStart).count { it == '\n' }
+                                    var endLine = fullText.substring(0, selEnd).count { it == '\n' }
+                                    if (selectedText.endsWith("\n")) {
+                                        endLine = (endLine - 1).coerceAtLeast(startLine)
+                                    }
+                                    currentOnAddToConversation?.invoke(selectedText, startLine, endLine)
+                                }
+                                mode?.finish()
+                                true
+                            }
+                            android.R.id.selectAll -> {
+                                this@apply.selectAll()
+                                true
+                            }
+                            android.R.id.cut, android.R.id.copy, android.R.id.paste -> {
+                                this@apply.onTextContextMenuItem(item.itemId)
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+
+                    override fun onDestroyActionMode(mode: ActionMode?) {}
+                    override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?) = false
+                })
             }
         },
         update = { view ->
