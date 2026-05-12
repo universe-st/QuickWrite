@@ -8,12 +8,12 @@
 
 | 文件 | 路径 | 用途 |
 |------|------|------|
-| WritingScreen | `presentation/ui/screens/WritingScreen.kt` | 写作页面 UI (1333行) |
+| WritingScreen | `presentation/ui/screens/WritingScreen.kt` | 写作页面 UI (~1350行) |
 | WritingViewModel | `presentation/viewmodel/WritingViewModel.kt` | 写作状态管理 (935行) |
 | MarkorEditor | `markor-editor/.../MarkorEditor.kt` | Compose 编辑器包装器 |
 | EditorConfig | `markor-editor/.../EditorConfig.kt` | 编辑器配置接口 |
 | AppEditorConfig | `util/AppEditorConfig.kt` | App 端配置实现 |
-| HighlightingEditor | `markor-editor/.../HighlightingEditor.java` | 核心编辑器控件 (625行) |
+| HighlightingEditor | `markor-editor/.../HighlightingEditor.java` | 核心编辑器控件 (含滚动控件) |
 | AutoTextFormatter | `markor-editor/.../AutoTextFormatter.java` | 自动格式化 |
 | LineNumbersView | `markor-editor/.../LineNumbersView.java` | 行号显示 |
 | SyntaxHighlighterBase | `markor-editor/.../SyntaxHighlighterBase.java` | 语法高亮基类 |
@@ -104,7 +104,8 @@ interface EditorConfig {
 │              WritingScreen                   │
 │  ┌───────────┐  ┌───────────┐              │
 │  │ Editor Tab│  │ Chat Tab  │              │
-│  │(MarkorEd.)│  │(开发中)    │              │
+│  │(MarkorEd.)│  │           │              │
+│  │ +ScrollH. │  │           │              │
 │  └───────────┘  └───────────┘              │
 │  ┌────────────────────┐                     │
 │  │ ChapterListPanel   │ (侧滑 220dp)        │
@@ -219,6 +220,34 @@ fun countWords(text: String): Int {
 
 ### Chat 标签页
 集成 AI 对话功能，详见 [14-AI 对话系统](./14-ai-chat-system.md)。`SessionSidebar` 支持左滑手势关闭，`SessionListItem` 支持长按触发删除确认。
+
+### 滚动控件 (ScrollHandle)
+
+编辑器右侧的胶囊形可拖动滚动控件，在 `HighlightingEditor.java` 中直接通过 `onDraw` 绘制和 `onTouchEvent` 处理拖拽实现。
+
+**视觉规格**:
+- 形状: 胶囊形 (8dp × 24dp, 圆角 = 宽度一半)
+- 颜色: 文字颜色 × 40% alpha × scrollHandleAlpha
+- 触摸热区: 编辑器右侧 56dp 宽区域
+- 位置: 热区水平居中，垂直位置随滚动比例移动
+
+**显示/隐藏行为**:
+- 默认隐藏 (alpha = 0)
+- 用户滚动编辑器时触发显示 (500ms ValueAnimator fade-in)
+- 停止滚动 3 秒后 fade-out (500ms ValueAnimator)
+- 拖动控件期间保持显示，释放后启动 3s 计时器
+
+**交互逻辑**:
+- `onTouchEvent` 中检测触摸 X 坐标是否在右侧热区
+- 拖动时 `performHandleScroll()` 将触摸 Y 坐标按比例映射到编辑器 scrollY
+- 热区内的触摸事件返回 `true`，阻止底层 EditText 处理
+
+**核心代码位置** (`HighlightingEditor.java`):
+- 字段: `_scrollHandleAlpha`, `_isHandleDragging`, `_handleHotZonePx`, `_fadeAnimator`, `_autoHideRunnable`
+- `onDraw` → `drawScrollHandle(canvas)` — 绘制胶囊
+- `onTouchEvent` — 热区检测 + 拖动路由
+- `onScrollChanged` — 用户滚动时显示控件 + 重置 3s 计时器
+- `animateScrollHandle(targetAlpha)` — ValueAnimator 500ms 渐变
 
 ## 已知问题/技术债务
 
