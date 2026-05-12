@@ -585,14 +585,12 @@ public class HighlightingEditor extends AppCompatEditText {
         setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                // Add custom items programmatically
                 menu.add(0, 0, 0, "☰");
                 return true;
             }
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                // Modify menu items here if necessary
                 return true;
             }
 
@@ -607,7 +605,6 @@ public class HighlightingEditor extends AppCompatEditText {
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
-                // Cleanup if needed
             }
         });
     }
