@@ -299,8 +299,6 @@ private fun preprocessMessages(
                     items.add(DisplayItem.ToolCard(tc.function.name, parsed, isLoading = false))
                 } else if (isGenerating) {
                     items.add(DisplayItem.ToolCard(tc.function.name, null, isLoading = true))
-                } else {
-                    items.add(DisplayItem.ToolCard(tc.function.name, null, isLoading = false))
                 }
             }
         } else {

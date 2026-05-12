@@ -433,9 +433,9 @@ class ApiDispatcher(
             )
         })
 
-        val allSilent = toolCalls.all { it.function.name == "rename_session" }
-
         val displayContent = textContent.ifBlank { "" }
+
+        val allSilent = toolCalls.all { it.function.name == "rename_session" } && displayContent.isBlank() && reasoningContent.isEmpty()
         val assistantMsg = ChatMessage(
             role = MessageRole.ASSISTANT,
             content = displayContent,
